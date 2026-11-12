@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 08:52 · Eksik listesi bitti: HAZIR (Opus)
+8 madde kapandı, 7 bitiş şartının hepsi geçti (REVIEW.md), testler 46/46. Kota: 5 saatlik pencere %19, haftalık %43. Sıradaki: sahibinin onayıyla Fotosop'a `cv adopt --apply`, sonra iki yerel eklenti ve ilk damıtma.
+
 ## 2026-11-12 08:51 · 8. İngilizce beceriler (Opus)
 `skills/en/{durum,calis,otonom,damit,cv-init}`: aynı ad ve komutlar, `cv` kodları çevrilmedi. tr/en eşliğini denetleyen test, 46/46. K24.
 
