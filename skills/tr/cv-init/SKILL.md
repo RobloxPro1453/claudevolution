@@ -22,6 +22,7 @@ Var olan, kendi düzeni olan bir projeyse `cv adopt` çalıştır ve üretilen e
 - Kod hangi klasörlerde? (`codePaths`)
 - **Ucuz modelin asla dokunmaması gereken yerler** neresi? (`forbiddenWrite`: kayıt/silme akışı, üretilmiş dosyalar, sahibinin elle yazdığı belgeler.) Emin değilsen yasakla; sonra açmak kolay, veri kaybını geri almak zor.
 - Ana dal adı (`baseBranch`).
+- **Kodu kim yazsın?** (`delegate.policy`) Seçenekli sor: "Hep ben (Opus) yazayım" → `kendisi` (önemli projeler) · "Yalnız DeepSeek yazsın, anahtar yoksa beklesin" → `yalniz-api` · "DeepSeek, yoksa ben" → `api-yoksa-kendisi` (varsayılan) · "DeepSeek, yoksa daha ucuz Claude modeli" → `api-yoksa-subagent` (`subagentModel`, ör. haiku). Sonra `cv delegate which` çıktısını göster.
 
 ## 3. VISION
 

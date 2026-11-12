@@ -7,13 +7,27 @@ import { exists, readText } from "../lib/util.js";
 import { forbiddenRegexes } from "../lib/config.js";
 
 export const FALLBACKS = ["claude-subagent", "self"];
+// delegate.policy: who may write delegated code. The owner picks it (cv-init asks); no policy = the old
+// fallback list decides (api, else its first entry).
+//   kendisi            never delegate: the main model writes everything, even with a key
+//   yalniz-api         only the API model (e.g. DeepSeek); without a key code work waits (mode "bekle")
+//   api-yoksa-kendisi  API model, else the main model (default)
+//   api-yoksa-subagent API model, else a Claude subagent on delegate.subagentModel
+export const POLICIES = ["kendisi", "yalniz-api", "api-yoksa-kendisi", "api-yoksa-subagent"];
+
+export function policyOf(d) {
+    if (POLICIES.includes(d.policy)) return d.policy;
+    const first = (d.fallback || []).find((f) => FALLBACKS.includes(f)) || "self";
+    return first === "claude-subagent" ? "api-yoksa-subagent" : "api-yoksa-kendisi";
+}
 
 export function choose(cfg, env = process.env) {
-    const d = cfg.delegate, p = d.providers && d.providers[d.provider];
+    const d = cfg.delegate, p = d.providers && d.providers[d.provider], policy = policyOf(d);
+    if (policy === "kendisi") return { mode: "self", name: "self", reason: "delegate.policy kendisi: iş dağıtılmaz" };
     if (p && env[p.keyEnv]) return { mode: "api", name: d.provider, reason: `${p.keyEnv} ortamda var` };
     const why = p ? `${p.keyEnv} ortamda yok` : `"${d.provider}" sağlayıcısı tanımlı değil`;
-    const first = (d.fallback || []).find((f) => FALLBACKS.includes(f)) || "self";
-    if (first === "claude-subagent") return { mode: "claude-subagent", name: first, model: d.subagentModel || "haiku", reason: why };
+    if (policy === "yalniz-api") return { mode: "bekle", name: "bekle", reason: `${why}; delegate.policy yalniz-api: kod işi anahtar gelene kadar bekler` };
+    if (policy === "api-yoksa-subagent") return { mode: "claude-subagent", name: "claude-subagent", model: d.subagentModel || "haiku", reason: why };
     return { mode: "self", name: "self", reason: why };
 }
 

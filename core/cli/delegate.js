@@ -18,7 +18,7 @@ export async function run(args) {
     const picked = choose.choose(cfg);
     if (picked.mode !== "api" && ["batch", "lane", "run", "fix", "scout", "auto", "ask"].includes(sub)) {
         console.log(`${choose.line(picked)}
-API işi başlatılmadı. Yedek: \`cv delegate brief <iş>\` çıktısını ${picked.mode === "claude-subagent" ? `Agent aracına (model: ${picked.model}) ver` : "kendin uygula"}; kurallar aynıdır.`);
+API işi başlatılmadı. ${picked.mode === "bekle" ? "Kod işi yapılmaz (delegate.policy yalniz-api): durumu SORULAR.md'ye yaz, kod dışı işlere geç. " : ""}Yedek (bekle değilse): \`cv delegate brief <iş>\` çıktısını ${picked.mode === "claude-subagent" ? `Agent aracına (model: ${picked.model}) ver` : "kendin uygula"}; kurallar aynıdır.`);
         return 3;
     }
     if (sub === "status") { console.log(lanes.statusText(cfg)); return 0; }

@@ -89,6 +89,7 @@ export function validate(cfg) {
     if (!isNum(d.defaultBudget) || !isNum(d.dailyBudget) || !isNum(d.defaultSteps)) err("delegate.defaultBudget / dailyBudget / defaultSteps: sayı olmalı");
     if (!Array.isArray(d.plugins)) err("delegate.plugins: liste olmalı");
     if (d.fallback !== undefined && (!Array.isArray(d.fallback) || d.fallback.some((f) => !["claude-subagent", "self"].includes(f)))) err("delegate.fallback: yalnız \"claude-subagent\" ve \"self\" içeren liste olmalı");
+    if (d.policy !== undefined && !["kendisi", "yalniz-api", "api-yoksa-kendisi", "api-yoksa-subagent"].includes(d.policy)) err("delegate.policy: kendisi | yalniz-api | api-yoksa-kendisi | api-yoksa-subagent");
     if (d.subagentModel !== undefined && !/^[a-z0-9.-]+$/i.test(String(d.subagentModel))) err("delegate.subagentModel: model adı olmalı (ör. haiku, sonnet)");
 
     const a = cfg.autonomy || {}, g = a.gates || {};
