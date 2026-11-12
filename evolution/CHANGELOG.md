@@ -19,3 +19,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-12 · claudevrim (v1.0.14) · sahibi exe'yi indirip claudevrim init + merhaba ile projeye başlar; evrensel dersler iki katmanla her projeye gider; ölçü: sahip-itirazi, COLD_START · test 69 → 74; kötü: codeLines %9 arttı (3168 → 3454); kötü: skillLines %5 arttı (529 → 557) · kabul
 - 2026-11-12 · cmd-guvenli (v1.0.15) · cv update kendi cv.cmd'sini yeniden yazınca fazladan satır çalışmasın; yeni .gitignore satırları var olan projelere de girsin · ölçüler eşit · kabul
 - 2026-11-12 · sessiz-init (v1.0.16) · yeni projede init sessiz; kurulum sonrası selam /loop başla'yı gösterir; yalnız-Opus ve kota açık söylenir (soğuk senaryo bulguları) · ölçüler eşit · kabul
+- 2026-11-12 · ders-windows-ta-calisirken-kendini-yeniden-108236 (v1.0.17) · evrensel ders: Windows'ta çalışırken kendini yeniden yazan bir .cmd dosyası kayan bayt konumund · ölçüler eşit · kabul
