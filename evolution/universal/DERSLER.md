@@ -26,3 +26,4 @@ Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca 
 - Arayüz işinde her adımda gerçek uygulamadan ekran görüntüsü al ve referans görselle yan yana koy, gerekirse piksel ölç; görüntüsüz yapılan arayüz işi körlemesine kalır ve farkları kaçırır. (2026-11-12)
 - Ara sıra düşen bir test ilk kez görülünce yeniden koşmadan önce hata yakalayıcısına dosya:satır ve çağrı zinciri ekle; yoksa düşüş tekrar ettiğinde de kaynağı bilinmez. (2026-11-12)
 - Windows'ta çalışırken kendini yeniden yazan bir .cmd dosyası kayan bayt konumundan okunmaya devam eder ve rastgele satırlar çalışır; komut satırını '& exit /b' ile bitir ve dosyayı yalnız içerik değiştiyse yaz. (2026-11-12)
+- "Sayfaya enjekte edilen test betiği hiç sonuç vermiyor ve içindeki zaman bekçisi de tetiklenmiyorsa asılmayı değil önce sözdizimini ara: ayrıştırılamayan betik hiç başlamaz. Koşmadan önce betiği bir JS çalışma ortamında async fonksiyon gövdesi olarak ayrıştır. (2026-11-12)" (2026-11-12)
