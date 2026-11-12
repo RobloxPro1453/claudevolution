@@ -1,5 +1,7 @@
 # Ölçüm takımı (benchmark) ve evrim planı
 
+> **Tarihçe** (paketin kuruluşu, 2026-11-12): güncel kural değil. Güncel sistem: `README.md`.
+
 Opus 5.5, 2026-11-12. Bu belge `docs/REVIEW.md` listesi bittikten sonraki işin tarifidir.
 
 ## Amaç

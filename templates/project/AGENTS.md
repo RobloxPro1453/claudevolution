@@ -2,7 +2,14 @@
 
 {{project}}: <tek cümle: bu proje nedir, kim için>. Başlamadan önce [docs/VISION.md](docs/VISION.md) dosyasını okuyun. Sahibi Türkçe konuşur; teknik bilmeyebilir, sade anlatın.
 
-Bu proje **claudevolution** düzeniyle çalışır: yapılandırma `.evrim/config.json`, beceriler `.claude/skills/` (`durum`, `calis`, `otonom`, `damit`), yardımcı komut `.evrim/cv` (Windows'ta `.evrim\cv.cmd`).
+## claudevolution
+
+Bu proje **claudevolution** düzeniyle çalışır. Sistemin tamamı paketin README'sindedir: paketin yeri `.evrim/local.json` > `packageHome` (`<packageHome>/README.md`). Kısaca:
+
+- `cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`. Ayarlar `.evrim/config.json`, otonom hafıza `.evrim/otonom/`.
+- Beceriler (`.claude/skills/`): `durum` ("neredeyiz"), `calis` ("çalış": bir tur iş), `otonom` (gözetimsiz tek çevrim), `damit` ("damıt"), `cv-init` (kurulum, VISION).
+- **Ders kuralı, her oturumda (döngü dışında da):** tekrar eden ya da pahalıya patlayan bir şey öğrendiğin an tek satır yaz. Yalnız bu projeye özgüyse `cv lesson "<ders>"` (`.evrim/otonom/DERSLER.md`). Proje adı çıkınca da doğruysa `cv lesson "<genelleştirilmiş ders>" --evrensel`: ders hemen pakete girer, ölçülür ve paketin GitHub deposuna gider; damıtmayı bekleme. Ciddi hata kalıbı: `--hata`.
+- **Push:** bu projenin deposunda yok (sahibi istemedikçe). Paketin push'unu yalnız `cv lesson --evrensel` ve `cv evolve` yapar. Paket yeni sürüm aldıysa: `cv update --apply`.
 
 ## Nereye bakmalı
 
@@ -72,6 +79,6 @@ Amaç: gelen her ajan öncekinin kaldığı yerden devam etsin. Her değişiklik
 | Düzeltilmeden bildirilen ya da elle denenecek hata | `docs/CHECKUP.md` |
 | Mimari, klasör ya da akış değişti | `docs/ARCHITECTURE.md` ya da `docs/DEVELOPMENT.md` |
 | Hedef ya da sahibinin kararı değişti | `docs/VISION.md` (yalnız sahibinin sözüyle) |
-| Tekrar eden ya da pahalıya patlayan durum | `.evrim/otonom/DERSLER.md` tek satır |
+| Tekrar eden ya da pahalıya patlayan durum | `cv lesson "<ders>"` (yerel) ya da `cv lesson "<genelleştirilmiş ders>" --evrensel` (pakete); bkz. § claudevolution |
 
 **Belge diyeti:** bir turda yazılan yalnız CHANGELOG satırları, ROADMAP işaretleri ve PROGRESS'e tek kısa kayıttır. KNOWLEDGE ve CHECKUP yalnız gerçekten yeni bulgu varsa, birkaç satır. Yeni plan ya da rapor belgesi açılmaz. Eski ya da yanlış bilgi görürseniz o an düzeltin; doğrulanmamışı doğrulanmış gibi yazmayın.

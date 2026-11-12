@@ -11,7 +11,7 @@ The owner may not be technical. Short sentences, one question at a time, with op
 
 ## 1. Skeleton
 
-If `.evrim/config.json` is missing: `cv init --name <name> --lang en` (never overwrites an existing file; leaves a `.new` beside a differing one). Tell the owner about the `.new` files in the output: "You already had these files, I did not touch them; the new versions sit next to them."
+If `.evrim/config.json` is missing: `cv init --name <name> --lang en` (never overwrites an existing file; leaves a `.new` beside a differing one). Tell the owner about the `.new` files in the output: "You already had these files, I did not touch them; the new versions sit next to them." If `AGENTS.md.new` or `CLAUDE.md.new` appeared, at least add the template's `## claudevolution` section to the existing `AGENTS.md` and make sure `CLAUDE.md` has an `@AGENTS.md` line: a session outside the loop learns the lesson rule (`cv lesson`) only from there. `cv doctor` reports it if missing.
 
 For an existing project with its own setup, run `cv adopt` and summarise the mapping plan for the owner; `--apply` only when the owner says "apply".
 

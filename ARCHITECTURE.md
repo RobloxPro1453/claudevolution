@@ -1,6 +1,6 @@
-# Mimari (taslak, v0)
+# Mimari
 
-Bu taslak Opus 5.5'in temelidir; Fable 5.2 bunu `docs/FABLE_PROMPT.md` ile tamamlar ve gerekirse değiştirir (değişikliği gerekçesiyle `docs/DECISIONS.md`'ye yazar).
+Sistemin kullanım özeti [README.md](README.md)'de; burada parçaların yeri ve gerekçesi. Mimari kararlar ve seçenekleri: `docs/DECISIONS.md`.
 
 ## Amaç
 
@@ -15,23 +15,26 @@ claudevolution, Claude Code ile çalışan bir projeye **tek komutla** şunları
 
 ```
 claudevolution/                 (bu depo: evrensel katman)
-  bin/cv(.ps1|.js)              CLI: init, update, doctor, distill, status
+  bin/cv(.cmd|.ps1|.js)         CLI yönlendirici; her komut core/cli/<komut>.js (cv help)
   core/
-    delegate/                   ucuz model ajanı (agent.js'in genel hâli) + şerit yöneticisi (ds.ps1)
+    delegate/                   ucuz model ajanı + ayrık süreçli şerit yöneticisi + yedek (subagent / ana model)
     metrics/                    tur ölçümü (round.js'in genel hâli)
     autonomy/                   zamanlanmış görev sürücüsü, kilit, limit kapıları, sigorta
     probe/                      eklenti arayüzü (uygulamaya kısa betik, ekran görüntüsü)
     reference/                  referans uygulama yakalama + yan yana karşılaştırma
-  skills/                       Claude becerileri: durum, calis, otonom, damit, init
+  skills/{tr,en}/               Claude becerileri: durum, calis, otonom, damit, cv-init
+  bench/                        ölçüm takımı (testler + kaos senaryoları + canlı mini proje); evrim değiştiremez
+  core/evolve/                  cv evolve (ölçülü kabul + push), cv lesson (tek ders hemen pakete), gizlilik taraması
   templates/project/            `cv init`'in kopyaladığı iskelet (aşağıda)
   evolution/
     universal/DERSLER.md        bütün projelerden damıtılmış dersler (≤ 80 satır)
     universal/HATALAR.md        tekrar eden hata kalıpları ve çözümleri
     CHANGELOG.md                pakete giren her evrim değişikliği + ölçü hipotezi + sonuç
-  docs/                         INVENTORY, METHOD (yöntem), DECISIONS, FABLE_PROMPT
+  docs/                         METHOD (yöntem), DECISIONS, STANDARD, OWNER_GUIDE; günlük PROGRESS; tarihçe: INVENTORY, REVIEW, BENCHMARK_PLAN, FABLE_PROMPT
 
 <proje>/                        (yerel katman, `cv init` sonrası)
-  AGENTS.md                     proje kuralları + "nereye bakmalı" + hafıza tablosu (şablondan)
+  AGENTS.md                     proje kuralları + claudevolution bölümü (ders kuralı) + "nereye bakmalı" + hafıza tablosu
+  CLAUDE.md                     tek satır `@AGENTS.md` (Claude Code CLAUDE.md'yi kendiliğinden okur)
   docs/                         VISION, PROGRESS, ROADMAP, CHECKUP, KNOWLEDGE, ARCHITECTURE, DEVELOPMENT
   docs/tasks/                   ucuz ajan kuralları (genel kısım paketten, proje kısmı burada) + tarifler
   .claude/skills/               paketten bağlanan beceriler (kopya değil; sürümlü)
@@ -54,7 +57,8 @@ claudevolution/                 (bu depo: evrensel katman)
 
 ## Evrim
 
-- **Yerel ders**: her çevrim `DERSLER.md`'ye (≤ 40 satır) tekrar eden ya da pahalı durumdan tek satır.
+- **Yerel ders**: `cv lesson "<ders>"` → `DERSLER.md` (≤ 40 satır), her oturumda, tekrar eden ya da pahalı durumdan tek satır.
+- **Evrensel ders, hemen**: `cv lesson "<genelleştirilmiş ders>" --evrensel` → paket deposunda `evrim/ders-…` dalı, `evolution/universal/DERSLER.md`, `cv evolve` (ölçüm, sürüm, push); yerel satır `[evrensel→taşındı vX]`.
 - **Damıtma** (`damit` becerisi; günde bir ya da her 10 çevrimde bir; toplam kotanın ≤ %10'u): yeni yerel dersler okunur; projeden bağımsız olanlar evrensel `DERSLER`'e ya da doğrudan şablon/beceri metnine taşınır. Her taşıma `evolution/CHANGELOG.md`'ye: değişiklik, beklenen etki, hangi ölçüyle doğrulanacağı.
 - **Doğrulama**: ölçüler `metrics.jsonl`'den: biten iş başına kota, ucuz model başarı oranı (ilk denemede biten), boşa giden çevrim sayısı, sahibinin geri dönüşleri. K çevrim sonra kötüleştiyse değişiklik geri alınır ("evrim seçilimi").
 - **Koruma**: evrensel değişiklik proje kurallarını gevşetemez (yasak yollar, veri kaybı kuralları her zaman yerel config'de açık); pakete giren değişiklik sürüm alır; projeler `cv update` ile farkı görüp alır.
@@ -63,6 +67,6 @@ claudevolution/                 (bu depo: evrensel katman)
 
 `cv init [--name X] [--lang tr]` boş ya da var olan bir projede: şablonları kopyalar (var olan dosyayı ezmez, yanına `.new` koyar), `.evrim/config.json`'u sorularla ya da algılamayla doldurur (derleme/test komutu), becerileri bağlar, `cv doctor` çalıştırır. Claude içinden: "claudevolution init" becerisi aynı işi konuşarak yapar ve VISION'ı sahibiyle doldurur.
 
-## İlk müşteri
+## Göç
 
-Fotosop: `cv init` yerine **göç** (`cv adopt`): var olan AGENTS/docs/scripts'i yeni yapıya eşler, Fotosop'a özgüleri yerel config ve eklentiye taşır, davranış değişmeden çalışmaya devam eder.
+Kendi düzeni olan bir projede `cv init` yerine `cv adopt`: var olan AGENTS/docs/betikleri yeni yapıya eşleyen plan üretir (örnek: `docs/examples/`), `--apply` ile uygular; hiçbir dosyayı ezmez.

@@ -1,6 +1,7 @@
 # claudevolution · Kullanım Kartı
 
 > Tek sayfalık özet: projeyi kurmak, tek tur çalıştırmak, gözetimsiz çalışmayı açıp kapatmak.
+> Paket bir kez indirilir: `git clone https://github.com/RobloxPro1453/claudevolution` (aşağıdaki örnekler kullanıcı klasörüne klonlandığını varsayar; başka yerdeyse o yolu yaz). Node ya da Deno gerekir.
 > Bütün cümleleri Claude uygulamasında, **projenin klasöründe açılmış** bir oturuma yazarsın.
 
 ---
@@ -17,7 +18,7 @@
 | Ne yaptı? | `ne yaptın` |
 | Durdurmak | `dur` |
 | Paketi güncellemek | `claudevolution'ı güncelle (cv update)` |
-| Dersleri pakete taşımak | `damıt` |
+| Dersleri pakete taşımak | `damıt` (tek ders zaten yazıldığı an gider: `cv lesson "…" --evrensel`) |
 
 ---
 
@@ -78,7 +79,7 @@
 ### Eve gelince
 
 - `ne yaptın` yaz. İstersen `.evrim/otonom/OZET.md` dosyasını kendin oku.
-- Senin onayını bekleyen dallar varsa (Fotosop'ta AURA dalı gibi) özette yazar. Uygulamayı deneyip beğenirsen `birleştir` de.
+- Senin onayını bekleyen dallar varsa özette yazar. Uygulamayı deneyip beğenirsen `birleştir` de.
 
 ---
 
@@ -123,8 +124,8 @@ Kontrol için Claude'a `cv doctor çalıştır` de. Eksik olanı sade dille söy
 
 ```
 proje çalışır → ders çıkar → .evrim/otonom/DERSLER.md (yerel)
-        ↓ arada bir "damıt"
-genel ders → claudevolution'da evrim/<ad> dalı → cv evolve
+        ↓ hemen ya da arada bir "damıt"
+genel ders → hemen: cv lesson "…" --evrensel  (büyük değişiklik: evrim/<ad> dalı → cv evolve)
         ↓ ölçüm: testler + 20 kaos senaryosu (0 token)
 iyiyse → pakete girer, sürüm artar, GitHub'a gider
 kötüyse → reddedilir, evolution/REJECTED.md'ye yazılır

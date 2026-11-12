@@ -1,5 +1,7 @@
 # FABLE_PROMPT: claudevolution'ı tek seferde kur
 
+> **Tarihçe** (paketin kuruluşu, 2026-11-12): güncel kural değil. Güncel sistem: `README.md`.
+
 > Sahibinin yeni (temiz) Fable 5.2 oturumuna yapıştıracağı tek satır:
 > **`%USERPROFILE%\claudevolution\docs\FABLE_PROMPT.md` dosyasını baştan sona oku ve uygula. Gözetimsiz çalışıyorsun; soru sorma, kararı gerekçesiyle DECISIONS.md'ye yaz.**
 

@@ -3,7 +3,8 @@
 Paketin kendini geliştiren kısmı. Uygulayan: `damit` becerisi (`skills/tr/damit/SKILL.md`); yardımcı çıktı: `cv distill`.
 
 ```
-proje/.evrim/otonom/DERSLER.md        yerel dersler (≤40 satır, her çevrim okunur)
+proje/.evrim/otonom/DERSLER.md        yerel dersler: cv lesson "<ders>" (≤40 satır, her çevrim okunur)
+        │  tek ders hemen: cv lesson "<genelleştirilmiş ders>" --evrensel (dal, ölçüm, sürüm, push)
         │  damıtma: günde bir ya da her 10 çalışan çevrimde; toplam kotanın ≤%10'u
         ▼
 evolution/universal/DERSLER.md        evrensel dersler (≤80 satır)            ┐

@@ -78,7 +78,7 @@ Boşa giden parayı ve kotayı sahibi değil **sen** fark edeceksin:
 ## 7. Asla
 
 - Sistem ayarı değiştirme, program kurma/kaldırma, internetten dosya indirme, proje ve kendi çalışma kopyaların dışında dosya silme.
-- Push, uzak depo, sahibinin onayını bekleyen dalı birleştirme.
+- Projede push, uzak depo, sahibinin onayını bekleyen dalı birleştirme. (Tek istisna paket: `cv lesson --evrensel` kendi ölçülü push'unu yapar; elle push yok.)
 - `.evrim/config.json` > `forbiddenWrite` listesini ya da kota eşiklerini gevşetme.
 - Anahtarı bir yere yazma. Başka projenin dosyalarına dokunma.
 

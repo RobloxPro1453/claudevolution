@@ -2,6 +2,10 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 · Sıfır açıklamayla başlangıç (Opus 5.5)
+Giriş noktası tek: README beş bölüm (ne, kurulum, günlük kullanım + çevrim + kapılar, evrim kuralı, komutlar); paket ve proje şablonuna `CLAUDE.md` (`@AGENTS.md`), şablon AGENTS.md'ye `## claudevolution` (ders kuralı döngü dışında da, push ayrımı). `cv doctor` bölüm yoksa uyarır. Push yasakları paket istisnasını söylüyor; ARCHITECTURE/OWNER_GUIDE/KULLANIM eskileri düzeltildi, kuruluş belgeleri "Tarihçe" işaretli. `lesson.test.js` cmd'ye tırnaksız `>` verip kökte `%39` dosyası üretiyordu: düzeltildi.
+Doğrulama: bağlamsız ajanlara 7 soru (`tests/docs.test.js` > `COLD_START`). Önce: kurulumun kaynağı yok, döngü dışında `cv lesson` belirsiz, push çelişkisi. Sonra Sonnet ve Haiku 7/7.
+
 ## 2026-11-12 · İlk gerçek evrimler + Fotosop göçü (Opus 5.5)
 `cv evolve` gerçek adaylarla iki kez çalıştı: v1.0.1 (yedek varsayılanı `self`), v1.0.2 (otonom döngü başında Remote Control); ikisi de ölçülüp push edildi. Fotosop `cv adopt --apply` ile göçtü (develop bfdd906). Bilinen hata: adopt, "kalır" denen var olan belgeler için de şablon `.new` bırakıyor (14 dosya, elle silindi); düzeltme bir sonraki gerçek evrim adayı.
 
