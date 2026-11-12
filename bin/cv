@@ -1,0 +1,7 @@
+#!/bin/sh
+# claudevolution CLI launcher (Linux/macOS/Git Bash). Uses Node if installed, otherwise Deno.
+dir=$(cd "$(dirname "$0")" && pwd)
+if command -v node >/dev/null 2>&1; then exec node "$dir/cv.js" "$@"; fi
+if command -v deno >/dev/null 2>&1; then exec deno run -A --quiet "$dir/cv.js" "$@"; fi
+echo "claudevolution: Node ya da Deno bulunamadi." >&2
+exit 127

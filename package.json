@@ -1,0 +1,10 @@
+{
+  "name": "claudevolution",
+  "version": "0.1.0",
+  "description": "Self-evolving operating system for Claude Code projects: rules and memory docs, cheap-model delegation, unattended limit-aware autonomy, and a local + universal learning loop.",
+  "type": "module",
+  "private": true,
+  "bin": { "cv": "bin/cv.js" },
+  "scripts": { "test": "node tests/run.js" },
+  "engines": { "node": ">=18" }
+}
