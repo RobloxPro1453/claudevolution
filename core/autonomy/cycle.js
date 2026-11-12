@@ -68,7 +68,9 @@ export function begin(cfg, args, now = new Date()) {
     if (g.decision === "CIK") { writeJson(cycleState(cfg), state); unlock(); return done("CIK"); }
 
     const head = git(["rev-parse", "HEAD"], cfg.root);
-    state.open = { id, startedAt: nowIso(now), head: head.ok ? head.out : null, usage };
+    // Every branch tip, so work committed in another worktree/branch of the same repo counts too.
+    const tips = git(["for-each-ref", "--format=%(objectname)", "refs/heads"], cfg.root);
+    state.open = { id, startedAt: nowIso(now), head: head.ok ? head.out : null, tips: tips.ok ? [...new Set(tips.out.split(/\s+/).filter(Boolean))] : null, usage };
     writeJson(cycleState(cfg), state);
 
     const w = cfg.autonomy.watchdog;
@@ -97,6 +99,10 @@ export function end(cfg, args, now = new Date(), { sleepOnly = false } = {}) {
     const quota = usage ? `kota 5s %${usage.five} / hafta %${usage.week}` : "kota okunamadı";
     let commits = 0;
     if (open.head) { const r = git(["rev-list", "--count", `${open.head}..HEAD`], cfg.root); if (r.ok) commits = parseInt(r.out, 10) || 0; }
+    if (open.tips && open.tips.length) {
+        const r = git(["rev-list", "--count", "--branches", "--not", ...open.tips], cfg.root);
+        if (r.ok) commits = Math.max(commits, parseInt(r.out, 10) || 0);
+    }
 
     if (sleepOnly) memory.appendJournal(cfg, `${stamp(now)} · uyku · ${quota}`, [String(args.reason || "kapı kapalı")]);
     else {
