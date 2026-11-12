@@ -1,6 +1,6 @@
 ---
 name: calis
-description: When the owner says "work", "continue" or "start", runs one round - Claude plans and supervises a package, the cheap model writes the code in parallel lanes; then review, merge, document, measure.
+description: When the owner says "work" or "continue" while present ("başla" and "/loop başla" belong to the otonom skill), runs one round - Claude plans and supervises a package, the cheap model writes the code in parallel lanes; then review, merge, document, measure.
 ---
 
 One round = **one package**: 8-30 short specs, parallel lanes. You make the decisions; do not ask the owner questions mid-round. Goal: `docs.vision` > finish line; visible progress every round.

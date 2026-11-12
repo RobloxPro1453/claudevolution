@@ -77,6 +77,8 @@ export const COLD_START = [
     { q: "Kota yüksekken ne olur?", where: "readme", facts: ["%85", "%90", "60 + 30·f", "KUCUK", "CIK", "cv cycle sleep"] },
     { q: "Pakete bir değişiklik nasıl girer, diğer projeler nasıl alır?", where: "readme", facts: ["evrim/<ad>", "cv evolve", "bench/", "gizlilik", "REJECTED.md", "cv update --apply"] },
     { q: "Döngü dışında, normal oturumda genel bir ders öğrendim; ne yaparım?", where: "agents", facts: ["döngü dışında da", "--evrensel", "damıtmayı bekleme"] },
+    { q: "Hiçbir şey kurulu olmayan bir bilgisayarda yeni proje nasıl başlar?", where: "readme", facts: ["Releases", "claudevrim.exe", "claudevrim init", "merhaba", "\"kurulum\": \"bekliyor\"", "/loop başla", "claudevrim guncelle"] },
+    { q: "Pakete push yetkim yoksa evrensel dersim nereye gider?", where: "readme", facts: ["~/.claudevrim/evrensel/DERSLER.md", ".evrim/evrensel.md", "hiçbiri silinmez"] },
     { q: "Push yapabilir miyim? Proje ile paket farkı?", where: "both", facts: ["push", "cv lesson --evrensel", "cv evolve"] }
 ];
 
@@ -113,8 +115,8 @@ test("cv setup: kullanıcı becerisi paketin yerini söyler, ikinci kez aynı ka
     const { setup, userSkillText } = await import("../core/cli/setup.js");
     const { tmpDir } = await import("./harness.js");
     const file = path.join(tmpDir("setup"), "skills", "claudevolution", "SKILL.md");
-    eq(setup({ file, pkg: "C:\paket" }), "yeni");
-    eq(setup({ file, pkg: "C:\paket" }), "aynı");
+    eq(setup({ file, pkg: "C:\\paket" }), "yeni");
+    eq(setup({ file, pkg: "C:\\paket" }), "aynı");
     const t = readText(file);
     ok(/^name: claudevolution$/m.test(t) && t.includes("C:/paket/README.md") && !t.includes("{{pkg}}"), "beceri metni");
     ok(userSkillText("x").includes("bin/cv.cmd init"), "kurulum adımı");

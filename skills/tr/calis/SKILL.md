@@ -1,6 +1,6 @@
 ---
 name: calis
-description: Sahibi "çalış", "devam et" ya da "başla" dediğinde bir tur iş yapar - Claude paketi planlar ve denetler, ucuz model kodu paralel şeritlerde yazar; sonra gözden geçirir, birleştirir, belgeler, ölçer.
+description: Sahibi "çalış" ya da "devam et" dediğinde (başındayken; "başla" ve "/loop başla" otonom becerisidir) bir tur iş yapar - Claude paketi planlar ve denetler, ucuz model kodu paralel şeritlerde yazar; sonra gözden geçirir, birleştirir, belgeler, ölçer.
 ---
 
 Bir tur = **bir paket**: 8-30 kısa tarif, paralel şeritler. Kararları sen verirsin; sahibine ara soru sorma. Hedef `docs.vision` > Bitiş çizgisi; tur başına görünür ilerleme.

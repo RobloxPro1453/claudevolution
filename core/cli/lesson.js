@@ -3,10 +3,12 @@
 // lesson goes to the package at once (core/evolve/lesson.js: branch, commit, measure, push) and the local
 // line is marked [evrensel→taşındı vX]. If the package refuses it, the local line stays [evrensel] so the
 // next distillation sees it again, and the reason is printed.
-import { appendText, today } from "../lib/util.js";
+import { appendText, exists, today, writeText } from "../lib/util.js";
+import { lessonTarget, userUniversal } from "../lib/home.js";
+import { writeProject } from "../evolve/merge.js";
 import { PKG_ROOT, findRoot, loadConfig } from "../lib/config.js";
 import { memFile } from "../autonomy/memory.js";
-import { promote } from "../evolve/lesson.js";
+import { problems, promote } from "../evolve/lesson.js";
 import process from "node:process";
 import path from "node:path";
 
@@ -31,6 +33,19 @@ export async function run(args) {
         const where = localWrite(cfg, kind, "[yerel]", text);
         console.log(where ? `yerel ${kind} yazıldı: ${where}` : "proje bulunamadı; yerel ders yazılmadı");
         return where ? 0 : 1;
+    }
+    // An owner without push rights to the package (claudevrim installed, not a developer machine): the lesson
+    // goes to this machine's universal layer and from there into every project (.evrim/evrensel.md).
+    if (lessonTarget() === "makine") {
+        const bad = problems(text, { projectWords: cfg ? [cfg.project] : [] });
+        if (bad.length) { localWrite(cfg, kind, "[evrensel]", text); console.log("evrensel olamaz (yerelde [evrensel] kaldı):\n  - " + bad.join("\n  - ")); return 1; }
+        const file = userUniversal(kind);
+        if (!exists(file)) writeText(file, kind === "hata" ? "# Bu makinenin evrensel hata kalıpları\n\n" : "# Bu makinenin evrensel dersleri\n\n");
+        appendText(file, kind === "hata" ? `\n## ${text.split(/\r?\n/)[0].slice(0, 80)}\n- ${text} (${today()})\n` : `- ${text} (${today()})\n`);
+        localWrite(cfg, kind, "[evrensel→taşındı makine]", text);
+        if (root) writeProject(root);
+        console.log(`evrensel ${kind} bu makinenin katmanında: ${file} (bütün projelere .evrim/evrensel.md ile gider)`);
+        return 0;
     }
     let r;
     try {

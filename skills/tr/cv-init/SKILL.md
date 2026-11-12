@@ -1,50 +1,63 @@
 ---
 name: cv-init
-description: claudevolution'ı bir projeye konuşarak kurar ya da kurulumu tamamlar - iskeleti kurar, yapılandırmayı sahibiyle doğrular, VISION'ı sahibinin sözleriyle doldurur, gözetimsiz çalışma önkoşullarını sade dille anlatır. Sahibi "claudevolution kur", "projeyi kur", "vizyonu dolduralım" dediğinde.
+description: claudevolution kurulumunu konuşarak tamamlar - yeni projede sahibinin ilk mesajı ("merhaba" bile) ile başlar, projeyi sade sorularla öğrenir (ne, kim için, bitti ne demek, kodu kim yazsın), başmimar olarak tartıp belgelere döker ve sahibine döngüyü nasıl başlatacağını söyler. .evrim/config.json > kurulum "bekliyor" iken, ya da sahibi "claudevolution kur", "vizyonu dolduralım" dediğinde.
 ---
 
-# Konuşarak kurulum
+# Keşif görüşmesi ve kurulum
 
-Sahibi teknik bilmeyebilir. Kısa cümleler, her seferinde tek soru, seçenekli sor. Cevabı kendi cümleleriyle yaz; uydurma.
+Sahibi teknik bilmeyebilir. Onun dilinde, kısa cümlelerle konuş; teknik terimi ya hiç kullanma ya da yanında bir cümleyle açıkla. Sen **başmimarsın**: sahibinin fikrini olduğu gibi yazmazsın, tartarsın, gerçekçi hâle getirirsin, sırayla anlatırsın. Kazma kürek (kod) bu görüşmede yok; bu görüşmenin sonunda döngüye başlamadan önce her şey belli olur.
 
-`cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`. İskelet henüz yoksa paketteki `bin/cv` ile çalıştır (sahibi yolu söyler ya da `CV_HOME` ortam değişkeninde durur).
+`cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`; `claudevrim` kuruluysa `claudevrim <komut>` da aynıdır. Paketin tam anlatımı paket klasöründe `README.md` (`.evrim/local.json` > `packageHome`).
 
-## 1. İskelet
+## 0. İskelet
 
-`.evrim/config.json` yoksa: `cv init --name <ad>` (var olan dosyayı ezmez; çakışanın yanına `.new` bırakır). Çıktıdaki `.new` dosyalarını sahibine söyle: "Sende zaten şu dosyalar vardı, dokunmadım; yenileri yanlarında duruyor." `AGENTS.md.new` ya da `CLAUDE.md.new` çıktıysa en azından şablonun `## claudevolution` bölümünü var olan `AGENTS.md`'ye ekle ve `CLAUDE.md`'de `@AGENTS.md` satırı olsun: döngü dışındaki oturum ders kuralını (`cv lesson`) yalnız oradan öğrenir. `cv doctor` eksikse söyler.
+`.evrim/config.json` yoksa önce `cv init --name <klasör adı>` (ya da `claudevrim init`). Var olan dosyayı ezmez; `AGENTS.md.new` ya da `CLAUDE.md.new` çıktıysa şablonun `## claudevolution` bölümünü var olan `AGENTS.md`'ye ekle ve `CLAUDE.md`'de `@AGENTS.md` satırı olsun. Kendi düzeni olan büyük bir projeyse `cv adopt` (plan) ve `--apply` yalnız sahibi "uygula" derse.
 
-Var olan, kendi düzeni olan bir projeyse `cv adopt` çalıştır ve üretilen eşleme planını sahibine özetle; `--apply` yalnız sahibi "uygula" derse.
+## 1. Karşıla ve projeyi oku
 
-## 2. Yapılandırmayı doğrula
+Kısa bir karşılama: ne olduğunu bir cümleyle söyle ("Bu klasörde senin için çalışacak sistem kuruldu; önce projeni anlamam lazım"). Klasörde kod varsa önce kendin bak (dosya yapısı, README, paket dosyaları), anladığını iki cümleyle söyle ve yalnız bilmediğini sor. Klasör boşsa her şeyi sahibinden öğreneceksin.
 
-`.evrim/config.json` içinde algılananları göster ve yalnız emin olmadıklarını sor:
-- Derleme ve test komutu doğru mu? (Bir kez çalıştır; çalışmıyorsa birlikte düzeltin.)
-- Kod hangi klasörlerde? (`codePaths`)
-- **Ucuz modelin asla dokunmaması gereken yerler** neresi? (`forbiddenWrite`: kayıt/silme akışı, üretilmiş dosyalar, sahibinin elle yazdığı belgeler.) Emin değilsen yasakla; sonra açmak kolay, veri kaybını geri almak zor.
-- Ana dal adı (`baseBranch`).
-- **Kodu kim yazsın?** (`delegate.policy`) Seçenekli sor: "Hep ben (Opus) yazayım" → `kendisi` (önemli projeler) · "Yalnız DeepSeek yazsın, anahtar yoksa beklesin" → `yalniz-api` · "DeepSeek, yoksa ben" → `api-yoksa-kendisi` (varsayılan) · "DeepSeek, yoksa daha ucuz Claude modeli" → `api-yoksa-subagent` (`subagentModel`, ör. haiku). Sonra `cv delegate which` çıktısını göster.
+## 2. Sorular
 
-## 3. VISION
+Hepsini tek seferde numaralı liste olarak sor; sahibi istediği sırayla, istediği uzunlukta cevaplasın. Her soruya bir örnek cevap ekle ki ne beklediğin anlaşılsın.
 
-`docs.vision` şablonunu sahibiyle doldur. Sırayla, tek tek sor:
-1. "Bu proje bitince ne yapabiliyor olacaksın?" → Hedef.
-2. "Kim kullanacak?" → Hedef.
-3. "'Bitti' demen için neler olmuş olmalı?" → Bitiş çizgisi (ölçülebilir hâle getir, sahibine onaylat).
-4. "'İyi olmuş' dediğin şey neye benziyor? Örnek aldığın bir şey var mı?" → His ve kalite ölçüsü (nasıl sınanacağıyla; iş sayısı kaliteyi ölçmez).
-5. "Ne olursa olsun bozulmaması gereken ne var?" → Değişmezler; aynılarını AGENTS.md > Kesin kurallar'a denetlenebilir cümlelerle yaz.
+1. **Ne yapmak istiyorsun?** Bir iki cümle; bildiğin bir örnek varsa söyle ("X'in benzeri ama şu farkla").
+2. **Kim kullanacak, nerede?** (Yalnız sen mi, başkaları da mı; bilgisayar, telefon, web?)
+3. **Olmazsa olmaz özellikler** ve **şimdilik gerekmeyenler.**
+4. **"Bitti" ne demek?** Hangi gün "tamam, bu iş gördü" dersin?
+5. **"İyi olmuş" neye benziyor?** Görünüş, hız, sadelik… örnek aldığın bir şey.
+6. **Asla bozulmaması gereken ne?** (Ör. "notlarım asla kaybolmasın".)
+7. **Kodu kim yazsın?** Seçenekleri sade anlat, maliyetiyle:
+   - "Hepsini ben (Claude, en güçlü model) yazayım: en sağlam yol, ama Claude kullanım limitin daha çabuk dolar." → `kendisi`
+   - "Ucuz bir yapay zekâ (DeepSeek) yazsın, ben planlayıp denetleyeyim: limitin uzun gider, küçük bir ücret ödersin; bunun için DeepSeek'ten bir anahtar alıp bilgisayarına eklemen gerekir (adım adım anlatırım)." Anahtar yokken ne olsun: "bekle" → `yalniz-api`, "sen yaz" → `api-yoksa-kendisi`.
+   - "Ucuz model yoksa daha küçük bir Claude modeli yazsın." → `api-yoksa-subagent` (`subagentModel`).
+8. **Sen yokken de çalışsın mı?** (Gece, okuldayken. Evetse bilgisayar ayarlarını sonra anlatırım.)
+9. Teknik tercihin var mı (dil, çatı, platform)? Yoksa "sen seç" demen yeter.
 
-AGENTS.md'nin ilk cümlesini (proje nedir) ve "İş bölümü"ndeki kritik alanları doldur. `docs/tasks/README.md` > Project rules'a aynı kuralların ucuz model için İngilizcesini yaz.
+## 3. Anla, anlamadıysan yeniden sor
 
-## 4. İlk yol haritası
+Cevapları kendi cümlelerinle özetle. Belirsiz, çelişen ya da gerçekçi olmayan bir yer varsa tahmin etme: o noktayı seçenekli olarak yeniden sor ("Senkronizasyon derken: a) kendi bilgisayarların arasında, b) internetteki bir sunucu üstünden?"). Gerekirse birkaç tur. Gerçekçi olmayanı nazikçe söyle ve küçültülmüş bir ilk hedef öner.
 
-Hedeften 5-10 somut madde çıkar, `docs.roadmap`'e yaz, sahibine sırayı onaylat.
+## 4. Başmimar olarak tart ve yaz
+
+Sahibinin cevaplarını teknik bir plana çevir: mimari, teknoloji seçimi (sahibi bırakmışsa gerekçesiyle sen seç), ilk sürümün kapsamı, sıralı iş listesi, nasıl doğrulanacağı (derleme ve test komutu). **Nereye ne yazacağına sen karar verirsin**; bu projenin belgelerini ve şablonunu görüyorsun. Görüşmenin sonunda şunlar yazılı ve bir sonraki oturum tarafından bulunabilir olmalı:
+
+- Hedef, kullanıcı, bitiş çizgisi, kalite ölçüsü, değişmezler (sahibinin sözleriyle; genelde `docs.vision`).
+- Sıralı, somut ilk iş listesi (genelde `docs.roadmap`; döngü işi buradan seçer).
+- Mimari taslak ve teknoloji kararları gerekçesiyle (uygun gördüğün belgede).
+- Değişmezlerin denetlenebilir hâli: `AGENTS.md` > Kesin kurallar; ucuz model için İngilizcesi `docs/tasks/README.md` > Project rules.
+- `.evrim/config.json`: `delegate.policy` (7. soru), `build`/`test` (proje boşsa ilk iş bunları kurmak olur; o zaman ROADMAP'in ilk maddesi), `codePaths`, `forbiddenWrite` (emin değilsen yasakla), `baseBranch`.
+- `AGENTS.md`'nin ilk cümlesi (proje nedir), "İş bölümü"ndeki kritik alanlar ve "Nereye bakmalı" tablosu: yeni açtığın ya da kullandığın her belge orada olsun.
+
+Planı sahibine kısa ve sade özetle ("Şunu yapacağız, şu sırayla, ilk görünür sonuç şu") ve onayını al. Değişiklik isterse düzelt.
 
 ## 5. Gözetimsiz çalışmaya hazırlık
 
-`cv doctor` çalıştır. Her ✗ satırı için sahibine **ne yapacağını adım adım, sade dille** söyle (hangi ayar penceresi, hangi seçenek). Ayarı sen değiştirme. Ucuz model anahtarı yoksa nasıl ekleneceğini anlat (ortam değişkeni; anahtarı sana yazmasın, sohbete yapıştırmasın).
+8. soru "evet" ise `cv doctor` çalıştır; her ✗ için ne yapacağını adım adım, sade söyle (hangi ayar penceresi, hangi seçenek). Ayarı sen değiştirme. Anahtar gerekiyorsa ekleme yolunu anlat; anahtarı sohbete yapıştırmasın.
 
-Zamanlanmış görevi sahibi kurar; ona verilecek düz metin: **"otonom becerisini yükle ve bir çevrim yap"** (eğik çizgi komutu değil). Ayrıntı: paketteki `docs/OWNER_GUIDE.md`.
+## 6. Bitir ve yönlendir
 
-## 6. Bitir
-
-Commit (`claudevolution kuruldu`), `docs.progress`'e tek kayıt, sahibine üç satır: ne kuruldu, şimdi ne yazarsa ne olur ("durum", "çalış"), gözetimsiz çalışma için kalan adımlar.
+1. `.evrim/config.json` > `kurulum`: `"tamam"`.
+2. Commit (`claudevolution kuruldu: <proje>`), `docs.progress`'e tek kayıt.
+3. Sahibine tam olarak şunu söyle (kendi dilinde):
+   > Her şey hazır. Bu konuşma uzun oldu; temiz başlamak için **yeni bir oturum aç**, önce **"merhaba"** yaz, sonra yalnız **`/loop başla`** yaz. Ben de planladığımız sırayla çalışmaya başlarım. Ne yaptığımı `.evrim/otonom/OZET.md` dosyasında ya da bana "ne yaptın" diye sorarak görebilirsin; durdurmak için "dur" yazman yeter.

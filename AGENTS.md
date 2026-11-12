@@ -16,6 +16,10 @@ Aşağıdakiler yalnız **paketin kendisini** değiştirirken geçerlidir.
 6. Beceri metni iki dilde aynı değişir: `skills/tr/<ad>/SKILL.md` ve `skills/en/<ad>/SKILL.md` (aynı `cv` komutları; test denetler).
 7. Projeye özgü hiçbir ad, yol, komut beceri ve şablona yazılmaz; hepsi `.evrim/config.json`'dan okunur.
 
+## Yayın
+
+`claudevrim` başlatıcısı (`bin/claudevrim.js`) yalnız `node:` yerleşiklerini kullanır; paket kodunu `~/.claudevrim/paket` içinden yükler (`bin/cv.js` > `main`). `cv evolve` sürümü artırıp push edince `.github/workflows/release.yml` exe'leri derler ve GitHub Release olarak yayınlar. Elle derleme: `deno compile -A -o claudevrim.exe bin/claudevrim.js`.
+
 ## Test
 
 ```

@@ -1,6 +1,6 @@
 ---
 name: otonom
-description: Projeyi sahibi yokken gözetimsiz ilerletir - tek çevrim yapar (kilit, kota kapısı, hafıza, bir iş adımı, kayıt) ve çıkar. Zamanlanmış görevden ("otonom becerisini yükle ve bir çevrim yap") ya da /loop içinden çağrılır; sahibi "ne yaptın" ya da "dur" dediğinde de bu beceri cevaplar.
+description: Projeyi sahibi yokken gözetimsiz ilerletir - tek çevrim yapar (kilit, kota kapısı, hafıza, bir iş adımı, kayıt) ve çıkar. Zamanlanmış görevden ("otonom becerisini yükle ve bir çevrim yap") ya da /loop içinden ("/loop başla": "başla" bir çevrim demektir) çağrılır; sahibi "ne yaptın" ya da "dur" dediğinde de bu beceri cevaplar.
 ---
 
 # Otonom çevrim
@@ -64,6 +64,7 @@ Boşa giden parayı ve kotayı sahibi değil **sen** fark edeceksin:
 ## 5. Çık ya da uyu
 
 - **Zamanlanmış görev:** bir cümlelik son söz yaz ve bitir. Yeniden planlama yok.
+- **Oturum uzadı mı?** Aynı `/loop` oturumunda 8. çevrimi geçtiysen ya da bağlam çok büyüdüyse (her çağrı pahalılaşır) döngüyü bozma, ama OZET'in "Senin bakman gerekenler" kısmına ve son sözüne sahibinin dilinde yaz: "Bu oturum uzadı; uygun olduğunda yeni bir oturum aç, 'merhaba' yaz, sonra `/loop başla` yaz. Kaldığım yerden devam ederim." Her çevrimde tekrarlama; en çok 4 çevrimde bir.
 - **`/loop`:** `ScheduleWakeup(<UYKU>, prompt = aynı metin, reason "<tek cümle>")`. İş sürüyorsa 60-120 sn; arka planda test/şerit bekleniyorsa 1200 sn; kapı kapalıysa komutun verdiği süre (en çok 3600'lük parçalar). Uyku çevrimlerinde iş yapma.
 
 ## 6. Kurtarma (takılma noktaları)

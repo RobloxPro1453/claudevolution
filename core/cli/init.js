@@ -6,6 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import { exists, git, isWindows, readJson, readText, slash, today, writeJson, writeText } from "../lib/util.js";
 import { CONFIG_REL, PKG_ROOT, TEMPLATE_DIR, VERSION, defaults, detect } from "../lib/config.js";
+import { writeProject } from "../evolve/merge.js";
 
 function walk(dir, rel = "") {
     const out = [];
@@ -62,7 +63,9 @@ export function buildConfig(root, name, lang) {
 export function cvCmd(pkgRoot) {
     return ["@echo off", "setlocal", `set "CV_PKG=${pkgRoot}"`, 'if defined CV_HOME set "CV_PKG=%CV_HOME%"',
         "where node >nul 2>nul", "if errorlevel 1 goto :deno", 'node "%CV_PKG%\\bin\\cv.js" %*', "exit /b %errorlevel%",
-        ":deno", 'deno run -A --quiet "%CV_PKG%\\bin\\cv.js" %*', "exit /b %errorlevel%", ""].join("\r\n");
+        ":deno", "where deno >nul 2>nul", "if errorlevel 1 goto :claudevrim", 'deno run -A --quiet "%CV_PKG%\\bin\\cv.js" %*', "exit /b %errorlevel%",
+        // An owner with neither: the claudevrim launcher carries its own runtime.
+        ":claudevrim", "claudevrim %*", "exit /b %errorlevel%", ""].join("\r\n");
 }
 
 // Machine-specific launchers (git-ignored): they know where this package lives on this machine.
@@ -71,7 +74,7 @@ export function writeShims(root) {
     writeJson(path.join(evrim, "local.json"), { packageHome: PKG_ROOT, writtenBy: "cv init", note: "Makineye özgü; git'e girmez. cv init yeniden üretir." });
     writeText(path.join(evrim, "cv.cmd"), cvCmd(PKG_ROOT));
     const sh = path.join(evrim, "cv");
-    writeText(sh, `#!/bin/sh\nexec "\${CV_HOME:-${slash(PKG_ROOT)}}/bin/cv" "$@"\n`);
+    writeText(sh, `#!/bin/sh\nif command -v node >/dev/null 2>&1 || command -v deno >/dev/null 2>&1; then exec "\${CV_HOME:-${slash(PKG_ROOT)}}/bin/cv" "$@"; fi\nexec claudevrim "$@"\n`);
     if (!isWindows) { try { fs.chmodSync(sh, 0o755); } catch (_) { /* best effort */ } }
 }
 
@@ -118,24 +121,37 @@ export function init(root, { name, lang = "tr" } = {}) {
     const want = [...readText(path.join(TEMPLATE_DIR, "gitignore.add")).split(/\r?\n/), ...nested].filter((l) => l && !have.split(/\r?\n/).includes(l) && (!l.startsWith("#") || !have.includes(l)));
     if (want.some((l) => !l.startsWith("#"))) { writeText(ignoreFile, have + (have && !have.endsWith("\n") ? "\n" : "") + want.join("\n") + "\n"); report.notes.push(".gitignore'a makineye özgü dosyalar eklendi"); }
     if (!git(["rev-parse", "--git-dir"], root).ok) report.notes.push("burası henüz git deposu değil: `git init` çalıştırın (otonomi ve şeritler git ister)");
+    // 5. Universal lessons of both layers (package + this machine), merged for this project.
+    const u = writeProject(root);
+    report.notes.push(`evrensel dersler: paketten ${u.pkg}, bu makineden ${u.machine} (.evrim/evrensel.md)`);
     return report;
 }
 
 export async function run(args) {
     const root = path.resolve(typeof args.dir === "string" ? args.dir : process.cwd());
     const lang = args.lang === "en" ? "en" : "tr";
+    // A new folder becomes a git repository (autonomy, lanes and evolution need one).
+    const fresh = !git(["rev-parse", "--git-dir"], root).ok;
+    if (fresh) { fs.mkdirSync(root, { recursive: true }); git(["init", "-q"], root); }
     const r = init(root, { name: typeof args.name === "string" ? args.name : undefined, lang });
     console.log(`claudevolution ${VERSION} → ${root}`);
     console.log(`  yeni dosya: ${r.created.length}   aynı kalan: ${r.same.length}   dokunulmayan (sizinki farklı): ${r.kept.length}`);
     for (const f of r.newFiles) console.log(`  yanına bırakıldı: ${f}`);
     if (r.kept.length && !r.newFiles.length) console.log("  (farklı dosyaların .new kopyaları zaten duruyor)");
-    for (const n of r.notes) console.log("  not: " + n);
+    for (const n of r.notes.filter((n) => !(fresh && /henüz git deposu değil/.test(n)))) console.log("  not: " + n);
+    // First commit of exactly the files this command wrote (never the owner's other files).
+    if (r.created.length) {
+        const paths = [...new Set([...r.created, ...r.newFiles, ".gitignore"])].filter((p) => exists(path.join(root, p)));
+        git(["add", "--", ...paths], root);
+        const c = git(["commit", "-q", "-m", "claudevolution kuruldu (cv init)", "--", ...paths], root);
+        console.log(c.ok ? "  commit: claudevolution kuruldu" : "  not: ilk commit atılamadı (git kullanıcı adı/e-postası tanımlı mı?); dosyalar hazır, commit'i Claude atar");
+    }
     // Once per machine (idempotent): the user-level skill that lets any new session recognise the package.
     if (!args["no-setup"]) { try { const { setup, userSkillFile } = await import("./setup.js"); const s = setup(); if (s !== "aynı") console.log(`  makine becerisi ${s}: ${userSkillFile()}`); } catch (e) { console.log("  not: makine becerisi yazılamadı (cv setup): " + e.message); } }
     if (args["no-doctor"]) return 0;
     console.log("");
     const doctor = await import("./doctor.js");
     await doctor.run({ _: [], dir: root, quiet: true });
-    console.log("\nSıradaki: Claude'a \"claudevolution kurulumunu tamamlayalım\" yazın (cv-init becerisi VISION'ı sizinle doldurur).");
+    console.log(lang === "tr" ? "\nSıradaki: Claude uygulamasında bu klasörü açın ve \"merhaba\" yazın; gerisini Claude sorar." : "\nNext: open this folder in the Claude app and write \"hello\"; Claude asks the rest.");
     return 0;
 }

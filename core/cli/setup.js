@@ -25,6 +25,6 @@ export async function run() {
     const file = userSkillFile();
     const r = setup({ file });
     console.log(`makine becerisi ${r}: ${file}`);
-    console.log("Artık bu makinede açılan her Claude oturumu claudevolution'ı tanır; paket klasörü bir projeye atılınca kurulumu kendisi yapar.");
+    console.log("Artık bu makinede açılan her Claude oturumu claudevolution'ı tanır; yeni projede `claudevrim init` sonrası ilk mesajda kurulum görüşmesini başlatır.");
     return 0;
 }

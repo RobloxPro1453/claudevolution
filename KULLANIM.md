@@ -1,7 +1,7 @@
 # claudevolution · Kullanım Kartı
 
 > Tek sayfalık özet: projeyi kurmak, tek tur çalıştırmak, gözetimsiz çalışmayı açıp kapatmak.
-> Paket bir kez indirilir: `git clone https://github.com/RobloxPro1453/claudevolution` (aşağıdaki örnekler kullanıcı klasörüne klonlandığını varsayar; başka yerdeyse o yolu yaz). Node ya da Deno gerekir.
+> Bilgisayara bir kez: GitHub'da paketin **Releases** sayfasından `claudevrim.exe`'yi indir, çift tıkla (Node/Deno gerekmez). Geliştirici: depoyu klonla, `claudevrim gelistirici <klon>`.
 > Bütün cümleleri Claude uygulamasında, **projenin klasöründe açılmış** bir oturuma yazarsın.
 
 ---
@@ -10,30 +10,25 @@
 
 | Ne istiyorsun? | Claude'a ne yazarsın? |
 |---|---|
-| Yeni projeye kurmak | `%USERPROFILE%\claudevolution\bin\cv.cmd init çalıştır, sonra cv-init becerisiyle kurulumu benimle tamamla` |
+| Yeni projeye kurmak | Proje klasöründe terminal: `claudevrim init`; sonra Claude'da o klasörü aç, `merhaba` |
 | Var olan projeyi taşımak | `claudevolution'a taşı: cv adopt önce --dry-run, sonra --apply` |
 | Neredeyiz? | `durum` |
 | Bir tur iş | `çalış` |
-| Gözetimsiz çalışma (evden çıkarken) | önce `merhaba`, sonra `/loop otonom becerisini çalıştır` |
+| Gözetimsiz çalışma (evden çıkarken) | yeni oturumda önce `merhaba`, sonra `/loop başla` |
 | Ne yaptı? | `ne yaptın` |
 | Durdurmak | `dur` |
-| Paketi güncellemek | `claudevolution'ı güncelle (cv update)` |
+| Paketi güncellemek | terminalde `claudevrim guncelle` (ya da Claude'a: `cv update --apply`) |
 | Dersleri pakete taşımak | `damıt` (tek ders zaten yazıldığı an gider: `cv lesson "…" --evrensel`) |
 
 ---
 
 ## 2. Yeni proje kurmak (bir kez)
 
-1. Proje için bir klasör aç ya da var olan klasörü seç.
-2. Claude uygulamasında **o klasörde** yeni oturum aç. Model **Opus**.
-3. Yaz:
-   ```
-   %USERPROFILE%\claudevolution\bin\cv.cmd init çalıştır, sonra cv-init becerisiyle kurulumu benimle tamamla
-   ```
-4. Claude birkaç şey sorar. Düz Türkçe cevap ver:
-   - Proje ne, bitince nasıl olacak? (vizyon)
-   - Derleme ve test komutu ne? (bilmiyorsan "sen bul" de)
-5. En sonda `cv doctor` çalışır ve eksik ayarları söyler (bkz. Bölüm 6).
+1. Proje için bir klasör aç (ör. masaüstünde `bazalt`). Klasörde sağ tık → **Terminalde aç**.
+2. Yaz: `claudevrim init`. Bitince terminali kapat.
+3. Claude uygulamasında **Code** bölümünden o klasörü seç, yeni oturum aç (model **Opus**), **`merhaba`** yaz.
+4. Claude projeyi sade sorularla öğrenir: ne yapmak istiyorsun, kim kullanacak, "bitti" ne demek, kodu kim yazsın (yalnız Claude / ucuz model / karışık), sen yokken çalışsın mı. Anlamadığını yeniden sorar, sonra planı sana özetler.
+5. Onaylayınca sana şunu der: **yeni oturum aç, `merhaba` yaz, sonra `/loop başla` yaz.** O kadar.
 
 > **Projede zaten kendi düzeni varsa** `init` yerine: `claudevolution'a taşı: cv adopt önce --dry-run, sonra --apply`. Hiçbir dosyayı ezmez, silmez.
 

@@ -1,6 +1,6 @@
 ---
 name: otonom
-description: Advances the project unattended while the owner is away - runs one cycle (lock, quota gate, memory, one work step, record) and exits. Called from a scheduled task ("load the otonom skill and run one cycle") or from /loop; also answers when the owner asks "what did you do" or "stop".
+description: Advances the project unattended while the owner is away - runs one cycle (lock, quota gate, memory, one work step, record) and exits. Called from a scheduled task ("load the otonom skill and run one cycle") or from /loop ("/loop başla": "başla" means one cycle); also answers when the owner asks "what did you do" or "stop".
 ---
 
 # Autonomous cycle
@@ -64,6 +64,7 @@ You, not the owner, must notice wasted money and quota:
 ## 5. Exit or sleep
 
 - **Scheduled task:** write a one-sentence last word and stop. No rescheduling.
+- **Session getting long?** Past the 8th cycle in the same `/loop` session, or when the context has grown large (every call gets expensive), do not break the loop, but write in OZET's "for you to check" part and in your last word, in the owner's language: "This session got long; when convenient, open a new session, write 'merhaba', then write `/loop başla`. I continue where I left off." Not every cycle; at most once every 4 cycles.
 - **`/loop`:** `ScheduleWakeup(<UYKU>, prompt = the same text, reason "<one sentence>")`. Work going on: 60-120 s; waiting for background tests/lanes: 1200 s; gate closed: the command's value (in chunks of at most 3600). Do no work in sleep cycles.
 
 ## 6. Recovery (sticking points)
