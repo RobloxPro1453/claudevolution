@@ -90,3 +90,7 @@ Sahibi teknik bilmiyor; rehber her işi "Claude'a şunu yaz" ya da "şu dosyaya 
 ## K20. INVENTORY §4 tabloya döndü; her hücre testle doğrulanır
 
 16 ders numaralı listeden "# · Ders · Nereye gitti" tablosuna çevrildi. 15'i koda, config'e, beceriye ya da şablona dönüştü; 16. ("his sorununu ölçülebilir parçaya indir") yalnız DERSLER'de: koda dönüşecek genel bir araç yok. Hepsi ayrıca `evolution/universal/DERSLER.md`'de. `tests/docs.test.js` 16 satırın varlığını ve hücrelerin gösterdiği dosyaların depoda olduğunu denetler: bir dosya taşınırsa tablo yalan kalmaz.
+
+## K21. METHOD.md ilke anlatır, komut tekrarlamaz; proje adı içermez
+
+Kaynak üç belge (paket düzeni, token optimizasyonu, ayırma notu) ~370 satırdı ve projeye özgü yollar, tur numaraları, iş kimlikleri taşıyordu. METHOD.md sekiz bölümde yalnız ilkeyi ve gerekçesini tutar (iş bölümü + 0,5 devir eşiği, paket düzeni, bağlam maliyeti, ölçüm, değişmez kurallar, deney, otonomi, evrim); komut ayrıntısı beceride ve kodda kalır (iki yerde yazılan şey ayrışır). Proje adı geçmez; kaynak INVENTORY'de. Eşikler testle config'e bağlı (K19 ile aynı gerekçe). Ders 16 artık METHOD §4'te de duruyor (INVENTORY sütunu güncellendi).

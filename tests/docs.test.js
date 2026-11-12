@@ -32,3 +32,12 @@ test("belge: INVENTORY §4'teki 16 dersin her birinin 'nereye gitti' hücresi va
         }
     }
 });
+
+test("belge: METHOD'daki eşikler config ile aynı; projeye özgü ad yok", () => {
+    const m = doc("docs/METHOD.md"), d = defaults();
+    const g = d.autonomy.gates;
+    ok(m.includes(`%${g.fiveHourNoNewStep}`) && m.includes(`%${g.fiveHourExit}`) && m.includes(`${g.weeklyBase} + ${g.weeklySlope}·f`), "kapılar");
+    ok(m.includes(`${d.autonomy.lockStaleMinutes} dakika`) && m.includes(`${d.autonomy.watchdog.delegateNoCommitMinutes} dakika`) && m.includes(`%${g.stepShareAlarm}`), "kilit, bekçi");
+    ok(m.includes(`≤${d.evolution.lessonsMax} satır`) && m.includes(`≤%${d.evolution.distillQuotaShare}`), "evrim sınırları");
+    eq(/fotosop|photopea/i.test(m), false, "projeye özgü ad");
+});

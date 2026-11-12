@@ -69,7 +69,7 @@ Fotosop'un kendi önceki ayırma notu `docs/workflow/ENGINE_IDEA.md` (bu deponun
 | 13 | Sahibinin psikolojisi: "kreş öğretmeni gibi her saniye kontrol" istemiyor; ama sürekli çalışan makine de tedirgin ediyor → sade OZET, net "uyuyor/çalışıyor" işareti, kolay "dur". | **Şablon + belge:** `.evrim/otonom/OZET.md`, `NOTLAR.md` (`DUR` kodda denetlenir, K10), `cv status` kilit satırı, `docs/OWNER_GUIDE.md`. + DERSLER |
 | 14 | Kullanıcıya görünen iş ile ölçülen iş farklı: menü sayısı 449→612 olsa da sahibi "ucuz kopya" dedi → his/kalite ölçüsü ilk günden tanımlanmalı (kör test). | **Şablon + beceri:** `templates/project/docs/VISION.md` "His ve kalite ölçüsü", `skills/tr/cv-init` 4. soru. + DERSLER |
 | 15 | Sayılarda dikkatsizlik güveni kırar (14'ü 16 dedi) → raporladığın her sayıyı komutla doğrula. | **Beceri + test:** `skills/tr/calis` 11. adım (her sayı komut çıktısından); `tests/docs.test.js` (rehberdeki sayılar config'e bağlı, K19). + DERSLER |
-| 16 | Teşhis ölçümle: arayüz "his" sorunu piksel ölçümüyle yanlış tema sütununa (en koyu yerine varsayılan) indirgendi. | **Yalnız DERSLER** (koda dönüşecek genel bir araç yok). |
+| 16 | Teşhis ölçümle: arayüz "his" sorunu piksel ölçümüyle yanlış tema sütununa (en koyu yerine varsayılan) indirgendi. | **Yöntem + DERSLER:** `docs/METHOD.md` §4 "Teşhis de ölçümle" (koda dönüşecek genel bir araç yok). |
 
 ## 5. Eksik olan (bugün hiçbir yerde yok)
 

@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 08:45 · 5. METHOD (Opus)
+`docs/METHOD.md`: iş bölümü, paket düzeni, bağlam, ölçüm, değişmez kurallar, deney, otonomi, evrim; proje adı yok. Eşikleri config'e bağlayan test, 41/41. K21.
+
 ## 2026-11-12 08:44 · 4. ders sütunu (Opus)
 INVENTORY §4 tablo oldu: 16 dersin her biri için "nereye gitti" (15 kod/beceri/şablon, 1 yalnız DERSLER). Hücrelerdeki yolları denetleyen test, 40/40. K20.
 
