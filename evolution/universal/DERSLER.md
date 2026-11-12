@@ -22,3 +22,4 @@ Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca 
 - Evrensel ders yazıldığı an pakete gider: `cv lesson "<ders>" --evrensel` (dal, ölçüm, commit, GitHub'a push tek komutta). Damıtmayı beklemek dersleri projede [evrensel] etiketiyle unutturuyordu (fotosop 2026-11-12).
 - Windows'ta .cmd sarmalayıcısı başka bir .cmd'yi `call` ile çağırınca argümanlardaki % ikinci kez açılır ("%34" → 3. argüman + "4") → sarmalayıcı node'u doğrudan çağırır. PowerShell'de dolar işaretli metni ("$0.05") tek tırnakla ver (fotosop 2026-11-12).
 - Test takımı arka planda koşarken aynı uygulamayı derleme: çıktı dosyası kilitli kalır, derleme derleyici başarısız diye düşer → önce testin bitmesini bekle, sonra derle. (Fotosop 2026-11-12)
+- Yardımcı betiğe (yoklama, test aracı) çok satırlı ya da tırnaklı kodu komut satırında verme: kabuk tırnakları bozar, araç zaman aşımına kadar bekler → kodu geçici bir dosyaya yaz, yolunu ver. (Fotosop 2026-11-12)
