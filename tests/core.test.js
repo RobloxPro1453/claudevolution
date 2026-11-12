@@ -269,6 +269,17 @@ test("çevrim: begin → iş → end; sayaçlar, günlük, kilit", () => {
     const e2 = end(cfg, { id: "s3", did: "araştırma", five: "60", week: "33" }, now);
     ok(e2.some((l) => /UYARI: bu çevrim pencerenin %17/.test(l)), "pahalı çevrim uyarısı: " + e2.join(" / "));
     eq([loadState(cfg).idleCycles, loadState(cfg).wasted], [1, 1]);
+
+    // Work committed on another branch (e.g. a separate worktree) counts; the idle streak resets.
+    begin(cfg, { five: "60", week: "33", session: "s4" }, now);
+    git(["branch", "yan"], cfg.root);
+    const wt = path.join(tmpDir("cyc-wt"), "wt");
+    ok(git(["worktree", "add", "-q", wt, "yan"], cfg.root).ok, "worktree");
+    writeText(path.join(wt, "src/b.js"), "export const b = 1;\n");
+    git(["add", "-A"], wt); git(["commit", "-qm", "yan iş"], wt);
+    const e3 = end(cfg, { id: "s4", did: "yan dalda iş", five: "61", week: "33" }, now);
+    ok(e3[0].includes("1 commit"), "başka daldaki commit sayılmalı: " + e3[0]);
+    eq(loadState(cfg).idleCycles, 0);
 });
 
 test("çevrim: kapı kapalıyken kilit tutulmaz; DUR her şeyin önünde", () => {
