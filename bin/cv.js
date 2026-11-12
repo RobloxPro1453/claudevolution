@@ -19,7 +19,8 @@ const COMMANDS = {
     delegate: "ucuz model: batch | status | stop | run | fix | ask | scout | auto",
     round: "tur ölçümü: start | end | show | table",
     probe: "çalışan uygulamayı yokla: --preset AD | --script JS | --list",
-    ref: "referans karşılaştırma: name | index | compare"
+    ref: "referans karşılaştırma: name | index | compare",
+    bench: "paket ölçümü: A testler + B kaos (bedava); --live ile C (ücretli, tavanlı); --baseline"
 };
 
 const [name, ...rest] = process.argv.slice(2);

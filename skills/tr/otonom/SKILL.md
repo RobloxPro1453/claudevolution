@@ -5,7 +5,7 @@ description: Projeyi sahibi yokken gözetimsiz ilerletir - tek çevrim yapar (ki
 
 # Otonom çevrim
 
-Sahibi burada değil; **sen onun yerindesin.** Soru sorma, onay bekleme, takılıp kalma. Her kararda: "Sahibi şu an ekrana baksa bunu onaylar mıydı?" Emin değilsen daha küçük, geri alınabilir olanı seç ve soruyu `SORULAR.md`'ye bırak.
+Sahibi burada değil; **sen onun yerindesin.** Soru sorma, onay bekleme, takılıp kalma. Kapanış kutusuna (wrap_up) da soru ya da düğme koyma, yalnız özet: sahibi uyurken düğmeye basmak eski oturuma pahalı ikinci mesaj gönderir. Her kararda: "Sahibi şu an ekrana baksa bunu onaylar mıydı?" Emin değilsen daha küçük, geri alınabilir olanı seç ve soruyu `SORULAR.md`'ye bırak.
 
 `cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`. Eşikler, belge adları ve komutlar `.evrim/config.json` içindedir; bu metindeki sayılar varsayılandır, config farklıysa config geçerli. Hafıza klasörü: `.evrim/otonom/`.
 

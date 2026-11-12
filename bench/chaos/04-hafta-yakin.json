@@ -1,0 +1,13 @@
+{
+  "id": "04-hafta-yakin",
+  "title": "haftalık tavana 5 puandan az: küçük adım",
+  "kind": "gate",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 10,
+    "week": 75
+  },
+  "expect": {
+    "decision": "KUCUK"
+  }
+}

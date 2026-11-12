@@ -1,0 +1,15 @@
+{
+  "id": "08-ayni-hata",
+  "title": "aynı hata 3 kez: geri al, atla",
+  "kind": "skill",
+  "files": [
+    "skills/tr/otonom/SKILL.md",
+    "skills/en/otonom/SKILL.md"
+  ],
+  "expect": {
+    "contains": [
+      "(aynı hata 3|same error survives 3)",
+      "(geri al|revert)"
+    ]
+  }
+}

@@ -5,7 +5,7 @@ description: Advances the project unattended while the owner is away - runs one 
 
 # Autonomous cycle
 
-The owner is not here; **you stand in for them.** Do not ask questions, do not wait for approval, do not get stuck. For every decision: "Would the owner approve this if they looked at the screen right now?" If unsure, pick the smaller, reversible option and leave the question in `SORULAR.md`.
+The owner is not here; **you stand in for them.** Do not ask questions, do not wait for approval, do not get stuck. Put no question or button in the closing box (wrap_up) either, only a recap: a button pressed while the owner sleeps sends an expensive second message to an old session. For every decision: "Would the owner approve this if they looked at the screen right now?" If unsure, pick the smaller, reversible option and leave the question in `SORULAR.md`.
 
 `cv` = `.evrim\cv.cmd` (Windows) or `.evrim/cv`. Thresholds, document names and commands live in `.evrim/config.json`; numbers in this text are defaults, config wins. Memory folder: `.evrim/otonom/`. `cv` prints in Turkish; the `KARAR` (decision) codes below are stable.
 

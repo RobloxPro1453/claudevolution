@@ -1,0 +1,22 @@
+{
+  "id": "09-iki-bos-cevrim",
+  "title": "iki çevrim ilerlemesiz: yaklaşım değiştir",
+  "kind": "cycle",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 20,
+    "week": 30
+  },
+  "setup": {
+    "state": {
+      "idleCycles": 2,
+      "total": 5
+    }
+  },
+  "expect": {
+    "decision": "GO",
+    "contains": [
+      "yaklaşımı değiştir"
+    ]
+  }
+}

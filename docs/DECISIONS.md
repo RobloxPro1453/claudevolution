@@ -110,3 +110,7 @@ Kaynakta yoklama bir PowerShell betiği (uygulamayı test profiliyle açıp beti
 ## K25. Anahtar yoksa iş durmaz: deepseek → claude-subagent → self
 
 Sahibinin DeepSeek anahtarı her zaman tanımlı değil. Paket subagent'ı kendisi çalıştıramaz (Agent aracı yalnız Claude oturumunun içinde var), bu yüzden `cv` yalnız **kimin** yapacağını söyler (`cv delegate which`) ve yedeğe verilecek metni üretir (`cv delegate brief`); beceri Agent aracını çağırır. Brief, API ajanının aldığı kuralların, yasak yolların ve test şartının aynısını taşır: yedek daha gevşek bir yol olmasın. Varsayılan model `haiku` (en ucuz); config'te `sonnet` yapılabilir.
+
+## K26. Kaos senaryoları gerçek karar kodunu sürer; beceri kuralları metin bekçisiyle korunur
+
+Kat B için ayrı bir "sahte otonomi" yazılmadı: senaryolar `gate`, `cycle.begin/end`, kilit ve kurtarma kodunu atılabilir bir git projesinde, sahte saat ve sahte kota ile çalıştırır. Böylece ölçülen şey gerçekten çalışan koddur. Yalnız beceri metninde yaşayan kurallar (aynı hata 3 kez, ucuz model 15 dk, kapanışta soru yok, anahtar yoksa yedek) `skill` türü senaryoyla korunur: evrim bu cümleleri sessizce silemez. Her senaryonun yanlış beklentiyle kırıldığı testle denetlenir (boş senaryo olmasın); senaryo sayısının azalması sert kapıdır. 20 senaryo, 0 model tokeni, ~20 sn.

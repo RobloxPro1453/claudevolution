@@ -1,0 +1,27 @@
+{
+  "id": "15-cokme",
+  "title": "çevrim ortasında çöküş: sonraki çevrim devralır",
+  "kind": "cycle",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 20,
+    "week": 30
+  },
+  "setup": {
+    "lockAgeMin": 120,
+    "lockSession": "olen",
+    "state": {
+      "total": 3,
+      "open": {
+        "id": "olen",
+        "startedAt": "2026-11-11T10:00:00Z"
+      }
+    }
+  },
+  "expect": {
+    "decision": "GO",
+    "contains": [
+      "KURTARMA: önceki çevrim \\(olen\\)"
+    ]
+  }
+}

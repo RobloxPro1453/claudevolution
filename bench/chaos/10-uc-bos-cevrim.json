@@ -1,0 +1,21 @@
+{
+  "id": "10-uc-bos-cevrim",
+  "title": "üç çevrim ilerlemesiz: takıldın, uyu",
+  "kind": "cycle",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 20,
+    "week": 30
+  },
+  "setup": {
+    "state": {
+      "idleCycles": 3,
+      "total": 6
+    }
+  },
+  "expect": {
+    "contains": [
+      "takıldın"
+    ]
+  }
+}

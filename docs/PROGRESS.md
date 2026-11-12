@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 · v1.0 iş 2: kaos senaryoları + cv bench (Opus 5.5)
+20 senaryo `bench/chaos/` (0 token), `cv bench` (A+B, sonuç dosyası, temel çizgi, karşılaştırma), ilk baseline; otonom becerisine "kapanışta soru/düğme yok" kuralı. 52/52. K26.
+
 ## 2026-11-12 · v1.0 iş 1: yedek iş dağıtımı (Opus 5.5)
 `cv delegate which|brief`, `delegate.fallback` + `subagentModel`, doctor raporu, calis/otonom (tr+en) yedek yolu, 3 test (49/49). K25.
 

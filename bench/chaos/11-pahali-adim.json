@@ -1,0 +1,19 @@
+{
+  "id": "11-pahali-adim",
+  "title": "bir çevrim pencerenin %15'inden fazlasını yedi",
+  "kind": "cycleEnd",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 20,
+    "week": 30
+  },
+  "endUsage": {
+    "five": 40,
+    "week": 31
+  },
+  "expect": {
+    "contains": [
+      "UYARI: .*alarm"
+    ]
+  }
+}
