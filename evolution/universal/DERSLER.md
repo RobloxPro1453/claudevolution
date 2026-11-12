@@ -24,3 +24,4 @@ Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca 
 - Test takımı arka planda koşarken aynı uygulamayı derleme: çıktı dosyası kilitli kalır, derleme derleyici başarısız diye düşer → önce testin bitmesini bekle, sonra derle. (Fotosop 2026-11-12)
 - Yardımcı betiğe (yoklama, test aracı) çok satırlı ya da tırnaklı kodu komut satırında verme: kabuk tırnakları bozar, araç zaman aşımına kadar bekler → kodu geçici bir dosyaya yaz, yolunu ver. (Fotosop 2026-11-12)
 - Arayüz işinde her adımda gerçek uygulamadan ekran görüntüsü al ve referans görselle yan yana koy, gerekirse piksel ölç; görüntüsüz yapılan arayüz işi körlemesine kalır ve farkları kaçırır. (Fotosop 2026-11-12)
+- Ara sıra düşen bir test ilk kez görülünce yeniden koşmadan önce hata yakalayıcısına dosya:satır ve çağrı zinciri ekle; yoksa düşüş tekrar ettiğinde de kaynağı bilinmez. (Fotosop 2026-11-12)
