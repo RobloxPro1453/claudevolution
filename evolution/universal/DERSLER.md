@@ -18,3 +18,4 @@ Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca 
 - Raporlanan her sayı komutla doğrulanır; yanlış sayı güveni kırar (fotosop).
 - "His" sorunları ölçülebilir parçalara indirgenir (piksel ölçümü yanlış tema sütununu buldu) (fotosop AURA).
 - Gözetimsiz istemde "bitince soru sorma, kapanış kutusunda düğme koyma" açıkça yazılır; uygulama kutusu sahibi uyurken soru gösterir, düğmeye basmak eski oturuma pahalı ikinci mesaj gönderir (claudevolution).
+- Otomatik izin kipi geri alınamaz git işlerini (birleşmemiş dalı silme, reset --hard) reddeder; tekrar denemek çevrimi yakar → bu tür işi denemeden SORULAR'a yaz, komutu sahibine bırak (fotosop 2026-11-12).
