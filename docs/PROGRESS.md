@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 08:43 · 3. OWNER_GUIDE (Opus)
+`docs/OWNER_GUIDE.md`: kurulum, bilgisayar ayarları, başlatma, "ne yaptın", döngü öldü mü, durdurma; komutsuz sade Türkçe. Sayıları config'e bağlayan test, 39/39. K19.
+
 ## 2026-11-12 08:41 · 2. cv adopt (Opus)
 `cv adopt [--dry-run|--apply] [--out]` + `docs/examples/fotosop-adopt-plan.md` (70 satır; Fotosop'a yalnız --dry-run, git temiz kaldı). 3 yeni test, 38/38. Karar K18.
 
