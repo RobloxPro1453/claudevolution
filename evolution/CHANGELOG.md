@@ -16,3 +16,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-12 · ders-ara-sira-dusen-bir-test-205631 (v1.0.11) · evrensel ders: Ara sıra düşen bir test ilk kez görülünce yeniden koşmadan önce hata yakalayıcıs · ölçüler eşit · kabul
 - 2026-11-12 · sifir-baslangic (v1.0.12) · soğuk başlayan model sistemi tek giriş noktasından anlasın: README + şablon AGENTS claudevolution bölümü + CLAUDE.md; ölçü: sahip-itirazi, COLD_START testi; K=10 · test 66 → 68 · kabul
 - 2026-11-12 · is-dagitimi-ayari (v1.0.13) · sahibi kodu kimin yazacağını seçer (delegate.policy); Haiku yalnız açıkça · test 68 → 69 · kabul
+- 2026-11-12 · claudevrim (v1.0.14) · sahibi exe'yi indirip claudevrim init + merhaba ile projeye başlar; evrensel dersler iki katmanla her projeye gider; ölçü: sahip-itirazi, COLD_START · test 69 → 74; kötü: codeLines %9 arttı (3168 → 3454); kötü: skillLines %5 arttı (529 → 557) · kabul
