@@ -1,11 +1,11 @@
 {
-  "version": "1.0.14",
+  "version": "1.0.15",
   "date": "2026-11-12",
   "A": {
     "passed": 74,
     "total": 74,
     "ok": true,
-    "seconds": 73.5
+    "seconds": 73.6
   },
   "B": {
     "passed": 20,
@@ -13,7 +13,7 @@
     "failed": []
   },
   "sizes": {
-    "codeLines": 3454,
+    "codeLines": 3466,
     "skillLines": 557,
     "templateLines": 688
   }
