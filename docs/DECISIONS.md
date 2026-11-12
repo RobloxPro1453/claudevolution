@@ -86,3 +86,7 @@ Seçenekler: (a) projeyi baştan sona tarayıp her dosyayı sınıflamak, (b) bi
 ## K19. OWNER_GUIDE komut değil cümle öğretir
 
 Sahibi teknik bilmiyor; rehber her işi "Claude'a şunu yaz" ya da "şu dosyaya şunu yaz" diye anlatır, terminal komutu içermez. Kapı yüzdeleri, kilit süresi ve gösterilen dosyalar `tests/docs.test.js` ile config ve şablonlara bağlı: biri değişirse test kırılır, rehber yalan söylemez (ders 15: her sayıyı doğrula).
+
+## K20. INVENTORY §4 tabloya döndü; her hücre testle doğrulanır
+
+16 ders numaralı listeden "# · Ders · Nereye gitti" tablosuna çevrildi. 15'i koda, config'e, beceriye ya da şablona dönüştü; 16. ("his sorununu ölçülebilir parçaya indir") yalnız DERSLER'de: koda dönüşecek genel bir araç yok. Hepsi ayrıca `evolution/universal/DERSLER.md`'de. `tests/docs.test.js` 16 satırın varlığını ve hücrelerin gösterdiği dosyaların depoda olduğunu denetler: bir dosya taşınırsa tablo yalan kalmaz.

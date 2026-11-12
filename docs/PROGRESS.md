@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 08:44 · 4. ders sütunu (Opus)
+INVENTORY §4 tablo oldu: 16 dersin her biri için "nereye gitti" (15 kod/beceri/şablon, 1 yalnız DERSLER). Hücrelerdeki yolları denetleyen test, 40/40. K20.
+
 ## 2026-11-12 08:43 · 3. OWNER_GUIDE (Opus)
 `docs/OWNER_GUIDE.md`: kurulum, bilgisayar ayarları, başlatma, "ne yaptın", döngü öldü mü, durdurma; komutsuz sade Türkçe. Sayıları config'e bağlayan test, 39/39. K19.
 
