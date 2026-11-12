@@ -1,6 +1,6 @@
 # Envanter: Fotosop'taki dağınık hazine
 
-Kaynak proje: `C:\Users\yasink\Desktop\fotosop` (dal `develop`). Çıkarım: Opus 5.5, 2026-11-12. Her parça: ne işe yarıyor, **E** = evrensel (her projede işe yarar), **Y** = yerel (Fotosop'a özgü), **K** = karışık (iskeleti evrensel, içeriği yerel; ayrılması gerek).
+Kaynak proje: `%USERPROFILE%\Desktop\fotosop` (dal `develop`). Çıkarım: Opus 5.5, 2026-11-12. Her parça: ne işe yarıyor, **E** = evrensel (her projede işe yarar), **Y** = yerel (Fotosop'a özgü), **K** = karışık (iskeleti evrensel, içeriği yerel; ayrılması gerek).
 
 Fotosop'un kendi önceki ayırma notu `docs/workflow/ENGINE_IDEA.md` (bu deponun tohumu; okunmalı).
 
@@ -45,7 +45,7 @@ Fotosop'un kendi önceki ayırma notu `docs/workflow/ENGINE_IDEA.md` (bu deponun
 | `.claude/skills/fullotonom/SKILL.md` (~150) | **Gözetimsiz döngü**: limit kapıları (5s %85/%90, haftalık 60+30·f), sigorta uyanışı, zarar bekçisi, zaman kutuları, takılma noktaları, hafıza sistemi (DERSLER/GUNLUK/HATALAR/OZET) | E (Faz A/B içeriği yerel) |
 | `.claude/loop.md` | Eski döngü istemi | E |
 | `docs/tasks/AURA.md`, `AURA-RUN.md`, `FABLE-001.md` (fable worktree: `%USERPROFILE%\fotosop-calisma\fable\docs\tasks\`) | Büyük model briefleri: gözetimsiz çalışma, sık commit, limit bekçisi, rapor dosyasından devam | E (brief kalıbı) |
-| Claude hafızası `%USERPROFILE%\.claude\projects\C--Users-yasink-Desktop-fotosop\memory\` (`MEMORY.md` + 6 not) | Oturumlar arası kalıcı geri bildirim | K |
+| Claude hafızası `%USERPROFILE%\.claude\projects\C--Users-<ad>-Desktop-fotosop\memory\` (`MEMORY.md` + 6 not) | Oturumlar arası kalıcı geri bildirim | K |
 | `build\otonom\` (fotosop) | Döngünün canlı hafızası (ilk gerçek koşu 2026-11-11 gecesi) | Y (veri) |
 
 ## 4. Bu hafta pahalıya öğrenilmiş dersler (evrensel; `evolution/universal/DERSLER.md` tohumu)

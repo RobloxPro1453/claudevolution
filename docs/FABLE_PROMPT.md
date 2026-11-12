@@ -1,7 +1,7 @@
 # FABLE_PROMPT: claudevolution'ı tek seferde kur
 
 > Sahibinin yeni (temiz) Fable 5.2 oturumuna yapıştıracağı tek satır:
-> **`C:\Users\yasink\claudevolution\docs\FABLE_PROMPT.md` dosyasını baştan sona oku ve uygula. Gözetimsiz çalışıyorsun; soru sorma, kararı gerekçesiyle DECISIONS.md'ye yaz.**
+> **`%USERPROFILE%\claudevolution\docs\FABLE_PROMPT.md` dosyasını baştan sona oku ve uygula. Gözetimsiz çalışıyorsun; soru sorma, kararı gerekçesiyle DECISIONS.md'ye yaz.**
 
 ---
 
@@ -14,10 +14,10 @@ Sen Fable 5.2'sin. Bu, projenin en önemli işi: bir haftalık dağınık biriki
 ## 2. Önce oku (bu sırayla; büyük dosyaları baştan sona değil, gerektiği kadar)
 
 1. Bu depo: `README.md`, `ARCHITECTURE.md` (Opus'un v0 taslağı; değiştirebilirsin), `docs/INVENTORY.md` (**hazine haritası: hangi dosya nerede, evrensel mi yerel mi; §4 pahalıya öğrenilmiş 16 ders; §5 eksikler**), `evolution/universal/DERSLER.md`.
-2. Fotosop (salt okunur, `C:\Users\yasink\Desktop\fotosop`): `docs/workflow/ENGINE_IDEA.md` (önceki ayırma tasarımı), `docs/workflow/README.md` (paket düzeni), `docs/workflow/OPTIMIZATION.md`, `docs/workflow/config.json`, `docs/tasks/README.md` + `docs/tasks/TEMPLATE.md` + iki örnek tarif/rapor (ör. `DS-047.md`, `DS-047.report.md`), `scripts/ds/agent.js`, `scripts/ds.ps1`, `scripts/round.js`, `.claude/skills/{durum,calis,fullotonom}/SKILL.md`, `AGENTS.md`, `docs/WORKER.md`.
-3. Gerekirse: `%USERPROFILE%\fotosop-calisma\fable\docs\tasks\{AURA,AURA-RUN,FABLE-001}.md` (büyük model brief kalıbı), Claude hafızası `%USERPROFILE%\.claude\projects\C--Users-yasink-Desktop-fotosop\memory\`, Fotosop'un canlı otonom hafızası `C:\Users\yasink\Desktop\fotosop\build\otonom\` (ilk gerçek gece koşusu: ne iyi gitti, ne takıldı).
+2. Fotosop (salt okunur, `%USERPROFILE%\Desktop\fotosop`): `docs/workflow/ENGINE_IDEA.md` (önceki ayırma tasarımı), `docs/workflow/README.md` (paket düzeni), `docs/workflow/OPTIMIZATION.md`, `docs/workflow/config.json`, `docs/tasks/README.md` + `docs/tasks/TEMPLATE.md` + iki örnek tarif/rapor (ör. `DS-047.md`, `DS-047.report.md`), `scripts/ds/agent.js`, `scripts/ds.ps1`, `scripts/round.js`, `.claude/skills/{durum,calis,fullotonom}/SKILL.md`, `AGENTS.md`, `docs/WORKER.md`.
+3. Gerekirse: `%USERPROFILE%\fotosop-calisma\fable\docs\tasks\{AURA,AURA-RUN,FABLE-001}.md` (büyük model brief kalıbı), Claude hafızası `%USERPROFILE%\.claude\projects\C--Users-<ad>-Desktop-fotosop\memory\`, Fotosop'un canlı otonom hafızası `%USERPROFILE%\Desktop\fotosop\build\otonom\` (ilk gerçek gece koşusu: ne iyi gitti, ne takıldı).
 
-**Fotosop'ta hiçbir dosyayı değiştirme.** Yalnız `C:\Users\yasink\claudevolution` içinde yaz.
+**Fotosop'ta hiçbir dosyayı değiştirme.** Yalnız `%USERPROFILE%\claudevolution` içinde yaz.
 
 ## 3. Kapsam: ne teslim edeceksin
 
