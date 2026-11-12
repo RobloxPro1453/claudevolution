@@ -10,3 +10,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-12 · izin-red-dal (v1.0.5) · reddedilen geri alınamaz git işini tekrar denemekle yanan çevrim azalır; ölçü bosa-cevrim şimdi 0.46, K=5 · ölçüler eşit · kabul
 - 2026-11-12 · ders-aninda (v1.0.6) · evrensel ders aninda pakete (cv lesson --evrensel); olcu: bosa-cevrim 0.46, K=5; gunluk bozulmasi (cv.cmd call) duzeldi · test 61 → 66 · kabul
 - 2026-11-12 · temizlik-yuzde39 (v1.0.7) · yanlislikla eklenen %39 dosyasi silindi · ölçüler eşit · kabul
+- 2026-11-12 · ders-test-takimi-arka-planda-kosarken-926289 (v1.0.8) · evrensel ders: Test takımı arka planda koşarken aynı uygulamayı derleme: çıktı dosyası kilitli  · ölçüler eşit · kabul
