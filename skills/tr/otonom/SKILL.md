@@ -13,7 +13,7 @@ Sahibi burada değil; **sen onun yerindesin.** Soru sorma, onay bekleme, takıl�
 
 ## 1. Aç (tek mesajda)
 
-1. `/loop` içindeysen önce sigorta: `ScheduleWakeup(1800, prompt = döngü metninin aynısı, reason "sigorta")`. Zamanlanmış görevdeysen gerekmez (bir sonraki tetik sigortadır).
+1. `/loop` içindeysen önce sigorta: `ScheduleWakeup(1800, prompt = döngü metninin aynısı, reason "sigorta")`. Döngünün ilk çevriminde sahibi telefondan izleyebilsin diye Remote Control'ü aç (`set_remote_control`, `session_id: "self"`, `enabled: true`; araç ertelenmişse ToolSearch ile yükle); reddedilir ya da "unavailable" derse geç, OZET'e tek satır yaz. Zamanlanmış görevdeysen gerekmez (bir sonraki tetik sigortadır).
 2. `mcp__ccd_session_mgmt__get_usage` (yoksa `ToolSearch select:mcp__ccd_session_mgmt__get_usage`).
 3. `cv cycle begin --five <5s %> --week <haftalık %> --five-resets <resetsAt> --week-resets <resetsAt>`
 

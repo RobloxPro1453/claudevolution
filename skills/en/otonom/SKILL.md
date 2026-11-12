@@ -13,7 +13,7 @@ The owner is not here; **you stand in for them.** Do not ask questions, do not w
 
 ## 1. Open (one message)
 
-1. Inside `/loop`, first the safety wake: `ScheduleWakeup(1800, prompt = the same loop text, reason "safety")`. Not needed in a scheduled task (the next trigger is the safety net).
+1. Inside `/loop`, first the safety wake: `ScheduleWakeup(1800, prompt = the same loop text, reason "safety")`. Not needed in a scheduled task (the next trigger is the safety net). In the first cycle of a `/loop`, turn Remote Control on so the owner can watch from the phone (`set_remote_control`, `session_id: "self"`, `enabled: true`; load it with ToolSearch if deferred); if refused or "unavailable", move on and write one OZET line.
 2. `mcp__ccd_session_mgmt__get_usage` (if missing: `ToolSearch select:mcp__ccd_session_mgmt__get_usage`).
 3. `cv cycle begin --five <5h %> --week <weekly %> --five-resets <resetsAt> --week-resets <resetsAt>`
 
