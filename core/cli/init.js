@@ -62,20 +62,36 @@ export function buildConfig(root, name, lang) {
 // % in the arguments a second time, so "--did %34" reached the CLI as argument 3 + "4" (journal lines broke).
 export function cvCmd(pkgRoot) {
     return ["@echo off", "setlocal", `set "CV_PKG=${pkgRoot}"`, 'if defined CV_HOME set "CV_PKG=%CV_HOME%"',
-        "where node >nul 2>nul", "if errorlevel 1 goto :deno", 'node "%CV_PKG%\\bin\\cv.js" %*', "exit /b %errorlevel%",
-        ":deno", "where deno >nul 2>nul", "if errorlevel 1 goto :claudevrim", 'deno run -A --quiet "%CV_PKG%\\bin\\cv.js" %*', "exit /b %errorlevel%",
+        // "& exit /b" on the same line: cv update rewrites this very file while it runs, and cmd reads a batch
+        // file line by line from a byte offset; once the command line is parsed nothing after it is read.
+        "where node >nul 2>nul", "if errorlevel 1 goto :deno", 'node "%CV_PKG%\\bin\\cv.js" %* & exit /b',
+        ":deno", "where deno >nul 2>nul", "if errorlevel 1 goto :claudevrim", 'deno run -A --quiet "%CV_PKG%\\bin\\cv.js" %* & exit /b',
         // An owner with neither: the claudevrim launcher carries its own runtime.
-        ":claudevrim", "claudevrim %*", "exit /b %errorlevel%", ""].join("\r\n");
+        ":claudevrim", "claudevrim %* & exit /b", ""].join("\r\n");
 }
 
 // Machine-specific launchers (git-ignored): they know where this package lives on this machine.
 export function writeShims(root) {
     const evrim = path.join(root, ".evrim");
     writeJson(path.join(evrim, "local.json"), { packageHome: PKG_ROOT, writtenBy: "cv init", note: "Makineye özgü; git'e girmez. cv init yeniden üretir." });
-    writeText(path.join(evrim, "cv.cmd"), cvCmd(PKG_ROOT));
+    const cmd = path.join(evrim, "cv.cmd");
+    if (readText(cmd, "") !== cvCmd(PKG_ROOT)) writeText(cmd, cvCmd(PKG_ROOT));
     const sh = path.join(evrim, "cv");
     writeText(sh, `#!/bin/sh\nif command -v node >/dev/null 2>&1 || command -v deno >/dev/null 2>&1; then exec "\${CV_HOME:-${slash(PKG_ROOT)}}/bin/cv" "$@"; fi\nexec claudevrim "$@"\n`);
     if (!isWindows) { try { fs.chmodSync(sh, 0o755); } catch (_) { /* best effort */ } }
+}
+
+// Adds the package's .gitignore lines the project lacks (init, and cv update for lines added later).
+// The package itself may sit inside the project (cloned or dropped in): it is its own repository, keep it out.
+export function ignoreLines(root) {
+    const ignoreFile = path.join(root, ".gitignore");
+    const have = readText(ignoreFile, "");
+    const inner = path.relative(root, PKG_ROOT);
+    const nested = inner && !inner.startsWith("..") && !path.isAbsolute(inner) ? [`/${slash(inner)}/`] : [];
+    const want = [...readText(path.join(TEMPLATE_DIR, "gitignore.add")).split(/\r?\n/), ...nested].filter((l) => l && !have.split(/\r?\n/).includes(l) && (!l.startsWith("#") || !have.includes(l)));
+    if (!want.some((l) => !l.startsWith("#"))) return [];
+    writeText(ignoreFile, have + (have && !have.endsWith("\n") ? "\n" : "") + want.join("\n") + "\n");
+    return want.filter((l) => !l.startsWith("#"));
 }
 
 export function init(root, { name, lang = "tr" } = {}) {
@@ -112,14 +128,8 @@ export function init(root, { name, lang = "tr" } = {}) {
     const versionFile = path.join(root, ".evrim", "version");
     if (!exists(versionFile)) { writeText(versionFile, VERSION + "\n"); report.created.push(".evrim/version"); }
     writeShims(root);
-    const ignoreFile = path.join(root, ".gitignore");
-    const have = readText(ignoreFile, "");
-    // The package itself may sit inside the project (cloned or dropped in): it is its own repository, keep it out.
-    const inner = path.relative(root, PKG_ROOT);
-    const nested = inner && !inner.startsWith("..") && !path.isAbsolute(inner) ? [`/${slash(inner)}/`] : [];
-    if (nested.length) report.notes.push(`paket proje içinde (${slash(inner)}/): .gitignore'a eklendi`);
-    const want = [...readText(path.join(TEMPLATE_DIR, "gitignore.add")).split(/\r?\n/), ...nested].filter((l) => l && !have.split(/\r?\n/).includes(l) && (!l.startsWith("#") || !have.includes(l)));
-    if (want.some((l) => !l.startsWith("#"))) { writeText(ignoreFile, have + (have && !have.endsWith("\n") ? "\n" : "") + want.join("\n") + "\n"); report.notes.push(".gitignore'a makineye özgü dosyalar eklendi"); }
+    const added = ignoreLines(root);
+    if (added.length) report.notes.push(".gitignore'a eklendi: " + added.join(", "));
     if (!git(["rev-parse", "--git-dir"], root).ok) report.notes.push("burası henüz git deposu değil: `git init` çalıştırın (otonomi ve şeritler git ister)");
     // 5. Universal lessons of both layers (package + this machine), merged for this project.
     const u = writeProject(root);
