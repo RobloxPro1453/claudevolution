@@ -19,6 +19,19 @@ Projedeki `.evrim/cv.cmd` (Windows) ya da `.evrim/cv` paketi bulan kısayoldur; 
 
 ## 2. Bir projeye kurmak
 
+**Sahibinin yolu (hiçbir şey indirmeden, derlemeden):**
+
+1. **Bilgisayara bir kez:** GitHub'da bu deponun **Releases** sayfasından en son `claudevrim.exe`'yi indir (macOS/Linux: `claudevrim-macos` / `claudevrim-linux`) ve çift tıkla. Kendini `%USERPROFILE%.claudevrimin`'e kopyalar, orayı kullanıcının PATH'ine ekler, paketi GitHub'dan `~/.claudevrim/paket`'e indirir, bu makinenin evrensel ders klasörünü (`~/.claudevrim/evrensel/`) açar ve makine becerisini yazar (`cv setup`). Node, Deno, npm gerekmez; exe kendi çalışma ortamını taşır. Git gerekir (Claude Code zaten ister).
+2. **Her yeni proje:** proje klasöründe terminal aç, `claudevrim init` yaz, terminali kapat. Komut önce paketi GitHub'dan günceller, sonra klasörü kurar (git deposu değilse açar, kurduğu dosyaları ilk commit'e koyar; projenin kendi dosyalarına dokunmaz).
+3. **Claude uygulamasında** o klasörü aç, **"merhaba"** yaz. Config'te `"kurulum": "bekliyor"` olduğu için oturum ilk mesaj ne olursa olsun `cv-init` keşif görüşmesini başlatır: projeyi sade sorularla öğrenir (ne, kim için, "bitti" ne demek, kodu kim yazsın), anlamadığını yeniden sorar, başmimar olarak tartıp planı belgelere yazar ve sonunda "yeni oturum aç, merhaba yaz, `/loop başla` yaz" der.
+4. Yeni oturumda **`/loop başla`**: `otonom` becerisi çevrim çevrim çalışır. Paket güncellemesi: `claudevrim guncelle` (projede ayrıca `cv update --apply` yapar).
+
+Paket klasörü bir projenin içine kopyalanmışsa da (`<proje>/claudevolution/`) makine becerisi onu tanır ve kurulumu oturum kendisi yapar; paket klasörü `.gitignore`'a girer.
+
+**Geliştirici (paketin bakımcısı):** paketi git ile klonla, `claudevrim gelistirici <klon>` (ya da exe olmadan doğrudan klondaki `bin/cv`). Evrensel dersler o zaman pakete gider (ölçülür, push edilir). Release'i `.github/workflows/release.yml` her kabul edilen sürümde kendisi derler ve yayınlar.
+
+Elle (exe olmadan):
+
 1. Paketi bir kez klonla (yer serbest; ör. kullanıcı klasörü). **Node ≥ 18 ya da Deno 2** yeter, `npm install` yok.
 2. Projenin klasöründe: `<paket>/bin/cv.cmd init --name <ad>` (Windows; macOS/Linux `<paket>/bin/cv init`). Var olan dosyayı ezmez, farklıysa yanına `.new` bırakır; ikinci kez çalıştırmak bir şey değiştirmez. Kurar: `AGENTS.md` + `CLAUDE.md`, `docs/` (VISION, ROADMAP, PROGRESS…), `.evrim/` (config, hafıza, kısayollar), `.claude/skills/` (durum, calis, otonom, damit, cv-init). Git deposu olmalı.
 3. Claude oturumunda **`cv-init` becerisi** ("claudevolution kurulumunu tamamlayalım"): config'i doğrular, VISION'ı sahibinin sözleriyle doldurur, ilk yol haritasını yazar, `cv doctor` ile gözetimsiz çalışma önkoşullarını söyler.
@@ -31,7 +44,7 @@ Projedeki `.evrim/cv.cmd` (Windows) ya da `.evrim/cv` paketi bulan kısayoldur; 
 |---|---|
 | "durum", "neredeyiz" | `durum` becerisi: değiştirmeden durum + sıradaki paket önerisi (`cv status`) |
 | "çalış", "devam et" | `calis` becerisi: bir tur = bir paket iş (8-30 tarif). Kodu kim yazar: `.evrim/config.json` > `delegate.policy` (aşağıda); `cv delegate which` söyler |
-| zamanlanmış görev "otonom becerisini yükle ve bir çevrim yap" ya da `/loop otonom becerisini çalıştır` | `otonom` becerisi: **tek çevrim** (aşağıda) |
+| zamanlanmış görev "otonom becerisini yükle ve bir çevrim yap" ya da `/loop başla` (eşdeğeri `/loop otonom becerisini çalıştır`) | `otonom` becerisi: **tek çevrim** (aşağıda) |
 | "damıt" | `damit` becerisi: yerel dersleri sınıfla, genel olanı pakete taşı, eski evrim değişikliklerini ölç |
 | `.evrim/otonom/NOTLAR.md`'ye `DUR` / `ÖNCE: <iş>` | döngü durur / o iş öne geçer |
 
@@ -48,10 +61,12 @@ Tekrar eden ya da pahalıya patlayan bir şey öğrendin mi, **o an** tek satır
 | Ders | Komut | Ne olur |
 |---|---|---|
 | Yalnız bu projede geçerli | `cv lesson "<ders>"` | `.evrim/otonom/DERSLER.md`'ye `[yerel]` satırı. Her otonom çevrim başında okunur. |
-| Proje adı çıkınca da doğru | `cv lesson "<genelleştirilmiş ders>" --evrensel` | Hemen pakete: `evrim/ders-…` dalı → `evolution/universal/DERSLER.md` satırı → ölçüm → kabul → sürüm +1 → GitHub'a push. Yerel satır `[evrensel→taşındı vX]`. Ret ya da hata olursa yerelde `[evrensel]` kalır, damıtma yeniden bakar. |
+| Proje adı çıkınca da doğru | `cv lesson "<genelleştirilmiş ders>" --evrensel` | **Geliştirici makinesinde** hemen pakete: `evrim/ders-…` dalı → `evolution/universal/DERSLER.md` satırı → ölçüm → kabul → sürüm +1 → GitHub'a push. Yerel satır `[evrensel→taşındı vX]`. Ret ya da hata olursa yerelde `[evrensel]` kalır, damıtma yeniden bakar. |
 | Ciddi hata kalıbı | aynı komuta `--hata` | `HATALAR.md` (yerel ya da evrensel) |
 
 Ders genelleştirilmiş olmalı: proje adı, yol, kişisel bilgi, anahtar geçerse paket reddeder.
+
+**İki evrensel katman.** Pakete push yetkisi olmayan bir sahip (claudevrim kurulu, geliştirici değil) için `--evrensel` dersi bu makinenin katmanına yazar: `~/.claudevrim/evrensel/DERSLER.md` (yerel satır `[evrensel→taşındı makine]`). Her projenin gördüğü evrensel dersler iki katmanın birleşimidir: paketin `evolution/universal/` (GitHub'dan, bakımcının) + bu makinenin katmanı; aynı ders bir kez yazılır, hiçbiri silinmez. Birleşik hâl projede `.evrim/evrensel.md` (üretilmiş; `claudevrim init`, `cv update`, `cv lesson` yeniler) ve her otonom çevrimin başında `cv cycle begin` çıktısında. Paketteki yeni evrensel dersler `claudevrim guncelle` ile gelir, makinenin kendi dersleri hiçbir güncellemede kaybolmaz.
 
 **Beceri, şablon ya da kod değişikliği** (ders satırından büyük): paket deposunda `evrim/<ad>` dalında commit → paket klasöründe `cv evolve evrim/<ad> --why "<beklenen etki>"`. Komut ölçer (A: testler, B: 20 kaos senaryosu; ikisi de 0 token; `--live` ile ücretli C katı), `bench/`'e dokunan adayı reddeder (sistem kendi sınavını değiştiremez), gizlilik taraması yapar; geçerse `main`'e `--no-ff` alır, sürümü artırır, `evolution/CHANGELOG.md`'ye yazar ve push eder; geçmezse `evolution/REJECTED.md`. Diğer projeler yeniliği `cv update --apply` ile alır.
 
@@ -60,6 +75,8 @@ Ders genelleştirilmiş olmalı: proje adı, yol, kişisel bilgi, anahtar geçer
 ## 5. Komutlar
 
 ```
+claudevrim [kur] | init | guncelle | gelistirici <klon> | <cv komutu>   indirilen başlatıcı (exe)
+cv setup                      makineye bir kez: her oturumun claudevolution'ı tanıdığı kullanıcı becerisi
 cv init | adopt | update      kurulum, göç, paket sürümünü projeye uygulama
 cv doctor | status            önkoşul denetimi; tur, kota, şerit, hafıza özeti
 cv cycle begin|end|sleep      otonom çevrim;  cv gate  kota kapısı;  cv lock  kilit;  cv recover  takılma

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import process from "node:process";
 import { runAll } from "./harness.js";
 
-for (const file of ["core", "evolution", "delegate", "metrics", "adopt", "ref", "docs", "bench", "live", "evolve", "lesson"]) {
+for (const file of ["core", "evolution", "delegate", "metrics", "adopt", "ref", "docs", "bench", "live", "evolve", "lesson", "claudevrim"]) {
     try { await import(`./${file}.test.js`); }
     catch (e) {
         // Only a missing file is skipped; a broken one fails the run (a syntax error once hid a whole suite).

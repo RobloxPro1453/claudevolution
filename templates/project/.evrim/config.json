@@ -4,6 +4,8 @@
   "project": "proje-adi",
   "lang": "tr",
   "baseBranch": "main",
+  "_comment_kurulum": "bekliyor: proje yeni, sahibinin ilk mesajı (merhaba bile) cv-init keşif görüşmesini başlatır. Görüşme bitince cv-init tamam yapar.",
+  "kurulum": "bekliyor",
 
   "_comment_build": "Komutlar dizi olarak yazılır (kabuk yok): [program, argüman, ...]. Yoksa null. Dakikalar süre sınırıdır; aşan komut öldürülür.",
   "build": null,

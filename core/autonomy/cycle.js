@@ -8,6 +8,7 @@ import { acquire, release } from "./lock.js";
 import * as share from "./share.js";
 import * as memory from "./memory.js";
 import { find } from "./recover.js";
+import { projectLessons } from "../evolve/merge.js";
 
 const cycleState = (cfg) => path.join(stateDir(cfg), "cycle.json");
 const quotaFile = (cfg) => path.join(stateDir(cfg), "quota.json");
@@ -85,6 +86,8 @@ export function begin(cfg, args, now = new Date()) {
     const ls = memory.lessons(cfg);
     out.push("", `DERSLER (${ls.length}/${cfg.evolution.lessonsMax}):`, ...(ls.length ? ls.map((l) => "  " + l) : ["  (henüz yok)"]));
     if (ls.length > cfg.evolution.lessonsMax) out.push("  ! sınır aşıldı: benzerleri birleştir, eskimişi sil");
+    const uni = projectLessons(cfg.root);
+    if (uni.length) out.push("", `EVRENSEL DERSLER (paket + bu makine, .evrim/evrensel.md, ${uni.length}):`, ...uni.map((l) => "  " + l));
     out.push("", "GUNLUK (son satırlar):", ...(memory.journalTail(cfg) || "(boş)").split("\n").map((l) => "  " + l));
     return done(g.decision);
 }

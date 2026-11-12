@@ -1,6 +1,10 @@
 # claudevolution paketinde çalışan ajanlar için
 
-Önce [README.md](README.md) (sistemin tamamı, beş bölüm). Bu dosya yalnız **paketin kendisini** değiştirirken geçerli kurallardır. Bir projede çalışıyorsan o projenin `AGENTS.md`'sine uy.
+Önce [README.md](README.md) (sistemin tamamı, beş bölüm). Bir projede çalışıyorsan o projenin `AGENTS.md`'sine uy.
+
+**Bu klasörde yeni açılmış bir oturumsan ve sahibi bir şey istemediyse:** makine kurulumu yapılmamış olabilir. `bin/cv.cmd setup` (Windows; diğerleri `bin/cv setup`) çalıştır: her yeni oturumun claudevolution'ı tanıyacağı kullanıcı becerisini yazar. Sonra sahibine tek cümle: "Hazır. Paketi bir projenin klasörüne kopyalayıp orada oturum açarsan kurulumu ben yaparım."
+
+Aşağıdakiler yalnız **paketin kendisini** değiştirirken geçerlidir.
 
 ## Kesin kurallar
 
@@ -11,6 +15,10 @@
 5. Elle `git push` ve zorla push yok; push yalnız `cv evolve` / `cv lesson --evrensel` içinden.
 6. Beceri metni iki dilde aynı değişir: `skills/tr/<ad>/SKILL.md` ve `skills/en/<ad>/SKILL.md` (aynı `cv` komutları; test denetler).
 7. Projeye özgü hiçbir ad, yol, komut beceri ve şablona yazılmaz; hepsi `.evrim/config.json`'dan okunur.
+
+## Yayın
+
+`claudevrim` başlatıcısı (`bin/claudevrim.js`) yalnız `node:` yerleşiklerini kullanır; paket kodunu `~/.claudevrim/paket` içinden yükler (`bin/cv.js` > `main`). `cv evolve` sürümü artırıp push edince `.github/workflows/release.yml` exe'leri derler ve GitHub Release olarak yayınlar. Elle derleme: `deno compile -A -o claudevrim.exe bin/claudevrim.js`.
 
 ## Test
 

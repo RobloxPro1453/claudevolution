@@ -2,14 +2,19 @@
 
 {{project}}: <tek cümle: bu proje nedir, kim için>. Başlamadan önce [docs/VISION.md](docs/VISION.md) dosyasını okuyun. Sahibi Türkçe konuşur; teknik bilmeyebilir, sade anlatın.
 
+## Oturumun ilk işi
+
+- `.evrim/config.json` > `kurulum` `"bekliyor"` ise sahibinin ilk mesajı ne olursa olsun ("merhaba" bile) `cv-init` becerisini uygula: keşif görüşmesi, plan, sonunda "yeni oturum aç, merhaba yaz, `/loop başla` yaz".
+- Kurulum tamamsa: selama `durum` becerisiyle kısa durum. `başla` (çoğunlukla `/loop başla` içinden) = `otonom` becerisiyle bir çevrim.
+
 ## claudevolution
 
 Bu proje **claudevolution** düzeniyle çalışır. Sistemin tamamı paketin README'sindedir: paketin yeri `.evrim/local.json` > `packageHome` (`<packageHome>/README.md`). Kısaca:
 
 - `cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`. Ayarlar `.evrim/config.json`, otonom hafıza `.evrim/otonom/`.
 - Beceriler (`.claude/skills/`): `durum` ("neredeyiz"), `calis` ("çalış": bir tur iş), `otonom` (gözetimsiz tek çevrim), `damit` ("damıt"), `cv-init` (kurulum, VISION).
-- **Ders kuralı, her oturumda (döngü dışında da):** tekrar eden ya da pahalıya patlayan bir şey öğrendiğin an tek satır yaz. Yalnız bu projeye özgüyse `cv lesson "<ders>"` (`.evrim/otonom/DERSLER.md`). Proje adı çıkınca da doğruysa `cv lesson "<genelleştirilmiş ders>" --evrensel`: ders hemen pakete girer, ölçülür ve paketin GitHub deposuna gider; damıtmayı bekleme. Ciddi hata kalıbı: `--hata`.
-- **Push:** bu projenin deposunda yok (sahibi istemedikçe). Paketin push'unu yalnız `cv lesson --evrensel` ve `cv evolve` yapar. Paket yeni sürüm aldıysa: `cv update --apply`.
+- **Ders kuralı, her oturumda (döngü dışında da):** tekrar eden ya da pahalıya patlayan bir şey öğrendiğin an tek satır yaz. Yalnız bu projeye özgüyse `cv lesson "<ders>"` (`.evrim/otonom/DERSLER.md`). Proje adı çıkınca da doğruysa `cv lesson "<genelleştirilmiş ders>" --evrensel`: ders hemen bütün projelere gider (geliştirici makinesinde pakete: ölçülür, GitHub'a push edilir; diğer makinelerde bu makinenin evrensel katmanına, `~/.claudevrim/evrensel/`); damıtmayı bekleme. Bu projenin gördüğü evrensel dersler (paket + bu makine, birleşik): `.evrim/evrensel.md`. Ciddi hata kalıbı: `--hata`.
+- **Push:** bu projenin deposunda yok (sahibi istemedikçe). Paketin push'unu yalnız `cv lesson --evrensel` ve `cv evolve` yapar. Paket yeni sürüm aldıysa: `claudevrim guncelle` (ya da `cv update --apply`).
 
 ## Nereye bakmalı
 

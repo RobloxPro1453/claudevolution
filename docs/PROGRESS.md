@@ -2,6 +2,10 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 · claudevrim: indir, init, merhaba (Opus 5.5)
+İndirilen başlatıcı `claudevrim` (Releases'tan exe; kendini kurar, PATH, paketi GitHub'dan çeker, makine becerisi). `claudevrim init`: git init, ilk commit, `kurulum: bekliyor`; ilk mesajda `cv-init` keşif görüşmesi (sorular, yeniden sorma, başmimar planı, nereye yazacağına kendisi karar verir), sonunda "yeni oturum, merhaba, `/loop başla`". İki evrensel katman: paket + `~/.claudevrim/evrensel/`, projede birleşik `.evrim/evrensel.md`, çevrim başında basılır. Uzun oturum hatırlatması. Yayın: `.github/workflows/release.yml`.
+Doğrulama: 74/74 test; derlenmiş exe ile geçici evde gelistirici → init → status uçtan uca.
+
 ## 2026-11-12 · Sıfır açıklamayla başlangıç (Opus 5.5)
 Giriş noktası tek: README beş bölüm (ne, kurulum, günlük kullanım + çevrim + kapılar, evrim kuralı, komutlar); paket ve proje şablonuna `CLAUDE.md` (`@AGENTS.md`), şablon AGENTS.md'ye `## claudevolution` (ders kuralı döngü dışında da, push ayrımı). `cv doctor` bölüm yoksa uyarır. Push yasakları paket istisnasını söylüyor; ARCHITECTURE/OWNER_GUIDE/KULLANIM eskileri düzeltildi, kuruluş belgeleri "Tarihçe" işaretli. `lesson.test.js` cmd'ye tırnaksız `>` verip kökte `%39` dosyası üretiyordu: düzeltildi.
 Doğrulama: bağlamsız ajanlara 7 soru (`tests/docs.test.js` > `COLD_START`). Önce: kurulumun kaynağı yok, döngü dışında `cv lesson` belirsiz, push çelişkisi. Sonra Sonnet ve Haiku 7/7.
