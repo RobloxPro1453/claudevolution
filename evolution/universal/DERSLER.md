@@ -19,3 +19,5 @@ Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca 
 - "His" sorunları ölçülebilir parçalara indirgenir (piksel ölçümü yanlış tema sütununu buldu) (fotosop AURA).
 - Gözetimsiz istemde "bitince soru sorma, kapanış kutusunda düğme koyma" açıkça yazılır; uygulama kutusu sahibi uyurken soru gösterir, düğmeye basmak eski oturuma pahalı ikinci mesaj gönderir (claudevolution).
 - Otomatik izin kipi geri alınamaz git işlerini (birleşmemiş dalı silme, reset --hard) reddeder; tekrar denemek çevrimi yakar → bu tür işi denemeden SORULAR'a yaz, komutu sahibine bırak (fotosop 2026-11-12).
+- Evrensel ders yazıldığı an pakete gider: `cv lesson "<ders>" --evrensel` (dal, ölçüm, commit, GitHub'a push tek komutta). Damıtmayı beklemek dersleri projede [evrensel] etiketiyle unutturuyordu (fotosop 2026-11-12).
+- Windows'ta .cmd sarmalayıcısı başka bir .cmd'yi `call` ile çağırınca argümanlardaki % ikinci kez açılır ("%34" → 3. argüman + "4") → sarmalayıcı node'u doğrudan çağırır. PowerShell'de dolar işaretli metni ("$0.05") tek tırnakla ver (fotosop 2026-11-12).

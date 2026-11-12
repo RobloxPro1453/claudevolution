@@ -56,7 +56,7 @@ Boşa giden parayı ve kotayı sahibi değil **sen** fark edeceksin:
 ## 4. Kapat
 
 1. Çalışma ağacı temiz ya da `WIP:` commit'li; derleme geçiyor (geçmiyorsa son commit'i geri al).
-2. **Ders:** bu çevrimde tekrar eden ya da pahalı bir şey olduysa `DERSLER.md`'ye tek satır (`[evrensel]` ya da `[yerel]` etiketiyle). Ciddi hata olduysa `HATALAR.md`'ye kayıt (önce `grep` ile benzerini ara).
+2. **Ders:** bu çevrimde tekrar eden ya da pahalı bir şey olduysa tek satır: projeye özgüyse `cv lesson "<ders>"`. Başka projede de aynen geçerliyse (proje adı çıkınca hâlâ doğru) **hemen** `cv lesson "<genelleştirilmiş ders>" --evrensel`: ders o an pakete girer, ölçülür, commit edilir ve GitHub'a gider; damıtmayı bekleme. Ciddi hata olduysa aynı komut `--hata` ile (önce `grep` ile `HATALAR.md`'de benzerini ara). Komut "pakete gitmedi" derse ders yerelde `[evrensel]` kalır, damıtma yeniden bakar.
 3. **OZET.md**'yi güncelle: sade Türkçe, teknik terimsiz; "Şu an", "Bitenler" (nereye bakılacağıyla), "Karar verdiklerim", "Takıldıklarım", "Harcama", "Senin bakman gerekenler".
 4. `get_usage`, sonra: `cv cycle end --id <kimlik> --did "<ne yaptım>" --cost "<kota %, $>" --worth evet|hayir --five .. --week .. --next "<sıradaki>"`. Komut GUNLUK'e yazar, sayaçları günceller, kilidi bırakır ve `UYKU` saniyesini söyler. Raporladığın her sayı bir komut çıktısından gelsin.
 5. Hafıza dosyalarını commit et (`otonom: çevrim <tarih>`).

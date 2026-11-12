@@ -45,6 +45,7 @@ A universal change:
 - **May never loosen any project's rules.** `forbiddenWrite`, data-loss rules, quota thresholds and "Never" lists can only be tightened. A loosening proposal goes to the owner in `SORULAR.md`, not applied.
 - May not contain a project name, path, personal information or key. Generalise the lesson before moving it ("the project", the tool by its kind).
 - Must be small: at most 5 moves per distillation; at most one paragraph at a time in a skill text.
+- The short way to move a single lesson (universal lesson or error pattern): `cv lesson "<generalised lesson>" --evrensel` (or `--hata`); branch, commit, measurement and push in one command, and it marks the local line. When a skill or template text changes:
 - Commit the change in the package repository on a branch `evrim/<short-name>` (never straight to main), then in the package folder run `cv evolve evrim/<short-name> --why "<expected effect>"`. It measures (free tiers), and if the gates hold it merges into main, bumps the version, writes CHANGELOG and pushes; otherwise it rejects and writes `evolution/REJECTED.md`. A candidate that touches `bench/` is always rejected. `cv evolve` writes the CHANGELOG line of step 5; put the measure and K into `--why`.
 
 ## 5. Record

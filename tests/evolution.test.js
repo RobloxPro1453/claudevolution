@@ -23,6 +23,7 @@ test("damıtma: ders sınıflama ipuçları", () => {
     eq(classify("- menu_map.json çakışınca iki tarafı tut", cfg), "yerel?");
     eq(classify("- Uzun çıktıyı okumak kotayı yiyor → kes", cfg), "aday?");
     eq(classify("- eski ders [evrensel→taşındı]", cfg), "taşındı");
+    eq(classify("- [evrensel→taşındı v1.0.5] sürümlü etiket de taşındı sayılır", cfg), "taşındı");
 });
 
 test("damıtma: ölçüler tur ve çevrim kayıtlarından", () => {
