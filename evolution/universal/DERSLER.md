@@ -17,3 +17,4 @@ Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca 
 - İş sayısı kaliteyi ölçmez (612 menü, "ucuz kopya") → his/kalite ölçüsünü (kör test) ilk günden tanımla (fotosop).
 - Raporlanan her sayı komutla doğrulanır; yanlış sayı güveni kırar (fotosop).
 - "His" sorunları ölçülebilir parçalara indirgenir (piksel ölçümü yanlış tema sütununu buldu) (fotosop AURA).
+- Gözetimsiz istemde "bitince soru sorma, kapanış kutusunda düğme koyma" açıkça yazılır; uygulama kutusu sahibi uyurken soru gösterir, düğmeye basmak eski oturuma pahalı ikinci mesaj gönderir (claudevolution).
