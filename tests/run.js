@@ -2,7 +2,7 @@
 import process from "node:process";
 import { runAll } from "./harness.js";
 
-for (const file of ["core", "evolution", "delegate", "metrics", "adopt", "ref", "docs", "bench"]) {
+for (const file of ["core", "evolution", "delegate", "metrics", "adopt", "ref", "docs", "bench", "live"]) {
     try { await import(`./${file}.test.js`); }
     catch (e) {
         if (e.code === "ERR_MODULE_NOT_FOUND" && String(e.message).includes(`${file}.test.js`)) continue; // suite not written yet
