@@ -23,3 +23,4 @@ Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca 
 - Windows'ta .cmd sarmalayıcısı başka bir .cmd'yi `call` ile çağırınca argümanlardaki % ikinci kez açılır ("%34" → 3. argüman + "4") → sarmalayıcı node'u doğrudan çağırır. PowerShell'de dolar işaretli metni ("$0.05") tek tırnakla ver (fotosop 2026-11-12).
 - Test takımı arka planda koşarken aynı uygulamayı derleme: çıktı dosyası kilitli kalır, derleme derleyici başarısız diye düşer → önce testin bitmesini bekle, sonra derle. (Fotosop 2026-11-12)
 - Yardımcı betiğe (yoklama, test aracı) çok satırlı ya da tırnaklı kodu komut satırında verme: kabuk tırnakları bozar, araç zaman aşımına kadar bekler → kodu geçici bir dosyaya yaz, yolunu ver. (Fotosop 2026-11-12)
+- Arayüz işinde her adımda gerçek uygulamadan ekran görüntüsü al ve referans görselle yan yana koy, gerekirse piksel ölç; görüntüsüz yapılan arayüz işi körlemesine kalır ve farkları kaçırır. (Fotosop 2026-11-12)
