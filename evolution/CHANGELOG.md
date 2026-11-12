@@ -12,3 +12,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-12 · temizlik-yuzde39 (v1.0.7) · yanlislikla eklenen %39 dosyasi silindi · ölçüler eşit · kabul
 - 2026-11-12 · ders-test-takimi-arka-planda-kosarken-926289 (v1.0.8) · evrensel ders: Test takımı arka planda koşarken aynı uygulamayı derleme: çıktı dosyası kilitli  · ölçüler eşit · kabul
 - 2026-11-12 · ders-yardimci-betige-yoklama-test-araci-024715 (v1.0.9) · evrensel ders: Yardımcı betiğe (yoklama, test aracı) çok satırlı ya da tırnaklı kodu komut satı · ölçüler eşit · kabul
+- 2026-11-12 · ders-arayuz-isinde-her-adimda-gercek-116356 (v1.0.10) · evrensel ders: Arayüz işinde her adımda gerçek uygulamadan ekran görüntüsü al ve referans görse · ölçüler eşit · kabul
