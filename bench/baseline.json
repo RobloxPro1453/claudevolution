@@ -1,11 +1,11 @@
 {
-  "version": "1.0.17",
+  "version": "1.0.18",
   "date": "2026-11-12",
   "A": {
     "passed": 74,
     "total": 74,
     "ok": true,
-    "seconds": 75.6
+    "seconds": 79.6
   },
   "B": {
     "passed": 20,
