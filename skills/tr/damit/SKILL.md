@@ -45,7 +45,7 @@ Evrensel değişiklik:
 - **Hiçbir projenin kuralını gevşetemez.** `forbiddenWrite`, veri kaybı kuralları, kota eşikleri ve "Asla" listeleri yalnız sıkılaştırılabilir. Gevşetme önerisi `SORULAR.md`'ye sahibine yazılır, uygulanmaz.
 - Proje adı, yolu, kişisel bilgi, anahtar içeremez. Taşımadan önce dersi genelleştir (proje adını "proje", aracı türüyle yaz).
 - Küçük olmalı: bir damıtmada en çok 5 taşıma; bir beceri metninde tek seferde en çok bir paragraf.
-- Paket git deposuysa değişikliği orada ayrı commit'le (`evrim: <özet>`); push yok.
+- Değişikliği paket deposunda `evrim/<kısa-ad>` dalında commit'le (main'e doğrudan değil), sonra paket klasöründe `cv evolve evrim/<kısa-ad> --why "<beklenen etki>"`. Komut ölçer (bedava katlar), kapılar geçerse main'e alır, sürümü artırır, CHANGELOG'a yazar ve push eder; geçmezse reddeder ve `evolution/REJECTED.md`'ye yazar. `bench/` klasörüne dokunan aday her zaman reddedilir. Aşağıdaki 5. adımın CHANGELOG satırını `cv evolve` yazar; sen yalnız ölçü ve K'yı `--why` içine koy.
 
 ## 5. Kaydet
 

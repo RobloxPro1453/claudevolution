@@ -1,4 +1,4 @@
-// cv bench [--live] [--baseline] [--no-save]
+// cv bench [--live] [--baseline] [--no-save] [--json]
 // Package benchmark (run inside the claudevolution checkout). Tiers A + B: zero model tokens.
 // --live adds tier C (cheap model on a fake project, hard spending cap). --baseline accepts the result as the new baseline.
 import path from "node:path";
@@ -13,6 +13,7 @@ export async function run(args) {
     }
     const base = bench.loadBaseline();
     const cmp = bench.compare(result, base);
+    if (args.json) { console.log(JSON.stringify(result)); return cmp.ok ? 0 : 1; }
     console.log(`claudevolution ${result.version} · ölçüm ${result.date}`);
     if (result.A) console.log(`  Kat A  testler    ${result.A.passed}/${result.A.total} (${result.A.seconds} sn)`);
     console.log(`  Kat B  kaos       ${result.B.passed}/${result.B.total}`);

@@ -54,6 +54,7 @@ export function compare(result, baseline) {
     const gates = [], worse = [], better = [];
     if (result.A && !result.A.ok) gates.push(`Kat A: ${result.A.passed}/${result.A.total} test`);
     if (result.B.passed !== result.B.total) gates.push(`Kat B: ${result.B.passed}/${result.B.total} senaryo (${result.B.failed.map((f) => f.id).join(", ")})`);
+    if (baseline && result.A && baseline.A && result.A.total < baseline.A.total) gates.push(`Kat A: test sayısı azaldı (${baseline.A.total} → ${result.A.total})`);
     if (baseline && result.B.total < baseline.B.total) gates.push(`Kat B: senaryo sayısı azaldı (${baseline.B.total} → ${result.B.total})`);
     if (result.C) {
         if (result.C.status === "olculemedi") gates.push("Kat C: ölçülemedi (tavan aşıldı ya da model yok)");

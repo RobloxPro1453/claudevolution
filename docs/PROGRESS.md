@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 · v1.0 iş 4: cv evolve + STANDARD (Opus 5.5)
+`cv evolve` (Goodhart kapısı, adayın kendi ölçümü, gizlilik taraması, sürüm, CHANGELOG, push), `damit` becerisi buna bağlandı, `docs/STANDARD.md`. Test koşucusu bozuk dosyayı artık atlamıyor. 60/60. K28.
+
 ## 2026-11-12 · v1.0 iş 3: canlı kat (küçük) (Opus 5.5)
 `bench/fixtures/mini` + 4 iş (1 tuzak) + gizli denetçi `bench/checks/mini.js`, `cv bench --live` (API, tavan $0,10, yoğun saatte koşmaz). Bu oturumda canlı koşulmadı; sahte modelle 3 test. 55/55. K27.
 

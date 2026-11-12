@@ -20,6 +20,7 @@ const COMMANDS = {
     round: "tur ölçümü: start | end | show | table",
     probe: "çalışan uygulamayı yokla: --preset AD | --script JS | --list",
     ref: "referans karşılaştırma: name | index | compare",
+    evolve: "evrensel evrim: evrim/<ad> dalını ölç, geçerse main'e al, sürüm, CHANGELOG, push",
     bench: "paket ölçümü: A testler + B kaos (bedava); --live ile C (ücretli, tavanlı); --baseline"
 };
 
