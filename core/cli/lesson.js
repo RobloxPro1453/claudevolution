@@ -34,7 +34,7 @@ export async function run(args) {
     }
     let r;
     try {
-        r = promote({ root: PKG_ROOT, text, kind, source: cfg ? cfg.project : "", projectWords: cfg ? [cfg.project] : [], push: !args["no-push"] });
+        r = promote({ root: PKG_ROOT, text, kind, source: "", projectWords: cfg ? [cfg.project] : [], push: !args["no-push"] });
     } catch (e) {
         localWrite(cfg, kind, "[evrensel]", text);
         console.log(`pakete gitmedi (yerelde [evrensel] kaldı, damıtma yeniden bakar): ${e.message}`);

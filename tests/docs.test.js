@@ -108,3 +108,17 @@ test("doctor: AGENTS.md'de claudevolution bölümü yoksa söyler", async () => 
     fs.writeFileSync(path.join(p, "AGENTS.md"), "# kurallar\n");
     eq(has(check(p)), true, "bölüm silinince uyarı");
 });
+
+test("cv setup: kullanıcı becerisi paketin yerini söyler, ikinci kez aynı kalır; README anlatır", async () => {
+    const { setup, userSkillText } = await import("../core/cli/setup.js");
+    const { tmpDir } = await import("./harness.js");
+    const file = path.join(tmpDir("setup"), "skills", "claudevolution", "SKILL.md");
+    eq(setup({ file, pkg: "C:\paket" }), "yeni");
+    eq(setup({ file, pkg: "C:\paket" }), "aynı");
+    const t = readText(file);
+    ok(/^name: claudevolution$/m.test(t) && t.includes("C:/paket/README.md") && !t.includes("{{pkg}}"), "beceri metni");
+    ok(userSkillText("x").includes("bin/cv.cmd init"), "kurulum adımı");
+    const readme = doc("README.md");
+    for (const f of ["cv setup", "<proje>/claudevolution/", ".gitignore"]) ok(readme.includes(f), "README: " + f);
+    ok(doc("AGENTS.md").includes("bin/cv.cmd setup"), "paket AGENTS.md makine kurulumunu söyler");
+});

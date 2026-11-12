@@ -19,6 +19,10 @@ Projedeki `.evrim/cv.cmd` (Windows) ya da `.evrim/cv` paketi bulan kısayoldur; 
 
 ## 2. Bir projeye kurmak
 
+**En kısa yol (sahibi hiçbir şey anlatmaz):** paketi projenin klasörüne indir ya da kopyala (`<proje>/claudevolution/`), o klasörde Claude oturumu aç, bir şey yaz ("merhaba" yeter). Makinede `cv setup` bir kez yapılmışsa (ilk `cv init` de yapar) her oturum `claudevolution` kullanıcı becerisini görür, projede paket klasörü olup `.evrim/` olmadığını fark eder ve aşağıdaki 2-3. adımları kendisi yapar (paket klasörü `.gitignore`'a girer). Makinede ilk kez: paket klasöründe bir oturum aç ya da `<paket>/bin/cv.cmd setup` çalıştır; paketin `AGENTS.md`'si oturuma bunu söyler.
+
+Elle:
+
 1. Paketi bir kez klonla (yer serbest; ör. kullanıcı klasörü). **Node ≥ 18 ya da Deno 2** yeter, `npm install` yok.
 2. Projenin klasöründe: `<paket>/bin/cv.cmd init --name <ad>` (Windows; macOS/Linux `<paket>/bin/cv init`). Var olan dosyayı ezmez, farklıysa yanına `.new` bırakır; ikinci kez çalıştırmak bir şey değiştirmez. Kurar: `AGENTS.md` + `CLAUDE.md`, `docs/` (VISION, ROADMAP, PROGRESS…), `.evrim/` (config, hafıza, kısayollar), `.claude/skills/` (durum, calis, otonom, damit, cv-init). Git deposu olmalı.
 3. Claude oturumunda **`cv-init` becerisi** ("claudevolution kurulumunu tamamlayalım"): config'i doğrular, VISION'ı sahibinin sözleriyle doldurur, ilk yol haritasını yazar, `cv doctor` ile gözetimsiz çalışma önkoşullarını söyler.
@@ -60,6 +64,7 @@ Ders genelleştirilmiş olmalı: proje adı, yol, kişisel bilgi, anahtar geçer
 ## 5. Komutlar
 
 ```
+cv setup                      makineye bir kez: her oturumun claudevolution'ı tanıdığı kullanıcı becerisi
 cv init | adopt | update      kurulum, göç, paket sürümünü projeye uygulama
 cv doctor | status            önkoşul denetimi; tur, kota, şerit, hafıza özeti
 cv cycle begin|end|sleep      otonom çevrim;  cv gate  kota kapısı;  cv lock  kilit;  cv recover  takılma

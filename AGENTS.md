@@ -1,6 +1,10 @@
 # claudevolution paketinde çalışan ajanlar için
 
-Önce [README.md](README.md) (sistemin tamamı, beş bölüm). Bu dosya yalnız **paketin kendisini** değiştirirken geçerli kurallardır. Bir projede çalışıyorsan o projenin `AGENTS.md`'sine uy.
+Önce [README.md](README.md) (sistemin tamamı, beş bölüm). Bir projede çalışıyorsan o projenin `AGENTS.md`'sine uy.
+
+**Bu klasörde yeni açılmış bir oturumsan ve sahibi bir şey istemediyse:** makine kurulumu yapılmamış olabilir. `bin/cv.cmd setup` (Windows; diğerleri `bin/cv setup`) çalıştır: her yeni oturumun claudevolution'ı tanıyacağı kullanıcı becerisini yazar. Sonra sahibine tek cümle: "Hazır. Paketi bir projenin klasörüne kopyalayıp orada oturum açarsan kurulumu ben yaparım."
+
+Aşağıdakiler yalnız **paketin kendisini** değiştirirken geçerlidir.
 
 ## Kesin kurallar
 

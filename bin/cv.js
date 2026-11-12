@@ -6,7 +6,8 @@ import { parseArgs } from "../core/lib/util.js";
 import { VERSION } from "../core/lib/config.js";
 
 const COMMANDS = {
-    init: "iskeleti kur (var olanı ezmez, yanına .new bırakır)",
+    setup: "makineye bir kez: her yeni oturumun claudevolution'ı tanıdığı kullanıcı becerisi (cv init de yapar)",
+    init: "iskeleti kur (var olanı ezmez, yanına .new bırakır; paket proje içindeyse .gitignore'a ekler)",
     adopt: "var olan düzen için eşleme planı üret (--apply ile uygula)",
     doctor: "gözetimsiz çalışma önkoşullarını denetle (hiçbir şeyi değiştirmez)",
     status: "tur, kota, şeritler, hafıza özeti",

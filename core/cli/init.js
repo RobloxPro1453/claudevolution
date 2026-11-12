@@ -111,7 +111,11 @@ export function init(root, { name, lang = "tr" } = {}) {
     writeShims(root);
     const ignoreFile = path.join(root, ".gitignore");
     const have = readText(ignoreFile, "");
-    const want = readText(path.join(TEMPLATE_DIR, "gitignore.add")).split(/\r?\n/).filter((l) => l && !have.split(/\r?\n/).includes(l) && (!l.startsWith("#") || !have.includes(l)));
+    // The package itself may sit inside the project (cloned or dropped in): it is its own repository, keep it out.
+    const inner = path.relative(root, PKG_ROOT);
+    const nested = inner && !inner.startsWith("..") && !path.isAbsolute(inner) ? [`/${slash(inner)}/`] : [];
+    if (nested.length) report.notes.push(`paket proje içinde (${slash(inner)}/): .gitignore'a eklendi`);
+    const want = [...readText(path.join(TEMPLATE_DIR, "gitignore.add")).split(/\r?\n/), ...nested].filter((l) => l && !have.split(/\r?\n/).includes(l) && (!l.startsWith("#") || !have.includes(l)));
     if (want.some((l) => !l.startsWith("#"))) { writeText(ignoreFile, have + (have && !have.endsWith("\n") ? "\n" : "") + want.join("\n") + "\n"); report.notes.push(".gitignore'a makineye özgü dosyalar eklendi"); }
     if (!git(["rev-parse", "--git-dir"], root).ok) report.notes.push("burası henüz git deposu değil: `git init` çalıştırın (otonomi ve şeritler git ister)");
     return report;
@@ -126,6 +130,8 @@ export async function run(args) {
     for (const f of r.newFiles) console.log(`  yanına bırakıldı: ${f}`);
     if (r.kept.length && !r.newFiles.length) console.log("  (farklı dosyaların .new kopyaları zaten duruyor)");
     for (const n of r.notes) console.log("  not: " + n);
+    // Once per machine (idempotent): the user-level skill that lets any new session recognise the package.
+    if (!args["no-setup"]) { try { const { setup, userSkillFile } = await import("./setup.js"); const s = setup(); if (s !== "aynı") console.log(`  makine becerisi ${s}: ${userSkillFile()}`); } catch (e) { console.log("  not: makine becerisi yazılamadı (cv setup): " + e.message); } }
     if (args["no-doctor"]) return 0;
     console.log("");
     const doctor = await import("./doctor.js");
