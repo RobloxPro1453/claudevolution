@@ -23,5 +23,5 @@ Fable 5.2 limit freninde (%76) durdu, 8 commit. Bitiş ölçüsü (FABLE_PROMPT 
 - [x] 4. INVENTORY §4 "nereye gitti" sütunu
 - [x] 5. `docs/METHOD.md`
 - [x] 6. `core/{delegate,metrics,probe,reference}/README.md` yer tutucuları
-- [ ] 7. probe/reference (`cv ref`)
+- [x] 7. probe/reference (`cv ref`)
 - [ ] 8. İngilizce beceriler

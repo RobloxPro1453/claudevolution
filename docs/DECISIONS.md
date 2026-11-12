@@ -98,3 +98,7 @@ Kaynak üç belge (paket düzeni, token optimizasyonu, ayırma notu) ~370 satır
 ## K22. core README'leri arayüz sözleşmesidir
 
 `core/delegate` (komutlar, güvenlik, sağlayıcı, eklenti arayüzü, kayıt biçimi), `core/metrics` (satır alanları, birimler), `core/probe` ve `core/reference` (eklenti arayüzü, ad kuralı, config) belgelendi. probe/reference README'leri 7. maddeden önce yazıldı: önce sözleşme, sonra kod; kod sözleşmeye uyar. Bir testi yer tutucu README kalmasın diye var.
+
+## K23. probe ve reference: paket çerçeveyi, proje uygulamayı verir
+
+Kaynakta yoklama bir PowerShell betiği (uygulamayı test profiliyle açıp betik çalıştırır), referans araçları Python (indeks) ve PowerShell (yakalama) idi; hepsi kuruluma ve uygulamaya bağlı. Pakete yalnız genel kısım girdi, Node standart kütüphanesiyle (Python bağımlılığı yok): `cv probe` eklentiyi yükler, zaman sınırı koyar, çıktıyı JSON'a çevirip `maxChars`'ta keser, ekran görüntüsüne ortak kuralla ad verir; `cv ref name|index|compare` ad kuralı (Türkçe harfler ASCII'ye, menü yolu `__` ile), indeks ve görüntü kopyalamayan yan yana HTML sayfası. Uygulamayı açmak ve referansı yakalamak projenin eklentisinde kalır. Referans indeksi kurulu uygulamanın dosyalarını **okumaz** (kaynaktaki indeks okuyordu): yalnız sahibinin çektiği görüntüler; telif ve "Adobe dosyası kopyalama" yasağı gereği.

@@ -11,6 +11,7 @@ cv probe --preset <ad>                 eklentinin hazır yoklaması
 cv probe --script "<js gövdesi>"       ya da --script yol/dosya.js
 cv probe --list                        eklentinin hazır yoklamaları
          [--max N] [--timeout SN]      çıktı sınırı (karakter), zaman sınırı (saniye)
+         [--arg anahtar=değer]         eklentiye giden ek değer (run({ args }))
 ```
 
 Çıktı tek JSON; `--max`'ı aşarsa kesilir ve kesildiği yazılır. Zaman aşımında `HATA: zaman aşımı`.

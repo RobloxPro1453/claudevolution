@@ -118,8 +118,10 @@
   },
 
   "probe": {
-    "_comment": "Çalışan uygulamayı yoklayan eklenti (projeye özgü). plugin: proje köküne göre modül yolu ya da null. Arayüz: paketteki core/probe/README.md.",
-    "plugin": null
+    "_comment": "Çalışan uygulamayı yoklayan eklenti (projeye özgü). plugin: proje köküne göre modül yolu ya da null. maxChars: çıktı sınırı (karakter), timeoutSeconds: zaman sınırı. Arayüz: paketteki core/probe/README.md.",
+    "plugin": null,
+    "maxChars": 4000,
+    "timeoutSeconds": 120
   },
 
   "reference": {

@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 08:49 · 7. probe/reference (Opus)
+`cv probe` (eklenti, zaman sınırı, çıktı kesme, ekran adı) + `cv ref name|index|compare` (ad kuralı, indeks, yan yana HTML). 3 yeni test, 45/45. K23.
+
 ## 2026-11-12 08:47 · 6. core README'leri (Opus)
 `core/{delegate,probe,reference}/README.md` yazıldı (metrics 1. maddede); eklenti arayüzleri, kayıt biçimleri, ad kuralı. Yer tutucu kalmasın testi, 42/42. K22.
 

@@ -18,7 +18,8 @@ const COMMANDS = {
     recover: "takılma bulguları (--fix: güvenli olanları düzelt)",
     delegate: "ucuz model: batch | status | stop | run | fix | ask | scout | auto",
     round: "tur ölçümü: start | end | show | table",
-    ref: "referans karşılaştırma: index | compare"
+    probe: "çalışan uygulamayı yokla: --preset AD | --script JS | --list",
+    ref: "referans karşılaştırma: name | index | compare"
 };
 
 const [name, ...rest] = process.argv.slice(2);
