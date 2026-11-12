@@ -21,7 +21,8 @@ Show what was detected in `.evrim/config.json` and ask only about what you are u
 - Are the build and test commands right? (Run each once; if it fails, fix it together.)
 - Which folders hold the code? (`codePaths`)
 - **Where must the cheap model never write?** (`forbiddenWrite`: save/delete flows, generated files, documents the owner writes by hand.) When unsure, forbid; opening later is easy, undoing data loss is not.
-- The main branch name (`baseBranch`).
+- Main branch name (`baseBranch`).
+- **Who writes the code?** (`delegate.policy`) Ask with options: "always me (Opus)" → `kendisi` (important projects) · "only DeepSeek, wait without a key" → `yalniz-api` · "DeepSeek, else me" → `api-yoksa-kendisi` (default) · "DeepSeek, else a cheaper Claude model" → `api-yoksa-subagent` (`subagentModel`, e.g. haiku). Then show the output of `cv delegate which`.
 
 ## 3. VISION
 

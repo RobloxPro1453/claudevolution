@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { test, tmpDir, eq, ok } from "./harness.js";
 import { git, readJson, readText, writeJson, writeText } from "../core/lib/util.js";
-import { loadConfig } from "../core/lib/config.js";
+import { loadConfig, defaults, validate } from "../core/lib/config.js";
 import { init } from "../core/cli/init.js";
 import * as agent from "../core/delegate/agent.js";
 import { split, statusText } from "../core/delegate/lanes.js";
@@ -118,7 +118,7 @@ test("yedek: anahtar varsa API, yoksa varsayılan self; subagent yalnız açık�
     const fb = choose.choose(cfg, {});
     eq(fb.mode, "self", "anahtar yok: ana model");
     ok(/^SAGLAYICI: self - DEEPSEEK_API_KEY ortamda yok$/.test(choose.line(fb)), "satır: " + choose.line(fb));
-    const sub = choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: ["claude-subagent", "self"] } }, {});
+    const sub = choose.choose({ ...cfg, delegate: { ...cfg.delegate, policy: undefined, fallback: ["claude-subagent", "self"] } }, {});
     eq([sub.mode, sub.model], ["claude-subagent", "haiku"], "açıkça seçilen subagent");
     eq(choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: ["self"] } }, {}).mode, "self", "yalnız self");
     eq(choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: [] } }, {}).mode, "self", "boş liste");
@@ -134,4 +134,18 @@ test("yedek: config yanlış fallback değerini reddeder", () => {
     const msg = validateCfg(bad).errors.join(" | ");
     ok(/delegate\.fallback/.test(msg), "hata metni: " + msg);
     eq(validateCfg(cfg).errors.filter((e) => /fallback|subagent/.test(e)), [], "şablon geçerli");
+});
+
+test("iş dağıtımı: delegate.policy sahibinin seçimini uygular; eski fallback çalışır", () => {
+    const base = defaults();
+    const pol = (policy, env = {}) => choose.choose({ ...base, delegate: { ...base.delegate, policy } }, env);
+    eq(pol("kendisi", { DEEPSEEK_API_KEY: "x" }).mode, "self", "kendisi: anahtar olsa bile dağıtma");
+    eq(pol("yalniz-api", { DEEPSEEK_API_KEY: "x" }).mode, "api", "yalniz-api: anahtar var");
+    eq(pol("yalniz-api").mode, "bekle", "yalniz-api: anahtar yok, bekle");
+    eq(pol("api-yoksa-kendisi").mode, "self", "varsayılan yedek");
+    eq([pol("api-yoksa-subagent").mode, pol("api-yoksa-subagent").model], ["claude-subagent", "haiku"], "subagent yalnız açıkça");
+    eq(base.delegate.policy, "api-yoksa-kendisi", "şablon varsayılanı");
+    const old = { ...base.delegate, fallback: ["claude-subagent"] }; delete old.policy;
+    eq(choose.choose({ ...base, delegate: old }, {}).mode, "claude-subagent", "eski fallback listesi");
+    ok(validate({ ...base, delegate: { ...base.delegate, policy: "haiku" } }).errors.some((e) => e.includes("delegate.policy")), "geçersiz policy reddedilir");
 });

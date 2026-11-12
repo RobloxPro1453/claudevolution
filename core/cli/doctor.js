@@ -80,6 +80,7 @@ export function check(root, { runCommands = false } = {}) {
         }
         const p = cfg.delegate.providers[cfg.delegate.provider], picked = chooseWorker(cfg);
         if (picked.mode === "api") ok(`iş dağıtımı: ${picked.name} (${p.keyEnv} ortamda var)`);
+        else if (picked.mode === "bekle" || /policy kendisi/.test(picked.reason)) info(`iş dağıtımı: ${picked.reason}`, picked.mode === "bekle" ? `Kod işi için ${p ? p.keyEnv : "anahtar"} ortam değişkeni gerekir (ayar: delegate.policy yalniz-api).` : null);
         else info(`iş dağıtımı: yedek ${picked.name}${picked.model ? ` (${picked.model})` : ""}; ${picked.reason}`, `Sorun değil, iş durmaz. Ucuz API modelini kullanmak isterseniz ${p ? p.keyEnv : "anahtar"} ortam değişkenini tanımlayın (Windows: Ayarlar > "ortam değişkenleri" araması > Kullanıcı değişkenleri > Yeni). Anahtarı hiçbir dosyaya yazmayın.`);
     }
 
