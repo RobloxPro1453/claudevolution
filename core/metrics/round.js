@@ -125,7 +125,9 @@ export function gitStats(cfg, base, head, from, to) {
     const code = (f) => codePaths.some((p) => f.startsWith(p));
     const taskRe = new RegExp(cfg.tasks.pattern), tdir = cfg.tasks.dir.replace(/\/$/, "");
     const isSpec = (f) => f.startsWith(tdir + "/") && taskRe.test(f.slice(tdir.length + 1));
-    const trailer = String(cfg.delegate.commitTrailer || "").replace(/^[^:]*:\s*/, "");
+    // The cheap model's commits carry delegate.commitTrailer; the e-mail in it identifies them (the name may carry a model).
+    const tv = String(cfg.delegate.commitTrailer || "").replace(/^[^:]*:\s*/, ""), mail = tv.match(/<[^>]+>/);
+    const trailer = mail ? mail[0] : tv;
     const g = { base, head, commits: 0, files: 0, codeAdded: 0, codeRemoved: 0, agentCodeAdded: 0, claudeCodeAdded: 0, specLines: 0, reviewLines: 0 };
     const count = git(["rev-list", "--count", `${base}..${head}`], cfg.root);
     g.commits = count.ok ? Number(count.out) || 0 : 0;

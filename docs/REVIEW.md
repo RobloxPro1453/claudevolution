@@ -18,7 +18,7 @@ Fable 5.2 limit freninde (%76) durdu, 8 commit. Bitiş ölçüsü (FABLE_PROMPT 
 
 ### Eksik listesi (önem sırası)
 - [x] 1. `core/metrics/round.js` + `cv round` (beceriler bunu çağırıyor)
-- [ ] 2. `cv adopt` (+ `--dry-run`) ve `docs/examples/fotosop-adopt-plan.md`
+- [x] 2. `cv adopt` (+ `--dry-run`) ve `docs/examples/fotosop-adopt-plan.md`
 - [ ] 3. `docs/OWNER_GUIDE.md`
 - [ ] 4. INVENTORY §4 "nereye gitti" sütunu
 - [ ] 5. `docs/METHOD.md`

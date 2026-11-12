@@ -1,9 +1,9 @@
 # İlerleme
 
 En üstte en yeni; kayıt başına ≤5 satır.
+
 ## 2026-11-12 08:38 · 1. cv round (Opus)
 `core/metrics/round.js` + `cv round start|end|add|show|table`: Fotosop tur ölçümünün genel hâli, alanlar `core/metrics/README.md`'de. 3 yeni test, 35/35. Karar K17.
-
 
 ## 2026-11-12 05:50 · Opus inceleme
 Fable işi incelendi: 7 şarttan 4 geçti (init, testler, ad temizliği, kişisel bilgi), 3 eksik (adopt, OWNER_GUIDE, ders sütunu). Karar DEVAM; liste `docs/REVIEW.md`. Opus saat başı birer adım sürdürür.
