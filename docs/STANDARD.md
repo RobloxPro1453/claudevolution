@@ -8,7 +8,7 @@ Bu sayfa paketin **bitmiş** hâlini tanımlar. v1.0'dan sonra "şunu da ekleyel
 |---|---|---|
 | Kurulum | `cv init`, `cv adopt`, `cv update` | Yeni projeye iskelet; var olan düzeni göç ettirme; paket sürümünü projeye uygulama |
 | Denetim | `cv doctor`, `cv status` | Gözetimsiz çalışma önkoşulları; tur, kota, hafıza özeti |
-| İş dağıtımı | `cv delegate …`, `which`, `brief` | Ucuz API modeli (anahtar varsa) → Claude subagent → ana model; aynı kurallar, aynı gizli denetim |
+| İş dağıtımı | `cv delegate …`, `which`, `brief` | Ucuz API modeli (anahtar varsa), yoksa ana model kendisi (isteğe bağlı Claude subagent); aynı kurallar, aynı gizli denetim |
 | Otonomi | `cv cycle`, `cv gate`, `cv lock`, `cv recover`, `otonom` becerisi | Limit kapıları, kilit, kurtarma, sade hafıza (DERSLER, GUNLUK, HATALAR, OZET, SORULAR, NOTLAR) |
 | Ölçüm | `cv round`, `cv bench` | Tur ölçüsü (saha); paket ölçümü: A testler + B 20 kaos senaryosu (0 token), C canlı (yalnız `--live`, tavanlı) |
 | Evrim | `cv distill`, `damit` becerisi, `cv evolve` | Yerel ders projede kalır; genel ders `evrim/<ad>` dalından ölçülerek pakete girer ve GitHub'a push edilir |

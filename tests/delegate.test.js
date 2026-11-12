@@ -112,12 +112,14 @@ test("şerit: işler şeritlere sırayla dağılır; CRLF eklentisi", () => {
 // --- fallback when the cheap-model key is missing (owner decision 2026-11-12)
 import * as choose from "../core/delegate/choose.js";
 import { validate as validateCfg } from "../core/lib/config.js";
-test("yedek: anahtar varsa API, yoksa claude-subagent, liste boşsa self", () => {
+test("yedek: anahtar varsa API, yoksa varsayılan self; subagent yalnız açıkça seçilirse", () => {
     const cfg = project();
     eq(choose.choose(cfg, { DEEPSEEK_API_KEY: "x" }).mode, "api", "anahtar var");
     const fb = choose.choose(cfg, {});
-    eq([fb.mode, fb.model], ["claude-subagent", "haiku"], "anahtar yok");
-    ok(/^SAGLAYICI: claude-subagent \(haiku\) - DEEPSEEK_API_KEY ortamda yok$/.test(choose.line(fb)), "satır: " + choose.line(fb));
+    eq(fb.mode, "self", "anahtar yok: ana model");
+    ok(/^SAGLAYICI: self - DEEPSEEK_API_KEY ortamda yok$/.test(choose.line(fb)), "satır: " + choose.line(fb));
+    const sub = choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: ["claude-subagent", "self"] } }, {});
+    eq([sub.mode, sub.model], ["claude-subagent", "haiku"], "açıkça seçilen subagent");
     eq(choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: ["self"] } }, {}).mode, "self", "yalnız self");
     eq(choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: [] } }, {}).mode, "self", "boş liste");
 });
