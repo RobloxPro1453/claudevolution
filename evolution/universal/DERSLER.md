@@ -1,0 +1,19 @@
+# Evrensel dersler
+
+Her satır: durum → artık ne yapıyoruz (kaynak). En çok 80 satır; dolunca birleştir. Damıtma (`damit`) buraya yazar; her ekleme `evolution/CHANGELOG.md`'ye.
+
+- Ucuz model şeritleri oturumun arka plan görevi olunca oturumla ölür → ayrık süreç başlat; yeniden başlatmadan önce WIP commit + detach (fotosop 2026-11-11).
+- Bir komutun hata metni veri sanılabilir (dal yokken `git log`) → çıkış kodunu kontrol et (fotosop).
+- Ucuz modelin yoğun saat fiyatı var → saat penceresini config'e koy, batch beklesin (fotosop).
+- Tek tek yeşil dallar birleşince test yalıtımı kırılır → paket birleşmesinden sonra "takımı yeşile çek" işini baştan planla (fotosop tur 9).
+- Toplamalı çakışma "iki tarafı koru" ile çözülür; ardından sözdizimi + JSON + yinelenen anahtar denetimi şart (fotosop).
+- İkili çıktı çakışırsa "bizimki" + kaynağa dokun, yeniden derlensin (fotosop).
+- Büyük model yarıda durdurulup yeniden başlatılınca bağlamı baştan okur, limiti yer → temiz oturum, tek nokta atışı istem, durdurma yok (fotosop/Fable).
+- Limit %100'e dayanırsa tur ölür, uyanış planlanamaz → %85 yeni adım yok, %90 çık; çevrim başında sigorta uyanışı (fotosop).
+- `/loop` 3 gün, `CronCreate` 7 gün ve oturumla sınırlı; yeni oturum kutusu eğik çizgi komutu kabul etmez → kalıcı otonomi = zamanlanmış görev + temiz oturum + kilit (fotosop).
+- Gözetimsiz makine: uyku kapalı, kapak "hiçbir şey yapma", prize takılı, güncelleme duraklatılmış; izin modu Otomatik; ilk 10 dk sahibi başında (fotosop).
+- Gizli test kopyası tek kopya denetimini yanıltabilir → test süreçleri ayırt edilebilir olmalı (fotosop).
+- Sahibi sürekli kontrol etmek istemez ama görünmez çalışma da tedirgin eder → sade OZET, net uyuyor/çalışıyor işareti, kolay "dur" (fotosop).
+- İş sayısı kaliteyi ölçmez (612 menü, "ucuz kopya") → his/kalite ölçüsünü (kör test) ilk günden tanımla (fotosop).
+- Raporlanan her sayı komutla doğrulanır; yanlış sayı güveni kırar (fotosop).
+- "His" sorunları ölçülebilir parçalara indirgenir (piksel ölçümü yanlış tema sütununu buldu) (fotosop AURA).
