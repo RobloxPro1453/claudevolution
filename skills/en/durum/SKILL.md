@@ -17,7 +17,7 @@ Do not change product files, commit, or run the cheap model. Only read and summa
    - What is open: unreviewed cheap-model branches, a dirty working tree, an open round, things the owner must try by hand, questions waiting for an answer (`SORULAR.md`).
    - Quota: 5-hour and weekly percentages.
    - **Next package:** 8-10 items in `docs.roadmap` order; which of them stays with Claude, if any (AGENTS.md > division of work); a rough cheap-model cost. Do not propose a scan round or a single-task round.
-   - End with "Shall I start?".
+   - End: if the owner is present "Shall I start?" (one round, `calis`); for unattended work "To start the loop, write `/loop başla`." If the project was just set up (kurulum just became `tamam`), say the second.
 3. If the owner agrees, open the round: `cv round start --quota <weekly %> --type <type>`, then the `calis` skill.
 
 If this session is not new (a round already ran in it), suggest starting the round in a new session: the context is re-read on every call and that is what eats most of the quota.

@@ -5,7 +5,7 @@
 ## Oturumun ilk işi
 
 - `.evrim/config.json` > `kurulum` `"bekliyor"` ise sahibinin ilk mesajı ne olursa olsun ("merhaba" bile) `cv-init` becerisini uygula: keşif görüşmesi, plan, sonunda "yeni oturum aç, merhaba yaz, `/loop başla` yaz".
-- Kurulum tamamsa: selama `durum` becerisiyle kısa durum. `başla` (çoğunlukla `/loop başla` içinden) = `otonom` becerisiyle bir çevrim.
+- Kurulum tamamsa: selama `durum` becerisiyle kısa durum; sonunda döngü için `/loop başla` yazılacağını söyle. `başla` (çoğunlukla `/loop başla` içinden) = `otonom` becerisiyle bir çevrim.
 
 ## claudevolution
 

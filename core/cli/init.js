@@ -158,10 +158,14 @@ export async function run(args) {
     }
     // Once per machine (idempotent): the user-level skill that lets any new session recognise the package.
     if (!args["no-setup"]) { try { const { setup, userSkillFile } = await import("./setup.js"); const s = setup(); if (s !== "aynı") console.log(`  makine becerisi ${s}: ${userSkillFile()}`); } catch (e) { console.log("  not: makine becerisi yazılamadı (cv setup): " + e.message); } }
-    if (args["no-doctor"]) return 0;
-    console.log("");
-    const doctor = await import("./doctor.js");
-    await doctor.run({ _: [], dir: root, quiet: true });
+    // A project still waiting for its discovery conversation gets no checklist here: build/test commands and
+    // machine settings are decided in that conversation (cv-init runs cv doctor), not by the owner in a terminal.
+    const waiting = readJson(path.join(root, CONFIG_REL), {}).kurulum === "bekliyor";
+    if (!args["no-doctor"] && !waiting) {
+        console.log("");
+        const doctor = await import("./doctor.js");
+        await doctor.run({ _: [], dir: root, quiet: true });
+    }
     console.log(lang === "tr" ? "\nSıradaki: Claude uygulamasında bu klasörü açın ve \"merhaba\" yazın; gerisini Claude sorar." : "\nNext: open this folder in the Claude app and write \"hello\"; Claude asks the rest.");
     return 0;
 }

@@ -17,7 +17,7 @@ description: Yeni oturum başında ya da sahibi "neredeyiz", "durum ne" dediğin
    - Açık kalanlar: gözden geçirilmemiş ucuz model dalı, kirli çalışma alanı, açık tur, sahibinin elle denemesi gerekenler, cevap bekleyen sorular (`SORULAR.md`).
    - Kota: 5 saatlik ve haftalık yüzde.
    - **Sıradaki paket:** `docs.roadmap` sırasına göre 8-10 madde; Claude'da kalacak olan varsa hangisi (AGENTS.md > İş bölümü); kabaca ucuz model maliyeti. Tarama turu ya da tek işlik tur önerme.
-   - "Başlayayım mı?" ile bitir.
+   - Bitiş: sahibi başındaysa "Başlayayım mı?" (bir tur, `calis`); gözetimsiz çalışma içinse "Döngüyü başlatmak için `/loop başla` yaz." Proje yeni kurulduysa (kurulum az önce `tamam` oldu) ikincisini söyle.
 3. Sahibi onaylarsa turu aç: `cv round start --quota <haftalık %> --type <tür>`, sonra `calis` becerisi.
 
 Bu oturum yeni değilse (önceki bir tur bu oturumda yapıldıysa) turu yeni oturumda başlatmayı öner: bağlam her çağrıda yeniden okunur ve kotanın çoğunu o yer.
