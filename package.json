@@ -1,6 +1,6 @@
 {
   "name": "claudevolution",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Self-evolving operating system for Claude Code projects: rules and memory docs, cheap-model delegation, unattended limit-aware autonomy, and a local + universal learning loop.",
   "type": "module",
   "private": true,
