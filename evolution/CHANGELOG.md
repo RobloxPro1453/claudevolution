@@ -14,3 +14,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-12 · ders-yardimci-betige-yoklama-test-araci-024715 (v1.0.9) · evrensel ders: Yardımcı betiğe (yoklama, test aracı) çok satırlı ya da tırnaklı kodu komut satı · ölçüler eşit · kabul
 - 2026-11-12 · ders-arayuz-isinde-her-adimda-gercek-116356 (v1.0.10) · evrensel ders: Arayüz işinde her adımda gerçek uygulamadan ekran görüntüsü al ve referans görse · ölçüler eşit · kabul
 - 2026-11-12 · ders-ara-sira-dusen-bir-test-205631 (v1.0.11) · evrensel ders: Ara sıra düşen bir test ilk kez görülünce yeniden koşmadan önce hata yakalayıcıs · ölçüler eşit · kabul
+- 2026-11-12 · sifir-baslangic (v1.0.12) · soğuk başlayan model sistemi tek giriş noktasından anlasın: README + şablon AGENTS claudevolution bölümü + CLAUDE.md; ölçü: sahip-itirazi, COLD_START testi; K=10 · test 66 → 68 · kabul
