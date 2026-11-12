@@ -21,6 +21,7 @@ const COMMANDS = {
     probe: "çalışan uygulamayı yokla: --preset AD | --script JS | --list",
     ref: "referans karşılaştırma: name | index | compare",
     evolve: "evrensel evrim: evrim/<ad> dalını ölç, geçerse main'e al, sürüm, CHANGELOG, push",
+    lesson: "ders yaz: \"<ders>\" [--evrensel: hemen pakete, ölç, commit, push] [--hata]",
     bench: "paket ölçümü: A testler + B kaos (bedava); --live ile C (ücretli, tavanlı); --baseline"
 };
 

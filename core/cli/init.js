@@ -57,11 +57,19 @@ export function buildConfig(root, name, lang) {
     return { cfg, detected: d };
 }
 
+// The Windows launcher runs Node (or Deno) itself. It must not `call` the package's cv.cmd: call expands
+// % in the arguments a second time, so "--did %34" reached the CLI as argument 3 + "4" (journal lines broke).
+export function cvCmd(pkgRoot) {
+    return ["@echo off", "setlocal", `set "CV_PKG=${pkgRoot}"`, 'if defined CV_HOME set "CV_PKG=%CV_HOME%"',
+        "where node >nul 2>nul", "if errorlevel 1 goto :deno", 'node "%CV_PKG%\\bin\\cv.js" %*', "exit /b %errorlevel%",
+        ":deno", 'deno run -A --quiet "%CV_PKG%\\bin\\cv.js" %*', "exit /b %errorlevel%", ""].join("\r\n");
+}
+
 // Machine-specific launchers (git-ignored): they know where this package lives on this machine.
 export function writeShims(root) {
     const evrim = path.join(root, ".evrim");
     writeJson(path.join(evrim, "local.json"), { packageHome: PKG_ROOT, writtenBy: "cv init", note: "Makineye özgü; git'e girmez. cv init yeniden üretir." });
-    writeText(path.join(evrim, "cv.cmd"), `@echo off\r\nsetlocal\r\nset "CV_PKG=${PKG_ROOT}"\r\nif defined CV_HOME set "CV_PKG=%CV_HOME%"\r\ncall "%CV_PKG%\\bin\\cv.cmd" %*\r\nexit /b %errorlevel%\r\n`);
+    writeText(path.join(evrim, "cv.cmd"), cvCmd(PKG_ROOT));
     const sh = path.join(evrim, "cv");
     writeText(sh, `#!/bin/sh\nexec "\${CV_HOME:-${slash(PKG_ROOT)}}/bin/cv" "$@"\n`);
     if (!isWindows) { try { fs.chmodSync(sh, 0o755); } catch (_) { /* best effort */ } }

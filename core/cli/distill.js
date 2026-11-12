@@ -15,7 +15,7 @@ const strip = (l) => l.replace(/^\s*-\s*/, "").replace(/\s*\[(evrensel|yerel)[^\
 // A lesson is a universal candidate if tagged so, or untagged and free of project-specific words.
 export function classify(lesson, cfg) {
     if (/\[yerel\]/i.test(lesson)) return "yerel";
-    if (/\[evrensel→taşındı\]/i.test(lesson)) return "taşındı";
+    if (/\[evrensel→taşındı[^\]]*\]/i.test(lesson)) return "taşındı";  // also "[evrensel→taşındı v1.0.5]"
     if (/\[evrensel\]/i.test(lesson)) return "aday";
     const local = [cfg.project, ...(cfg.codePaths || [])].filter(Boolean).map((s) => String(s).toLowerCase());
     const text = lesson.toLowerCase();

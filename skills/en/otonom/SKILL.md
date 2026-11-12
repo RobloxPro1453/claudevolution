@@ -56,7 +56,7 @@ You, not the owner, must notice wasted money and quota:
 ## 4. Close
 
 1. Working tree clean or committed as `WIP:`; the build passes (if not, revert the last commit).
-2. **Lesson:** if something repeated or was expensive this cycle, one line in `DERSLER.md` (tagged `[evrensel]` or `[yerel]`). For a serious error, an entry in `HATALAR.md` (`grep` for a similar one first).
+2. **Lesson:** if something repeated or was expensive this cycle, one line: project-specific, `cv lesson "<lesson>"`. If it would hold in another project as well (still true without the project name), **right away** `cv lesson "<generalised lesson>" --evrensel`: it enters the package now, is measured, committed and pushed to GitHub; do not wait for distillation. For a serious error the same command with `--hata` (`grep` `HATALAR.md` for a similar one first). If the command says it did not reach the package, the lesson stays `[evrensel]` locally and distillation looks again.
 3. Update **OZET.md**: plain language, no jargon, in the owner's language; sections "Şu an" (now), "Bitenler" (done, with where to look), "Karar verdiklerim" (decisions), "Takıldıklarım" (stuck), "Harcama" (spending), "Senin bakman gerekenler" (for you to check).
 4. `get_usage`, then: `cv cycle end --id <id> --did "<what I did>" --cost "<quota %, $>" --worth evet|hayir --five .. --week .. --next "<next>"`. It writes GUNLUK, updates the counters, releases the lock and prints the `UYKU` (sleep) seconds. Every number you report comes from a command output.
 5. Commit the memory files (`otonom: çevrim <date>`).
