@@ -143,3 +143,25 @@ Acele yok; Fotosop da bekliyor.
 8. Fotosop'a `cv adopt --apply`, ilk gerçek distill → ilk evrim adayı benchmark'tan geçer.
 
 Her oturum 5 saatlik pencerenin %80'inde durur. Haftalık genel limit %75'e gelirse o hafta yeni oturum açılmaz.
+
+## 6. Sahibinin kararları (2026-11-12) — bu bölüm yukarıdakileri ezer
+
+**A. Bitiş çizgisi: v1.0, kapsam donar.** "Şunu da ekle" döngüsü yok. v1.0 = mevcut v0.1.0 + aşağıdaki dört iş, başka hiçbir şey:
+1. Ucuz model yoksa yedek iş dağıtımı (B).
+2. Kat B kaos senaryoları + `cv bench` (A+B).
+3. Kat C'nin küçük hâli: 1 sahte proje, 4 iş (1 tuzak), isteğe bağlı.
+4. `cv evolve` (kapılar + gizlilik taraması + push) ve `docs/STANDARD.md`.
+
+v1.0'dan sonra pakete yeni özellik **yalnız** iki yoldan girer: (a) bir projede gerçekten yaşanmış, `HATALAR`/`DERSLER`'e düşmüş bir sorun, ya da (b) sahibinin açık isteği. İkisi de `cv evolve` kapılarından geçer. Kat D (devir sınavı), kalan sahte projeler ve holdout v1.0'a girmez. Gerçek bir ihtiyaç doğarsa bu kuralla eklenir.
+
+**B. DeepSeek anahtarı her zaman yok.** `delegate.provider` sırası: `deepseek` (anahtar ortamda varsa) → `claude-subagent` → `self`.
+- `claude-subagent`: Claude Code'un kendi Agent aracıyla daha ucuz modelde (Haiku ya da Sonnet; config'te) tarif uygulanır. Kurallar, yasak yollar ve gizli denetçi aynıdır.
+- `self`: ana model işi kendisi yapar.
+
+`cv doctor` hangisinin seçileceğini söyler. Beceriler (`calis`, `otonom`) anahtar yoksa durmaz, yedeğe geçer ve bunu GUNLUK'a yazar.
+
+**C. Ölçüm ucuz olmalı.** Ölçüm normal kodlamadan fazla token yemez:
+- Kat A ve B **sıfır model tokeni**: sahte model, sahte saat. Her değişiklikte bunlar koşar.
+- Kat C yalnız `cv evolve` bir evrensel değişikliği kabul etmeden önce koşar. Varsayılan kapalıdır, `--live` ile açılır. Tek koşu, 4 iş, sert tavan: DeepSeek ≤ 0,10 $ ya da subagent'ta 5 saatlik pencerenin ≤ %2'si. Tavan aşılırsa koşu durur ve "ölçülemedi" sayılır; değişiklik kabul edilmez.
+- 3 tekrar ve ortanca yok. Canlı kat tek koşu, sert kapı gibi kullanılır (tuzak ihlali, test kırmızı). Yumuşak skor yalnız bedava ölçülerden (Kat A/B süresi, değişen satır, belge boyu) ve saha verisinden (`metrics.jsonl`) gelir.
+- Evrim ve ölçümün toplam payı haftalık kotanın ≤ %10'u. `cv status` bunu gösterir.
