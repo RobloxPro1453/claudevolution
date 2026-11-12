@@ -1,0 +1,130 @@
+{
+  "_comment": "claudevolution proje yapılandırması. Projeye özgü HER ŞEY burada; paket kodu ve beceriler yalnız buradan okur. '_comment' ile başlayan alanlar açıklamadır, yok sayılır. Alanların tam açıklaması: .evrim/README.md. Denetim: .evrim/cv doctor",
+  "schema": 1,
+  "project": "proje-adi",
+  "lang": "tr",
+  "baseBranch": "main",
+
+  "_comment_build": "Komutlar dizi olarak yazılır (kabuk yok): [program, argüman, ...]. Yoksa null. Dakikalar süre sınırıdır; aşan komut öldürülür.",
+  "build": null,
+  "test": null,
+  "buildMinutes": 10,
+  "testMinutes": 15,
+
+  "_comment_paths": "codePaths: ölçümde 'kod' sayılan klasörler. forbiddenWrite: ucuz modelin yazamayacağı yollar (düzenli ifade, / ile). Bu liste yalnız sahibinin sözüyle daraltılır; evrensel güncelleme buraya dokunamaz. skipDirs: ajanın listelemediği/aramadığı klasörler.",
+  "codePaths": ["src/", "tests/"],
+  "forbiddenWrite": [
+    "^\\.git(/|$)", "^\\.gitignore$", "^\\.gitattributes$",
+    "^\\.evrim/", "^\\.claude/",
+    "^AGENTS\\.md$", "^docs/VISION\\.md$", "^docs/WORKER\\.md$",
+    "^docs/tasks/(?!.*\\.report\\.md$)",
+    "^(build|dist|node_modules|vendor)/"
+  ],
+  "skipDirs": "^(\\.git|node_modules|build|dist|target|vendor|\\.evrim/state)(/|$)",
+
+  "_comment_docs": "Becerilerin okuduğu belge adları. Bir belgeyi yeniden adlandırırsanız burayı değiştirin; beceri metni değişmez.",
+  "docs": {
+    "agents": "AGENTS.md",
+    "vision": "docs/VISION.md",
+    "progress": "docs/PROGRESS.md",
+    "roadmap": "docs/ROADMAP.md",
+    "checkup": "docs/CHECKUP.md",
+    "knowledge": "docs/KNOWLEDGE.md",
+    "architecture": "docs/ARCHITECTURE.md",
+    "development": "docs/DEVELOPMENT.md",
+    "worker": "docs/WORKER.md",
+    "changelog": "CHANGELOG.md"
+  },
+
+  "tasks": {
+    "_comment": "Ucuz modele verilen tarifler. prefix: iş adı öneki (T-001). rules: ajanın sistem mesajı olarak aldığı kurallar dosyası.",
+    "dir": "docs/tasks",
+    "prefix": "T",
+    "pattern": "^T-\\d+\\.md$",
+    "rules": "docs/tasks/README.md"
+  },
+
+  "delegate": {
+    "_comment": "Ucuz model ajanı ve şeritler. Anahtar YALNIZ ortam değişkeninden okunur (keyEnv); hiçbir dosyaya yazılmaz. worktreeRoot içinde ~ ev klasörü, {project} proje adıdır. peakUtc: pahalı saat pencereleri (UTC, hafta içi); şeritler bu saatlerde iş başlatmaz. price: milyon token başına dolar (yoğun saat); dışında offpeakFactor ile çarpılır. plugins: projeye özgü araçlar (proje köküne göre yol) ya da paketle gelenler ('builtin:crlf').",
+    "provider": "deepseek",
+    "providers": {
+      "deepseek": {
+        "apiBase": "https://api.deepseek.com",
+        "model": "deepseek-flash",
+        "keyEnv": "DEEPSEEK_API_KEY",
+        "thinking": true,
+        "price": { "input": 0.30, "cached": 0.006, "output": 1.2 },
+        "peakUtc": "01:00-04:00,06:00-10:00",
+        "offpeakFactor": 0.5
+      }
+    },
+    "intro": "You are a careful software engineer working on this project.",
+    "workPlan": "Work plan: 1) find the place in the code (search, then read); 2) write the change and the test; 3) build and test; fix until they pass.",
+    "worktreeRoot": "~/cv-calisma/{project}",
+    "branchPrefix": "cv/",
+    "linkDirs": [],
+    "lanes": 3,
+    "defaultSteps": 200,
+    "defaultBudget": 1.0,
+    "dailyBudget": 5.0,
+    "minBalanceNote": "Bakiye API'den okunamaz; günlük harcama stateDir kayıtlarından toplanır ve dailyBudget aşılınca yeni iş başlamaz.",
+    "stateDir": ".evrim/state/delegate",
+    "commitTrailer": "Co-Authored-By: delegate-agent <noreply@example.invalid>",
+    "plugins": ["builtin:crlf"]
+  },
+
+  "metrics": {
+    "_comment": "Tur ölçümleri. claudeProjectDir null ise proje yolundan türetilir (~/.claude/projects/<yol-kısaltması>), yalnız okunur. weights: 'Claude yükü' = (çıktı*20 + önbellekOkuma*0.2 + önbellekYazma*8 + girdi*4)/1e6 × model katsayısı.",
+    "file": ".evrim/metrics.jsonl",
+    "stateDir": ".evrim/state/round",
+    "claudeProjectDir": null,
+    "weights": { "output": 20, "cacheRead": 0.2, "cacheWrite": 8, "input": 4, "modelFactor": { "fable": 1.6, "opus": 1, "sonnet": 0.6, "haiku": 0.2 } }
+  },
+
+  "autonomy": {
+    "_comment": "Gözetimsiz döngü. gates: 5 saatlik pencere yüzde eşikleri; haftalık tavan = weeklyBase + weeklySlope × f (f = haftanın geçen kesri, 0..1); tavana weeklyMargin puan kala yeni adım yok. weeklyReset: haftalık kotanın sıfırlandığı an (UTC; 0 = Pazar ... 6 = Cumartesi). share: aynı makinede birden çok proje kotayı ağırlıklarıyla paylaşır.",
+    "dir": ".evrim/otonom",
+    "lockStaleMinutes": 90,
+    "gates": {
+      "fiveHourNoNewStep": 85,
+      "fiveHourExit": 90,
+      "weeklyBase": 60,
+      "weeklySlope": 30,
+      "weeklyMargin": 5,
+      "cycleShareMax": 8,
+      "stepShareAlarm": 15
+    },
+    "weeklyReset": { "weekdayUtc": 6, "hourUtc": 3 },
+    "safetyWakeSeconds": 1800,
+    "share": { "weight": 1 },
+    "watchdog": {
+      "delegateNoCommitMinutes": 15,
+      "delegateBudgetShareNoTest": 60,
+      "sameErrorMax": 3,
+      "idleCyclesChangeApproach": 2,
+      "idleCyclesSleep": 3,
+      "stepTimeboxCycles": 4
+    }
+  },
+
+  "evolution": {
+    "_comment": "lessonsMax: yerel DERSLER satır sınırı. Damıtma her distillEveryCycles çevrimde ya da günde bir; toplam kotanın en çok distillQuotaShare yüzdesi. selectionK: bir evrim değişikliği kaç çevrim sonra ölçülür (kötüleştiyse geri alınır).",
+    "lessonsMax": 40,
+    "journalTailLines": 10,
+    "distillEveryCycles": 10,
+    "distillQuotaShare": 10,
+    "selectionK": 5
+  },
+
+  "probe": {
+    "_comment": "Çalışan uygulamayı yoklayan eklenti (projeye özgü). plugin: proje köküne göre modül yolu ya da null. Arayüz: paketteki core/probe/README.md.",
+    "plugin": null
+  },
+
+  "reference": {
+    "_comment": "Referans uygulamayla yan yana karşılaştırma. dir: referans görüntülerinin klasörü; shotsDir: bizim görüntülerimiz; out: karşılaştırma sayfası.",
+    "dir": "references/shots",
+    "shotsDir": ".evrim/state/shots",
+    "out": ".evrim/state/compare.html"
+  }
+}

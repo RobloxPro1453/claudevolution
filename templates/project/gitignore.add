@@ -1,0 +1,6 @@
+# claudevolution (makineye özgü ve geçici dosyalar)
+.evrim/otonom/lock
+.evrim/state/
+.evrim/local.json
+.evrim/cv
+.evrim/cv.cmd
