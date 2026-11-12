@@ -77,9 +77,16 @@ test("cv.cmd sarmalayıcısı call kullanmaz; yüzde işaretli argüman bozulmad
     // No ">" in an unquoted argument: cmd would redirect into a file named "%39" in the working folder.
     const echo = path.join(dir, "echo.cmd");
     // Both launch lines (Node and the Deno fallback) print their arguments instead.
-    writeText(echo, text.replace(/^(node|deno run -A --quiet) "%CV_PKG%\\bin\\cv\.js" %\*(?=\r?$)/gm, "echo %*"));
+    writeText(echo, text.replace(/^(node|deno run -A --quiet) "%CV_PKG%\\bin\\cv\.js" %\* & exit \/b(?=\r?$)/gm, "echo %* & exit /b"));
     ok((readText(echo).match(/^echo %\*/gm) || []).length === 2, "iki satır da echo oldu");
     // As cv cycle end gets it: a quoted value with spaces ("5s %34->%39, 0 $").
     const e = run("cmd.exe", ["/d", "/c", echo, "cycle", "end", "--cost", "5s %34->%39, 0 $"], { timeoutMs: 60000 });
     ok(e.out.includes("%34->%39"), "yüzde korunmalı: " + e.out);
+    // cv update rewrites cv.cmd while it runs: every launch line ends with "& exit /b" so cmd never reads on.
+    for (const l of text.split("\r\n").filter((x) => /cv\.js" %\*|^claudevrim %\*/.test(x))) ok(/ & exit \/b$/.test(l), "satır kendini bitirir: " + l);
+    const self = path.join(dir, "self.cmd");
+    // The rewrite happens while the launch line runs (as node rewrites cv.cmd), then the line's own exit follows.
+    writeText(self, ["@echo off", `(echo @echo off> "${self}") & (echo echo BOZUK>> "${self}") & (echo echo BOZUK>> "${self}") & echo TEK & exit /b`, "echo FAZLA", ""].join("\r\n"));
+    const s = run("cmd.exe", ["/d", "/c", self], { timeoutMs: 60000 });
+    ok(s.out.includes("TEK") && !s.out.includes("BOZUK") && !s.out.includes("FAZLA"), "kendini yeniden yazan dosyada fazladan satır okunmaz: " + s.out);
 });
