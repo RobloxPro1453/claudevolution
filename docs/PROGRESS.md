@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 05:50 · Opus inceleme
+Fable işi incelendi: 7 şarttan 4 geçti (init, testler, ad temizliği, kişisel bilgi), 3 eksik (adopt, OWNER_GUIDE, ders sütunu). Karar DEVAM; liste `docs/REVIEW.md`. Opus saat başı birer adım sürdürür.
+
 ## 2026-11-12 05:15 · v0.1.0 kurulum, limit freninde durdu (Fable 5.2)
 5 saatlik pencere %76'ya geldi (istem sınırı %75); oturum kuralı gereği durdu. Doğrulama: `deno run -A tests/run.js` → 32/32 (bu makinede Node yok, Deno var; bkz. DECISIONS K1). Kararlar: `docs/DECISIONS.md` K1-K16.
 - **Biten:** şablonlar (3.4), Türkçe beceriler `durum/calis/otonom/damit/cv-init` (3.3), otonomi çekirdeği: kapılar, kilit, proje payı, hafıza özeti, çevrim, kurtarma (3.2), CLI `init/doctor/status/gate/lock/cycle/recover` (3.1), evrim `distill/update` (3.5), ucuz model ajanı + ayrık şeritler + `builtin:crlf` eklentisi (3.2 delegate), testler.
