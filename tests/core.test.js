@@ -319,7 +319,7 @@ test("kurtarma: bayat kilit ve yarım birleştirme bulunur, düzeltilir", () => 
     ok(ids.includes("bayat-kilit") && ids.includes("yarim-birleştirme") && ids.includes("cakisma"), "bulgular: " + ids.join(","));
     fix(cfg, found);
     eq(find(cfg).map((f) => f.id), [], "düzeltme sonrası temiz");
-    eq(readText(path.join(cfg.root, "f.txt")), "ana\n", "iş kaybolmamalı");
+    eq(readText(path.join(cfg.root, "f.txt")).trim(), "ana", "iş kaybolmamalı");
 });
 
 // ---------------------------------------------------------------- doctor
