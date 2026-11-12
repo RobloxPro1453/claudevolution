@@ -1,5 +1,7 @@
 # Değişiklikler
 
+Büyük sürümler burada; her yama sürümü (1.0.1, 1.0.2, …) gerekçesi ve ölçü farkıyla `evolution/CHANGELOG.md` içinde (`cv evolve` yazar).
+
 ## 1.0.0 · 2026-11-12
 
 Paket standart hâline geldi; kapsam dondu (`docs/STANDARD.md`).

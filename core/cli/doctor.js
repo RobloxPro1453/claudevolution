@@ -49,6 +49,8 @@ export function check(root, { runCommands = false } = {}) {
         if (!exists(path.join(root, cfg.tasks.rules))) missing.push(cfg.tasks.rules);
         if (missing.length) bad("eksik dosyalar: " + missing.join(", "), "`cv init` yeniden çalıştırın; eksikleri tamamlar, var olana dokunmaz.");
         else ok(".evrim, belgeler ve beceriler tam");
+        // A model outside the loop skills reads AGENTS.md first; without the section it never learns `cv lesson`.
+        if (!/cv lesson/.test(readText(path.join(root, cfg.docs.agents), ""))) info(`${cfg.docs.agents} içinde claudevolution bölümü yok (ders kuralı: cv lesson)`, `Paketteki templates/project/AGENTS.md > "## claudevolution" bölümünü ${cfg.docs.agents} dosyasına ekleyin; döngü dışındaki oturum ders yazmayı ancak oradan öğrenir.`);
         const ver = readText(path.join(root, ".evrim", "version"), "").trim();
         if (!ver) bad(".evrim/version yok", "`cv init` yeniden çalıştırın.");
         else if (ver !== VERSION) info(`proje sürümü ${ver}, paket ${VERSION}`, "`cv update` ile farkı görün.");

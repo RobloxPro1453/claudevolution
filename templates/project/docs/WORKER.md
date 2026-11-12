@@ -19,13 +19,13 @@ Başlatma: tek tur için `calis` becerisi ya da genel bir söz ("çalış", "dev
 
 ## Takılınca
 
-Hata, zaman aşımı, kilitli dosya normaldir: teşhis et, başka yol dene. Aynı hata 3 denemede düzelmiyorsa değişikliği geri al, öğrendiğini `docs/KNOWLEDGE.md`'ye yaz, başka işe geç. Testler kırmızıyken commit yok; kırık kod bırakma.
+Hata, zaman aşımı, kilitli dosya normaldir: teşhis et, başka yol dene. Aynı hata 3 denemede düzelmiyorsa değişikliği geri al, öğrendiğini `docs/KNOWLEDGE.md`'ye yaz (tekrar eden ya da pahalı bir dersse `cv lesson`; başka projede de doğruysa `--evrensel`), başka işe geç. Testler kırmızıyken commit yok; kırık kod bırakma.
 
 ## Sınırlar
 
 - Soru sorma, onay bekleme: kararı ver, gerekçesini PROGRESS kaydına yaz. Cevap beklemeyen soruyu `.evrim/otonom/SORULAR.md`'ye bırak ve güvenli varsayılanla ilerle.
 - Sahibinin açtığı pencereleri ve senin başlatmadığın süreçleri kapatma. Gerçek kullanıcı verisine dokunma.
-- Uzak depo ekleme, push yapma, program kurma, sistem ayarı değiştirme.
+- Uzak depo ekleme, push yapma, program kurma, sistem ayarı değiştirme. (Paketin push'unu yalnız `cv lesson --evrensel` / `cv evolve` yapar.)
 - `docs/VISION.md` sahibinindir.
 
 ## Durma

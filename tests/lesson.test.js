@@ -71,9 +71,10 @@ test("cv.cmd sarmalayıcısı call kullanmaz; yüzde işaretli argüman bozulmad
     const dir = tmpDir("shim");
     const shim = path.join(dir, "cv.cmd");
     writeText(shim, text);
-    const r = run("cmd.exe", ["/d", "/c", shim, "version", "--x", "%34->%39"], { timeoutMs: 60000 });
+    const r = run("cmd.exe", ["/d", "/c", shim, "version", "--x", "%34-%39"], { timeoutMs: 60000 });
     ok(r.ok, r.text);
     // The version command ignores extra flags; what matters is that cmd did not expand %3.
+    // No ">" in an unquoted argument: cmd would redirect into a file named "%39" in the working folder.
     const echo = path.join(dir, "echo.cmd");
     // Both launch lines (Node and the Deno fallback) print their arguments instead.
     writeText(echo, text.replace(/^(node|deno run -A --quiet) "%CV_PKG%\\bin\\cv\.js" %\*(?=\r?$)/gm, "echo %*"));

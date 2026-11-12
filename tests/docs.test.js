@@ -66,3 +66,45 @@ test("beceri: her Türkçe becerinin İngilizcesi var; ad ve çağırdığı cv 
     init(p, { name: "en", lang: "en" });
     ok(readText(path.join(p, ".claude/skills/otonom/SKILL.md")).includes("# Autonomous cycle"), "İngilizce beceri kuruldu");
 });
+
+// Cold start: a fresh model opened in a project reads CLAUDE.md -> AGENTS.md -> the package README.
+// Each question below was put to context-free agents; the facts are what a correct answer needs.
+// If a document stops carrying one of them, a cold agent gets that question wrong again.
+export const COLD_START = [
+    { q: "Bu sistemi yeni bir projeye nasıl kurarım?", where: "readme", facts: ["git clone", "Node ≥ 18 ya da Deno", "bin/cv.cmd init", "cv-init", "cv adopt", "cv update --apply"] },
+    { q: "Gözetimsiz bir çevrim nasıl başlar ve adım adım nasıl işler?", where: "readme", facts: ["otonom becerisini yükle ve bir çevrim yap", "/loop", "cv cycle begin", "KARAR", "cv cycle end", "OZET.md"] },
+    { q: "Yalnız bu projeye özgü ders ile her projede geçerli ders nasıl yazılır, ne olur?", where: "readme", facts: ["cv lesson \"<ders>\"", "--evrensel", "DERSLER.md", "[evrensel→taşındı", "[evrensel]"] },
+    { q: "Kota yüksekken ne olur?", where: "readme", facts: ["%85", "%90", "60 + 30·f", "KUCUK", "CIK", "cv cycle sleep"] },
+    { q: "Pakete bir değişiklik nasıl girer, diğer projeler nasıl alır?", where: "readme", facts: ["evrim/<ad>", "cv evolve", "bench/", "gizlilik", "REJECTED.md", "cv update --apply"] },
+    { q: "Döngü dışında, normal oturumda genel bir ders öğrendim; ne yaparım?", where: "agents", facts: ["döngü dışında da", "--evrensel", "damıtmayı bekleme"] },
+    { q: "Push yapabilir miyim? Proje ile paket farkı?", where: "both", facts: ["push", "cv lesson --evrensel", "cv evolve"] }
+];
+
+test("belge: soğuk başlangıç soruları README ve proje şablonundan cevaplanıyor", () => {
+    const readme = doc("README.md"), agents = readText(path.join(TEMPLATE_DIR, "AGENTS.md"));
+    eq(readText(path.join(TEMPLATE_DIR, "CLAUDE.md")).trim(), "@AGENTS.md", "şablon CLAUDE.md AGENTS.md'yi içe alır");
+    eq(doc("CLAUDE.md").trim(), "@AGENTS.md", "paket CLAUDE.md AGENTS.md'yi içe alır");
+    ok(agents.includes("## claudevolution") && agents.includes("packageHome") && agents.includes("README.md"), "şablon AGENTS paket README'sine yol gösterir");
+    for (const { q, where, facts } of COLD_START) {
+        const texts = where === "both" ? [readme, agents] : [where === "agents" ? agents : readme];
+        for (const t of texts) for (const f of facts) ok(t.includes(f), `${q} → ${where}: eksik "${f}"`);
+    }
+    const g = defaults().autonomy.gates;
+    ok(readme.includes(`%${g.fiveHourNoNewStep}`) && readme.includes(`${g.weeklyBase} + ${g.weeklySlope}·f`), "README kapıları config ile aynı");
+    for (const s of ["tr", "en"]) {
+        const never = doc(`skills/${s}/otonom/SKILL.md`).split("\n").filter((l) => /^- .*push/i.test(l));
+        ok(never.length > 0 && never.every((l) => l.includes("cv lesson --evrensel")), s + " otonom: push yasağı paket istisnasını söylüyor");
+    }
+});
+
+test("doctor: AGENTS.md'de claudevolution bölümü yoksa söyler", async () => {
+    const { init } = await import("../core/cli/init.js");
+    const { check } = await import("../core/cli/doctor.js");
+    const { tmpDir } = await import("./harness.js");
+    const p = tmpDir("cold");
+    init(p, { name: "cold" });
+    const has = (r) => r.rows.some(([, t]) => /claudevolution bölümü yok/.test(t));
+    eq(has(check(p)), false, "şablonla kurulan projede bölüm var");
+    fs.writeFileSync(path.join(p, "AGENTS.md"), "# kurallar\n");
+    eq(has(check(p)), true, "bölüm silinince uyarı");
+});

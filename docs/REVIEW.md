@@ -1,5 +1,7 @@
 # İnceleme (Opus 5.5)
 
+> **Tarihçe** (paketin kuruluşu, 2026-11-12): güncel kural değil. Güncel sistem: `README.md`.
+
 ## 2026-11-12 05:50 · Fable v0.1.0 kurulumu
 
 Fable 5.2 limit freninde (%76) durdu, 8 commit. Bitiş ölçüsü (FABLE_PROMPT §5):

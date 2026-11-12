@@ -11,7 +11,7 @@ Sahibi teknik bilmeyebilir. Kısa cümleler, her seferinde tek soru, seçenekli 
 
 ## 1. İskelet
 
-`.evrim/config.json` yoksa: `cv init --name <ad>` (var olan dosyayı ezmez; çakışanın yanına `.new` bırakır). Çıktıdaki `.new` dosyalarını sahibine söyle: "Sende zaten şu dosyalar vardı, dokunmadım; yenileri yanlarında duruyor."
+`.evrim/config.json` yoksa: `cv init --name <ad>` (var olan dosyayı ezmez; çakışanın yanına `.new` bırakır). Çıktıdaki `.new` dosyalarını sahibine söyle: "Sende zaten şu dosyalar vardı, dokunmadım; yenileri yanlarında duruyor." `AGENTS.md.new` ya da `CLAUDE.md.new` çıktıysa en azından şablonun `## claudevolution` bölümünü var olan `AGENTS.md`'ye ekle ve `CLAUDE.md`'de `@AGENTS.md` satırı olsun: döngü dışındaki oturum ders kuralını (`cv lesson`) yalnız oradan öğrenir. `cv doctor` eksikse söyler.
 
 Var olan, kendi düzeni olan bir projeyse `cv adopt` çalıştır ve üretilen eşleme planını sahibine özetle; `--apply` yalnız sahibi "uygula" derse.
 

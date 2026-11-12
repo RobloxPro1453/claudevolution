@@ -78,7 +78,7 @@ You, not the owner, must notice wasted money and quota:
 ## 7. Never
 
 - Change system settings, install/uninstall programs, download files from the internet, delete files outside the project and your own working copies.
-- Push, touch a remote, merge a branch waiting for the owner's approval.
+- Push the project, touch a remote, merge a branch waiting for the owner's approval. (Only exception is the package: `cv lesson --evrensel` does its own measured push; never push by hand.)
 - Loosen `.evrim/config.json` > `forbiddenWrite` or the quota thresholds.
 - Write the key anywhere. Touch another project's files.
 

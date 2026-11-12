@@ -23,6 +23,8 @@ Bu klasör projenin **claudevolution** katmanıdır. Sahibi için sade anlatım 
 .evrim/cv status      şu an ne durumda
 .evrim/cv doctor      gözetimsiz çalışmaya hazır mı
 .evrim/cv lock status döngü çalışıyor mu, uyuyor mu
+.evrim/cv lesson "<ders>" [--evrensel]   ders yaz (evrensel: hemen pakete; paketin README'si § 4)
+.evrim/cv update      paketin yeni sürümünü göster (--apply ile al)
 ```
 
 Windows'ta `.evrim\cv.cmd status` biçiminde yazılır.

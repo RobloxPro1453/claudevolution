@@ -14,11 +14,11 @@ Claude bir projede çalışırken öğrendiklerini unutmasın, ucuz bir modele i
 
 ## Kurulum (bir kez)
 
-1. Bilgisayarda **Node** ya da **Deno** kurulu olmalı (bu bilgisayarda Deno var, yeter).
+1. Bilgisayarda **Node** ya da **Deno** kurulu olmalı (biri yeter) ve paket bir kez indirilmiş olmalı (`git clone https://github.com/RobloxPro1453/claudevolution`).
 2. Claude'a proje klasöründe şunu yaz: **"claudevolution kurulumunu yap"**. Claude `cv init` komutunu çalıştırır, eksik belgeleri ekler, var olan hiçbir dosyanı ezmez (farklıysa yanına `.new` uzantılı bir kopya bırakır).
 3. Sonra Claude seninle projenin hedefini (VISION) konuşarak doldurur.
 
-Var olan, kendi düzeni olan bir projede (Fotosop gibi) önce **plan** çıkar: Claude'a "adopt planını göster" de. Plan, hangi dosyanın nereye gideceğini listeler; sen onaylamadan hiçbir şey değişmez.
+Var olan, kendi düzeni olan bir projede önce **plan** çıkar: Claude'a "adopt planını göster" de. Plan, hangi dosyanın nereye gideceğini listeler; sen onaylamadan hiçbir şey değişmez.
 
 ## Bilgisayar ayarları (gece çalışacaksa)
 
@@ -77,7 +77,7 @@ Kendi kendine durduğu durumlar (hepsi bilerek):
 ## Güvenlik sözleri
 
 - Var olan dosyalarını ezmez; silmez. Emin olmadığı her şeyde en geri alınabilir yolu seçer ve kararını yazar.
-- Senin onayın olmadan internete bir şey göndermez (push yok).
+- Projenin kodunu internete göndermez (push yok). Tek istisna paketin kendisi: her projede işe yarayacak bir ders öğrenince onu ölçüp paketin GitHub deposuna gönderir; kişisel bilgi, yol, anahtar taramadan geçemez.
 - Ucuz model bazı dosyalara hiç yazamaz (kurallar, vizyon, gizli klasörler); bu liste yalnız senin sözünle değişir.
 
 ## Sık sorulanlar

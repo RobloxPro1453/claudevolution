@@ -76,7 +76,7 @@ Modelin sormadan değiştirebildikleri: adım sınırı, araç çıktı sınırl
 
 ## 8. Evrim: yerel ders, evrensel ders
 
-- Her çevrim tekrar eden ya da pahalı bir durumdan tek satır ders yazar (`.evrim/otonom/DERSLER.md`, ≤40 satır).
+- Her oturum (döngü içinde ya da dışında) tekrar eden ya da pahalı bir durumdan tek satır ders yazar: `cv lesson` → `.evrim/otonom/DERSLER.md`, ≤40 satır. Başka projede de doğruysa `--evrensel` ile o an pakete gider (damıtmayı bekleyen ders projede unutuluyordu).
 - **Damıtma** (günde bir ya da her N çevrimde, kotanın ≤%10'u): projeden bağımsız dersler pakete taşınır: tercihen doğrudan ilgili beceri/şablon/kod metnine, olmazsa `evolution/universal/DERSLER.md`'ye. Her taşıma `evolution/CHANGELOG.md`'de bir deney kaydıdır.
 - **Seçilim:** dört ölçü (biten iş başına kota, ilk deneme oranı, boşa çevrim, sahibinin itirazları). K çevrim sonra ölçü kötüleştiyse değişiklik geri alınır.
 - **Paylaşım:** aynı makinede birden çok proje kotayı ağırlıkla paylaşır (makine kilidi + sıra); bir projenin öğrendiği genel ders `cv update` ile hepsine gider.

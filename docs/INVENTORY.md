@@ -1,5 +1,7 @@
 # Envanter: Fotosop'taki dağınık hazine
 
+> **Tarihçe** (paketin kuruluşu, 2026-11-12): güncel kural değil. Güncel sistem: `README.md`.
+
 Kaynak proje: `%USERPROFILE%\Desktop\fotosop` (dal `develop`). Çıkarım: Opus 5.5, 2026-11-12. Her parça: ne işe yarıyor, **E** = evrensel (her projede işe yarar), **Y** = yerel (Fotosop'a özgü), **K** = karışık (iskeleti evrensel, içeriği yerel; ayrılması gerek).
 
 Fotosop'un kendi önceki ayırma notu `docs/workflow/ENGINE_IDEA.md` (bu deponun tohumu; okunmalı).
