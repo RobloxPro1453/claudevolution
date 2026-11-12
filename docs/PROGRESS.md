@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 · İlk gerçek evrimler + Fotosop göçü (Opus 5.5)
+`cv evolve` gerçek adaylarla iki kez çalıştı: v1.0.1 (yedek varsayılanı `self`), v1.0.2 (otonom döngü başında Remote Control); ikisi de ölçülüp push edildi. Fotosop `cv adopt --apply` ile göçtü (develop bfdd906). Bilinen hata: adopt, "kalır" denen var olan belgeler için de şablon `.new` bırakıyor (14 dosya, elle silindi); düzeltme bir sonraki gerçek evrim adayı.
+
 ## 2026-11-12 · v1.0 iş 4: cv evolve + STANDARD (Opus 5.5)
 `cv evolve` (Goodhart kapısı, adayın kendi ölçümü, gizlilik taraması, sürüm, CHANGELOG, push), `damit` becerisi buna bağlandı, `docs/STANDARD.md`. Test koşucusu bozuk dosyayı artık atlamıyor. 60/60. K28.
 
