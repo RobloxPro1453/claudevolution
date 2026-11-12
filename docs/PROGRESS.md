@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 08:47 · 6. core README'leri (Opus)
+`core/{delegate,probe,reference}/README.md` yazıldı (metrics 1. maddede); eklenti arayüzleri, kayıt biçimleri, ad kuralı. Yer tutucu kalmasın testi, 42/42. K22.
+
 ## 2026-11-12 08:45 · 5. METHOD (Opus)
 `docs/METHOD.md`: iş bölümü, paket düzeni, bağlam, ölçüm, değişmez kurallar, deney, otonomi, evrim; proje adı yok. Eşikleri config'e bağlayan test, 41/41. K21.
 

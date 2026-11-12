@@ -41,3 +41,10 @@ test("belge: METHOD'daki eşikler config ile aynı; projeye özgü ad yok", () =
     ok(m.includes(`≤${d.evolution.lessonsMax} satır`) && m.includes(`≤%${d.evolution.distillQuotaShare}`), "evrim sınırları");
     eq(/fotosop|photopea/i.test(m), false, "projeye özgü ad");
 });
+
+test("belge: core/* klasörlerinin README'si yer tutucu değil", () => {
+    for (const d of fs.readdirSync(path.join(PKG_ROOT, "core"), { withFileTypes: true }).filter((e) => e.isDirectory() && !["cli", "lib"].includes(e.name))) {
+        const t = readText(path.join(PKG_ROOT, "core", d.name, "README.md"), "");
+        ok(t.split("\n").length > 10 && !/Boş: Fable/.test(t), "yer tutucu: core/" + d.name);
+    }
+});

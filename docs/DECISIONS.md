@@ -94,3 +94,7 @@ Sahibi teknik bilmiyor; rehber her işi "Claude'a şunu yaz" ya da "şu dosyaya 
 ## K21. METHOD.md ilke anlatır, komut tekrarlamaz; proje adı içermez
 
 Kaynak üç belge (paket düzeni, token optimizasyonu, ayırma notu) ~370 satırdı ve projeye özgü yollar, tur numaraları, iş kimlikleri taşıyordu. METHOD.md sekiz bölümde yalnız ilkeyi ve gerekçesini tutar (iş bölümü + 0,5 devir eşiği, paket düzeni, bağlam maliyeti, ölçüm, değişmez kurallar, deney, otonomi, evrim); komut ayrıntısı beceride ve kodda kalır (iki yerde yazılan şey ayrışır). Proje adı geçmez; kaynak INVENTORY'de. Eşikler testle config'e bağlı (K19 ile aynı gerekçe). Ders 16 artık METHOD §4'te de duruyor (INVENTORY sütunu güncellendi).
+
+## K22. core README'leri arayüz sözleşmesidir
+
+`core/delegate` (komutlar, güvenlik, sağlayıcı, eklenti arayüzü, kayıt biçimi), `core/metrics` (satır alanları, birimler), `core/probe` ve `core/reference` (eklenti arayüzü, ad kuralı, config) belgelendi. probe/reference README'leri 7. maddeden önce yazıldı: önce sözleşme, sonra kod; kod sözleşmeye uyar. Bir testi yer tutucu README kalmasın diye var.
