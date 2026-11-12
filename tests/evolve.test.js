@@ -4,7 +4,8 @@ import path from "node:path";
 import { test, tmpDir, eq, ok, throws } from "./harness.js";
 import { git, readJson, readText, writeJson, writeText } from "../core/lib/util.js";
 import { evolve, bumpPatch } from "../core/evolve/evolve.js";
-import { scanText } from "../core/evolve/privacy.js";
+import { scan, scanText } from "../core/evolve/privacy.js";
+import { PKG_ROOT } from "../core/lib/config.js";
 
 const BASE = { version: "1.0.0", A: { ok: true, passed: 10, total: 10 }, B: { passed: 20, total: 20, failed: [] }, sizes: { codeLines: 1000, skillLines: 100, templateLines: 100 } };
 const same = () => structuredClone(BASE);
@@ -61,10 +62,12 @@ test("evrim: kapı kırılırsa ret (senaryo kaybı, test silme)", () => {
 });
 test("evrim: gizlilik taraması kişisel yolu ve e-postayı yakalar", () => {
     const { root } = pkgRepo();
-    candidate(root, "sizinti", { "skills/b.md": "bkz C:\\Users\\ali\\proje\n" });
+    // Leak samples are assembled at run time so this file itself stays clean for the real scan.
+    const J = (...p) => p.join("");
+    candidate(root, "sizinti", { "skills/b.md": J("bkz C:\\", "Users\\ali\\proje\n") });
     const r = evolve({ root, branch: "evrim/sizinti", bench: same });
     ok(!r.accepted && /gizlilik/.test(r.why), r.why);
-    eq(scanText("ali@gmail.com sk-0123456789abcdefghijKLMN /home/veli/x").map((f) => f.rule), ["anahtar", "e-posta", "kişisel yol"]);
+    eq(scanText(J("ali", "@", "gmail.com sk-", "0123456789abcdefghijKLMN /ho", "me/veli/x")).map((f) => f.rule), ["anahtar", "e-posta", "kişisel yol"]);
     eq(scanText("noreply@anthropic.com test@example.invalid sk-abcdefghijklmnopqrstuvwxyz %USERPROFILE%\\x C:\\Users\\<ad>\\x"), []);
 });
 test("evrim: kirli ağaçta ya da yanlış dal adında çalışmaz; sürüm artırma", () => {
@@ -73,4 +76,7 @@ test("evrim: kirli ağaçta ya da yanlış dal adında çalışmaz; sürüm art�
     throws(() => evolve({ root, branch: "evrim/x", bench: same }), /temiz değil/, "kirli");
     throws(() => evolve({ root, branch: "ozellik/x", bench: same }), /evrim\/<ad>/, "ad");
     eq([bumpPatch("1.0.9"), bumpPatch("0.1.0")], ["1.0.10", "0.1.1"]);
+});
+test("evrim: paketin kendisi gizlilik taramasından temiz geçer (yoksa her evrim reddedilir)", () => {
+    eq(scan(PKG_ROOT).map((f) => `${f.file}:${f.line} ${f.rule}`), []);
 });
