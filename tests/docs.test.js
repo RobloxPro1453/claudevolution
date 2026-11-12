@@ -48,3 +48,21 @@ test("belge: core/* klasörlerinin README'si yer tutucu değil", () => {
         ok(t.split("\n").length > 10 && !/Boş: Fable/.test(t), "yer tutucu: core/" + d.name);
     }
 });
+
+test("beceri: her Türkçe becerinin İngilizcesi var; ad ve çağırdığı cv komutları aynı; --lang en onları kurar", async () => {
+    const dir = (l) => path.join(PKG_ROOT, "skills", l);
+    const names = fs.readdirSync(dir("tr")).sort();
+    eq(fs.readdirSync(dir("en")).sort(), names, "aynı beceriler");
+    const cmds = (t) => [...new Set([...t.matchAll(/`cv ([a-z-]+)(?: ([a-z]+))?/g)].map((m) => m[1] + (m[2] ? " " + m[2] : "")))].sort();
+    for (const n of names) {
+        const tr = readText(path.join(dir("tr"), n, "SKILL.md")), en = readText(path.join(dir("en"), n, "SKILL.md"));
+        eq(en.match(/^name: (.+)$/m)[1], tr.match(/^name: (.+)$/m)[1], n + " adı");
+        eq(cmds(en), cmds(tr), n + " cv komutları");
+        ok(/^description: .{40,}/m.test(en) && !/[çğışöüÇĞİŞÖÜ]{2,}/.test(en.match(/^description: (.+)$/m)[1]), n + " açıklaması İngilizce");
+    }
+    const { init } = await import("../core/cli/init.js");
+    const { tmpDir } = await import("./harness.js");
+    const p = tmpDir("en");
+    init(p, { name: "en", lang: "en" });
+    ok(readText(path.join(p, ".claude/skills/otonom/SKILL.md")).includes("# Autonomous cycle"), "İngilizce beceri kuruldu");
+});

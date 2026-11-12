@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 08:51 · 8. İngilizce beceriler (Opus)
+`skills/en/{durum,calis,otonom,damit,cv-init}`: aynı ad ve komutlar, `cv` kodları çevrilmedi. tr/en eşliğini denetleyen test, 46/46. K24.
+
 ## 2026-11-12 08:49 · 7. probe/reference (Opus)
 `cv probe` (eklenti, zaman sınırı, çıktı kesme, ekran adı) + `cv ref name|index|compare` (ad kuralı, indeks, yan yana HTML). 3 yeni test, 45/45. K23.
 

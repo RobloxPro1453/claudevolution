@@ -1,0 +1,22 @@
+---
+name: calis
+description: When the owner says "work", "continue" or "start", runs one round - Claude plans and supervises a package, the cheap model writes the code in parallel lanes; then review, merge, document, measure.
+---
+
+One round = **one package**: 8-30 short specs, parallel lanes. You make the decisions; do not ask the owner questions mid-round. Goal: `docs.vision` > finish line; visible progress every round.
+
+`cv` = `.evrim\cv.cmd` (Windows) or `.evrim/cv`. Paths, commands, lane count and budget live in `.evrim/config.json` (`docs.*`, `tasks.*`, `delegate.*`, `build`, `test`, `baseBranch`).
+
+1. **State.** If `durum` has not run in this session, do its step 1. If no round is open, open one: `cv round start --quota <weekly %> --type <type>`.
+2. **If a branch is waiting** (`cv delegate status` > unreviewed branches), finish it first (step 6).
+3. **Choose the package.** `docs.roadmap` order. Concrete items; no open-ended "scan and find". **Hand-off threshold:** if the spec would be longer than half the code it asks for, or the job is 1-2 edits, do it yourself. What stays with Claude: AGENTS.md > division of work. List what truly cannot be done, without coding it (`SORULAR.md`).
+4. **Short specs.** `tasks.dir`/TEMPLATE.md, 15-40 lines: goal, test, do-not-touch. Research is the agent's scout step; write only the hard facts you already have. "How to test" says what the test reads and how; the "finish blocked if you cannot solve it in 5 steps" rule is in the template. Group similar small jobs into one task (raise steps and budget). **Plan from the start a task that brings the test suite back to green after the package merges** (branches green one by one break together; usually test isolation). Commit the specs to `baseBranch` in one commit.
+5. **Lanes.** `cv delegate batch --lanes <N> <task> <task> ...`. It starts the lanes as **detached processes** and returns at once (they survive the session); it waits by itself in the peak-price window. Each task: scout → implement → one automatic fix pass. **Do not poll**; look with `cv delegate status` only when needed (lane logs under `delegate.stateDir`). While waiting, write the next specs or review finished branches.
+6. **Review (cheap first).** In order, only as far as needed: `cv delegate status` (status, tests, changed files) → `git diff <baseBranch> <branch> --stat` → the diff of changed product files only. The report only when in doubt. Check: did it leave the spec; does the test really measure the behaviour (an always-true check is rejected); reject if it touched a data-loss path.
+7. **Blocked.** If the code is good, make the small fix yourself. Small error: write notes to a file, `cv delegate fix <task> <notes>`; **at most 1 fix pass**. Wrong direction: leave the branch, fix the spec, put it in the next package.
+8. **Merge.** Finished branches one by one: `git merge --no-ff <branch>`. In additive conflicts (lists, tables, appended tests) keep both sides, then check syntax, JSON and duplicate keys. If a compiled binary conflicts, take one side, touch its source, let it rebuild. Then build + test **once**; never leave broken code. Delete merged branches.
+9. **Document (diet).** Visible items to `docs.changelog`, ticks in `docs.roadmap`, one short entry in `docs.progress`. `docs.knowledge`/`docs.checkup` only for a genuinely new finding. The spec's `Status:` line. One commit.
+10. **Close.** `get_usage`, then `cv round end --quota <weekly %> [--bugs "..."] [--waste "..."]`; commit the metrics file. If the quota allows (`cv gate --five .. --week ..` → `GO`), write and start the next package's specs; otherwise stop.
+11. **Summary.** To the owner, in their language, briefly: what arrived (visible items), how many lines, cheap-model cost, what to try by hand, next package. Every number from `cv round show` or another command's output.
+
+Rules: `git status` ends clean; no merge before tests pass; every diff is read; the key is written nowhere; after a second round in the same session, suggest a new session.
