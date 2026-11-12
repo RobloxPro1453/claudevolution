@@ -28,7 +28,7 @@ Ask all of them at once as a numbered list; the owner answers in any order and l
 5. **What does "good" look like?** Look, speed, simplicity… something you take as a model.
 6. **What must never break?** (E.g. "my notes must never be lost".)
 7. **Who writes the code?** Explain plainly, with the cost:
-   - "I (Claude, the strongest model) write all of it: the safest way, but your Claude usage limit fills faster." → `kendisi`
+   - "I (Claude, the strongest model) write all of it: the safest way, but your Claude usage limit fills faster." → `kendisi` ("me" is this session's model; if they want "only Opus", tell them to always open sessions with Opus and write it in the vision)
    - "A cheap AI (DeepSeek) writes, I plan and review: your limit lasts long, you pay a small fee; you need a DeepSeek key on your computer (I explain step by step)." Without the key: "wait" → `yalniz-api`, "you write" → `api-yoksa-kendisi`.
    - "If the cheap model is missing, a smaller Claude model writes." → `api-yoksa-subagent` (`subagentModel`).
 8. **Should it work while you are away?** (At night, at school. If yes, I explain the computer settings later.)
@@ -53,7 +53,7 @@ Summarise the plan to the owner briefly and plainly ("We will build this, in thi
 
 ## 5. Preparing unattended work
 
-If question 8 was "yes", run `cv doctor`; for each ✗ say step by step and plainly what to do (which settings window, which option). Do not change settings yourself. If a key is needed, explain how to add it; the owner must not paste it into the chat.
+If question 8 was "yes" and only Claude writes the code (`kendisi`), say in one sentence: unattended work uses the Claude limit fast; the loop watches the limit, sleeps when it fills and resumes when it renews. Then run `cv doctor`; for each ✗ say step by step and plainly what to do (which settings window, which option). Do not change settings yourself. If a key is needed, explain how to add it; the owner must not paste it into the chat.
 
 ## 6. Finish and hand over
 

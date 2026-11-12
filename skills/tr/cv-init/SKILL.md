@@ -28,7 +28,7 @@ Hepsini tek seferde numaralı liste olarak sor; sahibi istediği sırayla, isted
 5. **"İyi olmuş" neye benziyor?** Görünüş, hız, sadelik… örnek aldığın bir şey.
 6. **Asla bozulmaması gereken ne?** (Ör. "notlarım asla kaybolmasın".)
 7. **Kodu kim yazsın?** Seçenekleri sade anlat, maliyetiyle:
-   - "Hepsini ben (Claude, en güçlü model) yazayım: en sağlam yol, ama Claude kullanım limitin daha çabuk dolar." → `kendisi`
+   - "Hepsini ben (Claude, en güçlü model) yazayım: en sağlam yol, ama Claude kullanım limitin daha çabuk dolar." → `kendisi` ("ben" bu oturumun modelidir; "yalnız Opus" istiyorsa oturumları hep Opus ile açmasını söyle ve VISION'a yaz)
    - "Ucuz bir yapay zekâ (DeepSeek) yazsın, ben planlayıp denetleyeyim: limitin uzun gider, küçük bir ücret ödersin; bunun için DeepSeek'ten bir anahtar alıp bilgisayarına eklemen gerekir (adım adım anlatırım)." Anahtar yokken ne olsun: "bekle" → `yalniz-api`, "sen yaz" → `api-yoksa-kendisi`.
    - "Ucuz model yoksa daha küçük bir Claude modeli yazsın." → `api-yoksa-subagent` (`subagentModel`).
 8. **Sen yokken de çalışsın mı?** (Gece, okuldayken. Evetse bilgisayar ayarlarını sonra anlatırım.)
@@ -53,7 +53,7 @@ Planı sahibine kısa ve sade özetle ("Şunu yapacağız, şu sırayla, ilk gö
 
 ## 5. Gözetimsiz çalışmaya hazırlık
 
-8. soru "evet" ise `cv doctor` çalıştır; her ✗ için ne yapacağını adım adım, sade söyle (hangi ayar penceresi, hangi seçenek). Ayarı sen değiştirme. Anahtar gerekiyorsa ekleme yolunu anlat; anahtarı sohbete yapıştırmasın.
+8. soru "evet" ise ve kodu yalnız Claude yazacaksa (`kendisi`) bir cümleyle söyle: gözetimsiz çalışma Claude limitini hızlı yer; döngü limiti kendisi gözetir, dolunca uyur, yenilenince devam eder. Sonra `cv doctor` çalıştır; her ✗ için ne yapacağını adım adım, sade söyle (hangi ayar penceresi, hangi seçenek). Ayarı sen değiştirme. Anahtar gerekiyorsa ekleme yolunu anlat; anahtarı sohbete yapıştırmasın.
 
 ## 6. Bitir ve yönlendir
 
