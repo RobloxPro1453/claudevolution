@@ -6,3 +6,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-12 · yedek-ana-model (v1.0.1) · sahibinin isteği: anahtar yoksa ana model (Opus) devam etsin, kod kalitesi düşmesin; ölçü: Kat A/B aynı kalmalı · ölçüler eşit · kabul
 - 2026-11-12 · uzaktan-izleme (v1.0.2) · sahibinin isteği: okuldayken telefondan izleyebilsin; ölçü: A/B aynı kalmalı · ölçüler eşit · kabul
 - 2026-11-12 · kullanim-karti (v1.0.3) · sahibinin isteği: telefonda ve PC'de duracak tek sayfalık kullanım kartı · ölçüler eşit · kabul
+- 2026-11-12 · sayac-tum-dallar (v1.0.4) · Ayrı çalışma kopyasında commit edilen iş 'commit'siz çevrim' sayılmasın; ölçü: bosa-cevrim (şimdi 1), K=5 · ölçüler eşit · kabul
