@@ -76,6 +76,7 @@
   "metrics": {
     "_comment": "Tur ölçümleri. claudeProjectDir null ise proje yolundan türetilir (~/.claude/projects/<yol-kısaltması>), yalnız okunur. weights: 'Claude yükü' = (çıktı*20 + önbellekOkuma*0.2 + önbellekYazma*8 + girdi*4)/1e6 × model katsayısı.",
     "file": ".evrim/metrics.jsonl",
+    "table": ".evrim/METRICS.md",
     "stateDir": ".evrim/state/round",
     "claudeProjectDir": null,
     "weights": { "output": 20, "cacheRead": 0.2, "cacheWrite": 8, "input": 4, "modelFactor": { "fable": 1.6, "opus": 1, "sonnet": 0.6, "haiku": 0.2 } }

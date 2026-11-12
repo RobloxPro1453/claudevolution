@@ -74,3 +74,7 @@ Derleme/test programının PATH'te olduğuna bakar; gerçekten koşturmak `--run
 ## K16. Temizlenen yan etki
 
 İlk elle denemede `cv cycle begin` gerçek ev klasöründe `~/.claudevolution` oluşturdu (istem: "sistemde değişiklik yok"). İçeriği yalnız bu denemenin kaydıydı; silindi. Testler `CV_STATE_HOME` ile geçici klasöre yazar; `tests/harness.js` bunu içe aktarmadan önce ayarlar.
+
+## K17. `cv round`: Fotosop betiğinin aynısı, kaynakları config'den
+
+`core/metrics/round.js` Fotosop `scripts/round.js`'in alan alan aynısı (start/end/add/show/table, aynı yük formülü), şu farklarla: yollar ve ağırlıklar `.evrim/config.json`'dan (`metrics.*`, `delegate.stateDir`, `tasks.pattern`, `codePaths`); ucuz model alanı `deepseek` yerine `delegate` (sağlayıcıdan bağımsız; eski satırlar `deepseek` alanıyla da okunur); Claude kayıt klasörü verilmezse proje yolundan türetilir (Claude Code'un adlandırması: harf/rakam dışı her karakter "-"); ucuz modelin kodu `delegate.commitTrailer` ile ayrılır; tablo `metrics.table` (varsayılan `.evrim/METRICS.md`). `round.ps1` taşınmadı: `cv.cmd/cv.ps1` sarmalayıcısı aynı işi görür. **Neden:** Fotosop'ta bir hafta kullanılmış ölçüyle geçmiş satırlar karşılaştırılabilir kalsın.
