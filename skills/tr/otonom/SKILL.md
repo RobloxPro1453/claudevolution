@@ -38,7 +38,7 @@ Sıra:
 1. **Kurtarma bulgusu varsa önce o** (§6). Kırık derleme ya da yarım birleştirme üstüne iş yapılmaz.
 2. **Sahibinin notları.** `ÖNCE:` ile başlayan not sıradaki işin önüne geçer. İtiraz ("beğenmedim", "yapma") gelmişse önce onu düzelt ya da geri al. Her notu işleyince `NOTLAR.md`'de başına `[okundu <tarih>]` yaz. Cevaplanmış soruyu uygula, `SORULAR.md`'de "Kapananlar"a taşı.
 3. **`DAMITMA: evet` ise** bu çevrimin işi damıtmadır: `damit` becerisini yükle, yalnız onu yap.
-4. **Yoksa bir iş adımı:** `docs.worker` belgesindeki döngünün tek adımı. Kaynak: `docs.roadmap` açık maddeleri ve `docs.checkup`. Kod işi tarif edilebiliyorsa ucuz modele (`calis` becerisinin 3-8. adımları; şeritler ayrık süreçtir, bu çevrim bitse de çalışır; sonucu sonraki çevrim toplar). Kritik yerleri (AGENTS.md > İş bölümü) kendin yaz.
+4. **Yoksa bir iş adımı:** `docs.worker` belgesindeki döngünün tek adımı. Kaynak: `docs.roadmap` açık maddeleri ve `docs.checkup`. Kod işi tarif edilebiliyorsa ucuz modele (`calis` becerisinin 3-8. adımları; şeritler ayrık süreçtir, bu çevrim bitse de çalışır; sonucu sonraki çevrim toplar). Anahtar yoksa (`cv delegate which` yedek der) `calis` 5. adımın yedek yolu; durma. Kritik yerleri (AGENTS.md > İş bölümü) kendin yaz.
 
 Çevrim içinde **her 5-6 araç çağrısında bir ve her commit'ten sonra** `get_usage` + `cv gate --five .. --week ..`. `KUCUK`/`CIK` dönerse elindekini commit et (`WIP:` olabilir, derlenir hâlde) ve §4'e geç. Bir çevrim 5 saatlik pencerenin %8'inden fazlasını yememeli; yiyorsa bir sonraki çevrimi küçült.
 

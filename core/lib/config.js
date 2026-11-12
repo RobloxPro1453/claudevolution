@@ -88,6 +88,8 @@ export function validate(cfg) {
     if (!isNum(d.lanes) || d.lanes < 1) err("delegate.lanes: en az 1");
     if (!isNum(d.defaultBudget) || !isNum(d.dailyBudget) || !isNum(d.defaultSteps)) err("delegate.defaultBudget / dailyBudget / defaultSteps: sayı olmalı");
     if (!Array.isArray(d.plugins)) err("delegate.plugins: liste olmalı");
+    if (d.fallback !== undefined && (!Array.isArray(d.fallback) || d.fallback.some((f) => !["claude-subagent", "self"].includes(f)))) err("delegate.fallback: yalnız \"claude-subagent\" ve \"self\" içeren liste olmalı");
+    if (d.subagentModel !== undefined && !/^[a-z0-9.-]+$/i.test(String(d.subagentModel))) err("delegate.subagentModel: model adı olmalı (ör. haiku, sonnet)");
 
     const a = cfg.autonomy || {}, g = a.gates || {};
     for (const k of ["fiveHourNoNewStep", "fiveHourExit", "weeklyBase", "weeklySlope", "weeklyMargin", "cycleShareMax", "stepShareAlarm"]) if (!isNum(g[k])) err(`autonomy.gates.${k}: sayı olmalı`);

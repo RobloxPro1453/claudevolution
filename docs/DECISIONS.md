@@ -106,3 +106,7 @@ Kaynakta yoklama bir PowerShell betiği (uygulamayı test profiliyle açıp beti
 ## K24. İngilizce beceriler: aynı ad, aynı komutlar, Türkçe anahtar sözcükler korunur
 
 `skills/en/` beş becerinin çevirisi; klasör ve `name:` alanı Türkçeyle aynı (`durum`, `calis`, `otonom`, `damit`, `cv-init`): zamanlanmış görev istemi, beceriler arası çağrılar ve `cv` çıktısı ada bağlı, dil değişince kırılmasın. `cv`'nin Türkçe çıktısındaki sabit kodlar (`KARAR: GO|KUCUK|CIK|MESGUL|DUR|SIRA_DEGIL`, `DAMITMA: evet`, `KURTARMA`) ve hafıza dosya adları (`DERSLER`, `OZET`, `NOTLAR`, `SORULAR`) çevrilmedi, yanlarında anlamları yazıldı: kod bu sözcükleri denetliyor. Şablon belgeler Türkçe kalır (K15). Bir test, her Türkçe becerinin İngilizcesinin olduğunu, adların ve çağrılan `cv` komutlarının aynı olduğunu ve `--lang en` kurulumunun İngilizcesini koyduğunu denetler: biri değişip öbürü unutulursa test kırılır.
+
+## K25. Anahtar yoksa iş durmaz: deepseek → claude-subagent → self
+
+Sahibinin DeepSeek anahtarı her zaman tanımlı değil. Paket subagent'ı kendisi çalıştıramaz (Agent aracı yalnız Claude oturumunun içinde var), bu yüzden `cv` yalnız **kimin** yapacağını söyler (`cv delegate which`) ve yedeğe verilecek metni üretir (`cv delegate brief`); beceri Agent aracını çağırır. Brief, API ajanının aldığı kuralların, yasak yolların ve test şartının aynısını taşır: yedek daha gevşek bir yol olmasın. Varsayılan model `haiku` (en ucuz); config'te `sonnet` yapılabilir.

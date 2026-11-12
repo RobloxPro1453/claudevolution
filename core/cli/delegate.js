@@ -2,15 +2,25 @@
 // cv delegate status | stop <lane>
 // cv delegate run <TASK> | fix <TASK> <notes-file> | scout <TASK> | auto <TASK>   [--lane N]  (foreground)
 // cv delegate ask "<question>"
+// cv delegate which | brief <TASK>   who does the work (API key or fallback) and the fallback brief
 import { num } from "../lib/util.js";
 import { project } from "./_project.js";
 import * as agent from "../delegate/agent.js";
 import * as lanes from "../delegate/lanes.js";
+import * as choose from "../delegate/choose.js";
 
 export async function run(args) {
     const cfg = project(args);
     const [sub, ...rest] = args._;
     const p = agent.provider(cfg);
+    if (sub === "which") { console.log(choose.line(choose.choose(cfg))); return 0; }
+    if (sub === "brief" && rest[0]) { console.log(choose.brief(cfg, rest[0])); return 0; }
+    const picked = choose.choose(cfg);
+    if (picked.mode !== "api" && ["batch", "lane", "run", "fix", "scout", "auto", "ask"].includes(sub)) {
+        console.log(`${choose.line(picked)}
+API işi başlatılmadı. Yedek: \`cv delegate brief <iş>\` çıktısını ${picked.mode === "claude-subagent" ? `Agent aracına (model: ${picked.model}) ver` : "kendin uygula"}; kurallar aynıdır.`);
+        return 3;
+    }
     if (sub === "status") { console.log(lanes.statusText(cfg)); return 0; }
     if (sub === "stop" && rest[0]) { console.log(lanes.stop(cfg, parseInt(rest[0], 10))); return 0; }
     if (sub === "batch" && rest.length) {
@@ -39,5 +49,5 @@ export async function run(args) {
         await agent.runTask(ctx, rest[0], null);
         return 0;
     }
-    throw new Error("kullanım: cv delegate batch [--lanes N] [--from N] <iş>... | status | stop <şerit> | run|fix|scout|auto <iş> [--lane N] | ask \"<soru>\"");
+    throw new Error("kullanım: cv delegate batch [--lanes N] [--from N] <iş>... | status | stop <şerit> | run|fix|scout|auto <iş> [--lane N] | ask \"<soru>\" | which | brief <iş>");
 }

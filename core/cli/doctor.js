@@ -1,6 +1,7 @@
 // cv doctor [--run] [--dir PATH]
 // Checks what unattended work needs. Changes nothing; reports, and tells the owner in plain words what to do.
 // --run also runs the build and test commands (bounded by buildMinutes / testMinutes).
+import { choose as chooseWorker } from "../delegate/choose.js";
 import path from "node:path";
 import process from "node:process";
 import { exists, git, isWindows, readText, run as sh } from "../lib/util.js";
@@ -75,9 +76,9 @@ export function check(root, { runCommands = false } = {}) {
             const r = sh(c[0], c.slice(1), { cwd: root, timeoutMs: minutes * 60000 });
             if (r.ok) ok(`${label} geçti`); else bad(`${label} ${r.timedOut ? `${minutes} dakikada bitmedi` : "başarısız (çıkış " + r.code + ")"}`, `${label} komutunu elle çalıştırıp hatayı görün: ${c.join(" ")}`);
         }
-        const p = cfg.delegate.providers[cfg.delegate.provider];
-        if (p && process.env[p.keyEnv]) ok(`ucuz model anahtarı ortamda var (${p.keyEnv})`);
-        else if (p) info(`ucuz model anahtarı yok (${p.keyEnv})`, `Ucuz modele iş vermek için ${p.keyEnv} ortam değişkenini tanımlayın (Windows: Ayarlar > "ortam değişkenleri" araması > Kullanıcı değişkenleri > Yeni). Anahtarı hiçbir dosyaya yazmayın.`);
+        const p = cfg.delegate.providers[cfg.delegate.provider], picked = chooseWorker(cfg);
+        if (picked.mode === "api") ok(`iş dağıtımı: ${picked.name} (${p.keyEnv} ortamda var)`);
+        else info(`iş dağıtımı: yedek ${picked.name}${picked.model ? ` (${picked.model})` : ""}; ${picked.reason}`, `Sorun değil, iş durmaz. Ucuz API modelini kullanmak isterseniz ${p ? p.keyEnv : "anahtar"} ortam değişkenini tanımlayın (Windows: Ayarlar > "ortam değişkenleri" araması > Kullanıcı değişkenleri > Yeni). Anahtarı hiçbir dosyaya yazmayın.`);
     }
 
     // --- machine

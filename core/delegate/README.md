@@ -58,3 +58,7 @@ Eklenti dosyası yoksa ajan başlamaz (bilerek: sessizce eksik araçla çalışm
 ## Kayıtlar
 
 `delegate.stateDir/<iş>.json`: `{ task, cost, runs: [{ startedAt, at, kind: first|fix, before, after, cost, steps, tokens {hit, miss, out}, status: done|blocked, stopReason, testsBy, offpeak }], scout?, summary }`; `asks.jsonl`: soru başına bir satır. `cv round` ve günlük bütçe bunları okur.
+
+## Yedek (anahtar yoksa)
+
+`cv delegate which` → `SAGLAYICI: <ad> (<model>) - <neden>`. Anahtar ortamdaysa API ajanı; değilse `delegate.fallback` sırası: `claude-subagent` (Claude Code Agent aracı, `delegate.subagentModel`) ya da `self` (ana model). `cv delegate brief <iş>` yedeğin uygulayacağı metni basar: kurallar, yasak yollar, derleme/test, dal ve commit satırı, tarif. API komutları (`batch/run/fix/scout/auto/ask`) anahtarsız çağrılırsa başlamaz, yedeği söyler ve 3 ile çıkar.

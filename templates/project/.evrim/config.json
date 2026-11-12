@@ -47,6 +47,9 @@
   "delegate": {
     "_comment": "Ucuz model ajanı ve şeritler. Anahtar YALNIZ ortam değişkeninden okunur (keyEnv); hiçbir dosyaya yazılmaz. worktreeRoot içinde ~ ev klasörü, {project} proje adıdır. peakUtc: pahalı saat pencereleri (UTC, hafta içi); şeritler bu saatlerde iş başlatmaz. price: milyon token başına dolar (yoğun saat); dışında offpeakFactor ile çarpılır. plugins: projeye özgü araçlar (proje köküne göre yol) ya da paketle gelenler ('builtin:crlf').",
     "provider": "deepseek",
+    "_comment_fallback": "Anahtar ortamda yoksa iş durmaz, sırayla yedeğe geçer: claude-subagent (Claude Code Agent aracı, subagentModel ile ucuz Claude modeli) ya da self (ana model kendisi yapar). Kurallar, yasak yollar ve testler aynıdır: cv delegate brief <iş>.",
+    "fallback": ["claude-subagent", "self"],
+    "subagentModel": "haiku",
     "providers": {
       "deepseek": {
         "apiBase": "https://api.deepseek.com",

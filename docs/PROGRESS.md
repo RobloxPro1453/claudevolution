@@ -2,6 +2,9 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-12 · v1.0 iş 1: yedek iş dağıtımı (Opus 5.5)
+`cv delegate which|brief`, `delegate.fallback` + `subagentModel`, doctor raporu, calis/otonom (tr+en) yedek yolu, 3 test (49/49). K25.
+
 ## 2026-11-12 08:52 · Eksik listesi bitti: HAZIR (Opus)
 8 madde kapandı, 7 bitiş şartının hepsi geçti (REVIEW.md), testler 46/46. Kota: 5 saatlik pencere %19, haftalık %43. Sıradaki: sahibinin onayıyla Fotosop'a `cv adopt --apply`, sonra iki yerel eklenti ve ilk damıtma.
 

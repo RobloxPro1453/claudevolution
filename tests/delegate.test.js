@@ -108,3 +108,28 @@ test("şerit: işler şeritlere sırayla dağılır; CRLF eklentisi", () => {
     eq(crlf.beforeEdit("x\r\ny\r\nz\r\n", "x\ny", "x\nq"), { old_text: "x\r\ny", new_text: "x\r\nq" });
     eq(crlf.beforeEdit("x\ny\n", "x\ny", "x\nq"), { old_text: "x\ny", new_text: "x\nq" });
 });
+
+// --- fallback when the cheap-model key is missing (owner decision 2026-11-12)
+import * as choose from "../core/delegate/choose.js";
+import { validate as validateCfg } from "../core/lib/config.js";
+test("yedek: anahtar varsa API, yoksa claude-subagent, liste boşsa self", () => {
+    const cfg = project();
+    eq(choose.choose(cfg, { DEEPSEEK_API_KEY: "x" }).mode, "api", "anahtar var");
+    const fb = choose.choose(cfg, {});
+    eq([fb.mode, fb.model], ["claude-subagent", "haiku"], "anahtar yok");
+    ok(/^SAGLAYICI: claude-subagent \(haiku\) - DEEPSEEK_API_KEY ortamda yok$/.test(choose.line(fb)), "satır: " + choose.line(fb));
+    eq(choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: ["self"] } }, {}).mode, "self", "yalnız self");
+    eq(choose.choose({ ...cfg, delegate: { ...cfg.delegate, fallback: [] } }, {}).mode, "self", "boş liste");
+});
+test("yedek: brief aynı kuralları, yasak yolları, testi ve tarifi taşır", () => {
+    const cfg = project(), b = choose.brief(cfg, "T-001");
+    for (const s of ["## Kurallar", "Yazması yasak", "evrim", "Test kırmızıysa", "cv/T-001", "src/b.js eklensin", cfg.delegate.commitTrailer]) ok(b.includes(s), "briefte yok: " + s);
+    let threw = false; try { choose.brief(cfg, "T-999"); } catch (_) { threw = true; } ok(threw, "olmayan tarif");
+});
+test("yedek: config yanlış fallback değerini reddeder", () => {
+    const cfg = project();
+    const bad = { ...cfg, delegate: { ...cfg.delegate, fallback: ["gpt"] } };
+    const msg = validateCfg(bad).errors.join(" | ");
+    ok(/delegate\.fallback/.test(msg), "hata metni: " + msg);
+    eq(validateCfg(cfg).errors.filter((e) => /fallback|subagent/.test(e)), [], "şablon geçerli");
+});

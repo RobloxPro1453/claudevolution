@@ -38,7 +38,7 @@ Order:
 1. **Recovery findings first** (§6). No work on top of a broken build or a half merge.
 2. **The owner's notes.** A note starting with `ÖNCE:` goes before the next job. If an objection came ("don't like it", "don't do that"), fix or revert that first. After handling each note, prefix it in `NOTLAR.md` with `[okundu <date>]`. Apply answered questions and move them to "Kapananlar" in `SORULAR.md`.
 3. **If `DAMITMA: evet`**, this cycle's job is distillation: load the `damit` skill and do only that.
-4. **Otherwise one work step:** one step of the loop in the `docs.worker` document. Source: open items of `docs.roadmap` and `docs.checkup`. If the code job can be specified, give it to the cheap model (`calis` steps 3-8; lanes are detached processes and keep running after this cycle; the next cycle collects them). Write critical parts yourself (AGENTS.md > division of work).
+4. **Otherwise one work step:** one step of the loop in the `docs.worker` document. Source: open items of `docs.roadmap` and `docs.checkup`. If the code job can be specified, give it to the cheap model (`calis` steps 3-8; lanes are detached processes and keep running after this cycle; the next cycle collects them). If there is no key (`cv delegate which` names a fallback), follow the fallback path of `calis` step 5; do not stop. Write critical parts yourself (AGENTS.md > division of work).
 
 Inside the cycle, **every 5-6 tool calls and after every commit**: `get_usage` + `cv gate --five .. --week ..`. On `KUCUK`/`CIK`, commit what you have (`WIP:` is fine, in a building state) and go to §4. A cycle should not eat more than 8% of the 5-hour window; if it does, make the next cycle smaller.
 
