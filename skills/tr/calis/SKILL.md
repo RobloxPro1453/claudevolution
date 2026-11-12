@@ -1,0 +1,22 @@
+---
+name: calis
+description: Sahibi "çalış", "devam et" ya da "başla" dediğinde bir tur iş yapar - Claude paketi planlar ve denetler, ucuz model kodu paralel şeritlerde yazar; sonra gözden geçirir, birleştirir, belgeler, ölçer.
+---
+
+Bir tur = **bir paket**: 8-30 kısa tarif, paralel şeritler. Kararları sen verirsin; sahibine ara soru sorma. Hedef `docs.vision` > Bitiş çizgisi; tur başına görünür ilerleme.
+
+`cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`. Yollar, komutlar, şerit sayısı, bütçe `.evrim/config.json` içindedir (`docs.*`, `tasks.*`, `delegate.*`, `build`, `test`, `baseBranch`).
+
+1. **Durum.** Bu oturumda `durum` çalışmadıysa onun 1. adımını uygula. Tur açık değilse aç: `cv round start --quota <haftalık %> --type <tür>`.
+2. **Bekleyen dal varsa** (`cv delegate status` > gözden geçirilmemiş dallar) önce onu bitir (adım 6).
+3. **Paket seç.** `docs.roadmap` sırası. Somut maddeler; açık uçlu "tara, bul" yok. **Devir eşiği:** tarif, isteyeceği kodun yarısından uzun olacaksa ya da iş 1-2 düzenlemede bitecekse kendin yap. Claude'da kalanlar: AGENTS.md > İş bölümü. Gerçekten yapılamayanları kodlamadan listele (`SORULAR.md`).
+4. **Kısa tarifler.** `tasks.dir`/TEMPLATE.md, 15-40 satır: hedef, test, dokunulmayacaklar. Araştırmayı ajanın keşif adımı yapar; sen yalnız elindeki kesin bilgiyi yaz. "How to test" bölümü testin neyi nasıl okuyacağını söylesin; "5 adımda çözemezsen blocked bitir" kuralı şablonda var. Benzer küçük işleri tek grup işi yap (adım ve bütçeyi büyüt). **Paket birleşince test takımını yeşile çekecek bir işi baştan planla** (tek tek yeşil dallar birlikte kırılır; sebep çoğunlukla test yalıtımıdır). Tarifleri tek commit'le `baseBranch`'e at.
+5. **Şeritler.** `cv delegate batch --lanes <N> <iş> <iş> ...`. Komut şeritleri **ayrık süreç** olarak başlatır ve hemen döner (oturum kapansa da çalışırlar); yoğun saat penceresinde kendiliğinden bekler. Her iş: keşif → uygulama → bir otomatik düzeltme. **Yoklama yapma**; `cv delegate status` ile yalnız gerektiğinde bak (şerit günlükleri `delegate.stateDir` altında). Beklerken sıradaki tarifleri ya da biten dalların gözden geçirmesini yap.
+6. **Gözden geçir (ucuz).** Sırayla, gerektiği kadar: `cv delegate status` (durum, test, değişen dosyalar) → `git diff <baseBranch> <dal> --stat` → yalnız değişen ürün dosyalarının diff'i. Rapor yalnız şüphede. Bak: tarif dışına çıktı mı; test gerçekten davranışı ölçüyor mu (her zaman doğru dönen kontrol reddedilir); veri kaybı riski olan akışa dokunduysa reddet.
+7. **Blocked.** Kod iyiyse küçük düzeltmeyi sen yap. Küçük hata: notları bir dosyaya yaz, `cv delegate fix <iş> <notlar>`; **en çok 1 düzeltme turu**. Yanlış yön: dalı bırak, tarifi düzelt, sonraki pakete koy.
+8. **Birleştir.** Biten dalları sırayla `git merge --no-ff <dal>`. Toplamalı çakışmada (liste, tablo, test ekleri) iki tarafı da tut, sonra sözdizimini, JSON'u ve yinelenen anahtarı denetle. Derlenmiş ikili çakışırsa birini al, kaynağına dokun, yeniden derlensin. Sonra **bir kez** derleme + test; kırık kod bırakma. Birleşen dalları sil.
+9. **Belgele (diyet).** `docs.changelog`'a görünür maddeler, `docs.roadmap` işaretleri, `docs.progress`'e tek kısa kayıt. `docs.knowledge`/`docs.checkup` yalnız gerçekten yeni bulgu varsa. Tarifin `Status:` satırı. Tek commit.
+10. **Kapat.** `get_usage`, sonra `cv round end --quota <haftalık %> [--bugs "..."] [--waste "..."]`; ölçüm dosyasını commit et. Kota izin veriyorsa (`cv gate --five .. --week ..` → `GO`) sıradaki paketin tariflerini yazıp başlat; vermiyorsa dur.
+11. **Özet.** Sahibine kendi dilinde, kısa: ne geldi (görünür maddeler), kaç satır, ucuz model maliyeti, elle denenecekler, sıradaki paket. Her sayı `cv round show` ya da bir komut çıktısından.
+
+Kurallar: `git status` temiz biter; testler geçmeden birleştirme yok; her diff okunur; anahtar hiçbir yere yazılmaz; aynı oturumda ikinci turdan sonra yeni oturum öner.
