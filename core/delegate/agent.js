@@ -8,6 +8,7 @@ import process from "node:process";
 import { spawn } from "node:child_process";
 import { appendText, exists, expand, num, readJson, readText, slash, writeJson, writeText } from "../lib/util.js";
 import { PKG_ROOT, forbiddenRegexes, safeRel } from "../lib/config.js";
+import { slotCount, withSlot } from "./slots.js";
 
 const MAX_TOOL_OUTPUT = 6000, READ_LINES = 200, LOOP_WARN = 3, LOOP_STOP = 4;
 const tail = (text, n) => String(text).split(/\r?\n/).slice(-n).join("\n");
@@ -133,7 +134,9 @@ export function makeTools(ctx) {
                 if (command === "build" || command === "test") {
                     const c = cfg[command];
                     if (!c) { ctx.track[command === "build" ? "lastBuildOk" : "lastTestOk"] = ctx.track.step; return `no ${command} command is configured for this project (skipped)`; }
-                    const r = await sh(c[0], c.slice(1), ctx.wt, (command === "build" ? cfg.buildMinutes : cfg.testMinutes) * 60000);
+                    // A machine-wide slot first (core/delegate/slots.js); the wait costs no step and no money.
+                    const minutes = command === "build" ? cfg.buildMinutes : cfg.testMinutes;
+                    const r = await withSlot(command, slotCount(cfg, command), minutes + 5, () => sh(c[0], c.slice(1), ctx.wt, minutes * 60000), { log: ctx.log, ...(ctx.slotOpts || {}) });
                     if (!r.code) { if (command === "build") ctx.track.lastBuildOk = ctx.track.step; else { ctx.track.lastTestOk = ctx.track.step; ctx.track.lastTestTail = tail(r.text.trim(), 2); } }
                     return `exit ${r.code}\n` + tail(r.text, 20);
                 }

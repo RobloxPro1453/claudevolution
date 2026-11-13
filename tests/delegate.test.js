@@ -149,3 +149,51 @@ test("iş dağıtımı: delegate.policy sahibinin seçimini uygular; eski fallba
     eq(choose.choose({ ...base, delegate: old }, {}).mode, "claude-subagent", "eski fallback listesi");
     ok(validate({ ...base, delegate: { ...base.delegate, policy: "haiku" } }).errors.some((e) => e.includes("delegate.policy")), "geçersiz policy reddedilir");
 });
+
+test("yuva: makine çapında en çok n eşzamanlı build/test; bekleme bütçeden sayılmaz; bayat yuva temizlenir", async () => {
+    const slots = await import("../core/delegate/slots.js");
+    const dir = path.join(tmpDir("slot"), "slots");
+    let now = 0, peak = 0;
+    const job = async () => { now++; peak = Math.max(peak, now); await new Promise((r) => setTimeout(r, 30)); now--; return "ok"; };
+    const opts = { dir, pollMs: 5, staleMs: 1e9 };
+    const out = await Promise.all(Array.from({ length: 6 }, () => slots.withSlot("test", 2, 10, job, opts)));
+    eq(out, Array(6).fill("ok"), "hepsi koştu");
+    eq(peak, 2, "aynı anda en çok 2");
+    eq(fs.readdirSync(dir).length, 0, "yuvalar geri verildi");
+    // iki eşzamanlı tryTake aynı yuvayı alamaz
+    const a = slots.tryTake("build", 1, dir), b = slots.tryTake("build", 1, dir);
+    ok(a && !b, "ikinci alım reddedilir"); fs.unlinkSync(a);
+    // bayat: pid ölü ya da süre aşımı
+    fs.writeFileSync(path.join(dir, "test-1.lock"), JSON.stringify({ pid: 999999, at: Date.now() }));
+    fs.writeFileSync(path.join(dir, "test-2.lock"), JSON.stringify({ pid: process.pid, at: Date.now() - 20 * 60000 }));
+    fs.writeFileSync(path.join(dir, "test-3.lock"), JSON.stringify({ pid: process.pid, at: Date.now() }));
+    eq(slots.clearStale("test", 10, dir, { alive: (p) => p === process.pid }), 2, "ölü pid + eski yuva silinir, canlı kalır");
+    eq(fs.readdirSync(dir), ["test-3.lock"], "canlı yuva duruyor");
+    // dolu makinede bayat yuva temizlenince iş başlar
+    fs.writeFileSync(path.join(dir, "test-1.lock"), JSON.stringify({ pid: 999999, at: Date.now() }));
+    fs.unlinkSync(path.join(dir, "test-3.lock"));
+    eq(await slots.withSlot("test", 1, 10, async () => "geçti", { dir, pollMs: 5, staleMs: 0, alive: () => false }), "geçti", "bayat yuva beklemeyi kilitlemez");
+    // ayar: delegate.slots, varsayılan 2
+    eq(slots.slotCount({ delegate: {} }, "test"), 2, "varsayılan");
+    eq(slots.slotCount({ delegate: { slots: { test: 4 } } }, "test"), 4, "config");
+    ok(validate({ ...defaults(), delegate: { ...defaults().delegate, slots: { test: 0 } } }).errors.some((e) => e.includes("delegate.slots")), "geçersiz slots reddedilir");
+    eq(defaults().delegate.slots, { test: 2, build: 2 }, "şablon");
+});
+
+test("yuva: ajanın build/test komutu yuva alır, beklerken adım sayılmaz", async () => {
+    const cfg = project();
+    cfg.build = [process.execPath, process.versions.deno ? "eval" : "-e", "setTimeout(()=>{},50)"];
+    const ctx = await agent.newCtx(cfg, 1, silent);
+    await agent.ensureLane(ctx);
+    const dir = path.join(tmpDir("slot2"), "slots");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "build-1.lock"), JSON.stringify({ pid: process.pid, at: Date.now() }));
+    ctx.slotOpts = { dir, pollMs: 5, staleMs: 1e9 };
+    cfg.delegate.slots = { build: 1 };
+    setTimeout(() => fs.unlinkSync(path.join(dir, "build-1.lock")), 60);
+    const steps = ctx.track.step;
+    const r = await ctx.kit.tools.run.run({ command: "build" });
+    ok(/^exit 0/.test(r), "build koştu: " + r);
+    eq(ctx.track.step, steps, "bekleme adım değil");
+    eq(fs.readdirSync(dir).length, 0, "yuva bırakıldı");
+});

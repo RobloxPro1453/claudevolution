@@ -69,6 +69,7 @@
     "branchPrefix": "cv/",
     "linkDirs": [],
     "lanes": 3,
+    "slots": { "test": 2, "build": 2 },
     "defaultSteps": 200,
     "defaultBudget": 1.0,
     "dailyBudget": 5.0,
