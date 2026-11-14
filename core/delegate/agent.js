@@ -9,6 +9,7 @@ import process from "node:process";
 import { spawn, spawnSync } from "node:child_process";
 import { appendText, exists, expand, extractJson, num, readJson, readText, slash, writeJson, writeText } from "../lib/util.js";
 import * as configLib from "../lib/config.js";
+import { isSensitiveFile } from "../evolve/privacy.js";
 import { slotCount, withSlot } from "./slots.js";
 
 const { PKG_ROOT, forbiddenRegexes, realInside, safeRel } = configLib;
@@ -18,8 +19,7 @@ const cap = (text, max = MAX_TOOL_OUTPUT) => (text.length > max ? text.slice(0, 
 
 export const SCOPE_DISCIPLINE = "Scope discipline: make the SMALLEST surgical change that fully satisfies the spec. Prefer the standard library or existing helpers over new dependencies; add no unrequested abstractions, config, or files; do not refactor or reformat unrelated code. Keep error handling, edge cases, and existing tests intact (never delete or weaken assertions to pass).";
 
-const SENSITIVE_RE = /(?:^|\/)(?:\.env(?:\.(?!example$|sample$|template$).+)?|\.envrc(?:\..*)?|\.npmrc|\.netrc|id_(?:rsa|ed25519|ecdsa|dsa)(?:\.pub)?)$|\.(?:pem|key|p12|pfx)$/i;
-export const isSensitivePath = (rel) => SENSITIVE_RE.test(slash(String(rel || "")).replace(/^\.\//, ""));
+export { isSensitiveFile as isSensitivePath };
 
 // Resolve a model-provided path safely inside root, rejecting ".." escapes and symlink/junction escapes.
 export function inside(root, p, allowedLinkDirs = [], { allowRoot = false } = {}) {
@@ -195,7 +195,7 @@ export function makeTools(ctx) {
                 for (const pl of ctx.plugins) if (pl.beforeEdit) ({ old_text, new_text } = pl.beforeEdit(text, old_text, new_text));
                 const count = text.split(old_text).length - 1;
                 if (count !== 1) throw new Error(`old_text found ${count} times; it must be unique. Read the file again and copy the exact text.`);
-                fs.writeFileSync(full, text.replace(old_text, () => new_text));
+                writeText(full, text.replace(old_text, () => new_text));
                 ctx.track.lastWrite = tick();
                 return "edited " + rel;
             }
@@ -614,7 +614,7 @@ export async function safeStage(ctx) {
         }
         for (const rel of paths) {
             if (!rel) continue;
-            if (forbidden.some((r) => r.test(rel)) || isSensitivePath(rel)) {
+            if (forbidden.some((r) => r.test(rel)) || isSensitiveFile(rel)) {
                 skipped.push(rel);
                 if (x !== " " && x !== "?") await runGit(["reset", "HEAD", "--", rel]);
                 continue;

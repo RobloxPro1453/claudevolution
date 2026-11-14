@@ -17,7 +17,7 @@ const COMMANDS = {
     update: "paket sürümüyle projedeki farkı göster (--apply ile uygula)",
     gate: "kota kapısı: --five N --week N [--five-resets ISO] [--week-resets ISO]",
     lock: "çevrim kilidi: status | acquire --session ID | release [--session ID]",
-    cycle: "otonom çevrim: begin | end | sleep",
+    cycle: "otonom çevrim: begin | end | sleep | prime",
     recover: "takılma bulguları (--fix: güvenli olanları düzelt)",
     delegate: "ucuz model: batch | status | stop | run | fix | ask | scout | auto | verify",
     round: "tur ölçümü: start | end | show | table",

@@ -7,7 +7,7 @@ import process from "node:process";
 import { test, tmpDir, eq, ok, throws } from "./harness.js";
 import { extractJson, git, readJson, readText, writeJson, writeText } from "../core/lib/util.js";
 import { defaults, isForbidden, loadConfig, realInside, SECRET_RES, validate } from "../core/lib/config.js";
-import { isSensitiveFile, scan, scanFile, scanText } from "../core/evolve/privacy.js";
+import { allowFakeKey, isSensitiveFile, scan, scanFile, scanText } from "../core/evolve/privacy.js";
 import { init } from "../core/cli/init.js";
 import { apply as adoptApply, plan as adoptPlan } from "../core/cli/adopt.js";
 import { collectClaudeDirs, computeBurnRate, estimateQuota, floorToHour, identifySessionBlocks, projectBlockUsage } from "../core/metrics/blocks.js";
@@ -136,8 +136,9 @@ test("upgrade: büyük-küçük harfe duyarsız ALWAYS_FORBIDDEN, realInside sym
         ok(validate(badCfg).errors.some((e) => /anahtar/.test(e)), "validate reddetmeli");
     }
 
-    ok(isSensitiveFile(".env") && isSensitiveFile(".env.production") && isSensitiveFile("a/b/.npmrc") && isSensitiveFile("id_ed25519") && isSensitiveFile("k.pem"));
+    ok(isSensitiveFile(".env") && isSensitiveFile(".env.production") && isSensitiveFile(".envrc") && isSensitiveFile(".envrc.local") && isSensitiveFile("a/b/.npmrc") && isSensitiveFile("id_ed25519") && isSensitiveFile("keys/id_rsa.pub") && isSensitiveFile("k.pem"));
     ok(!isSensitiveFile(".env.example") && !isSensitiveFile("src/app.js"));
+    ok(allowFakeKey(J("sk-abcdefghij", "1234567890abcdef")) && !allowFakeKey(J("sk-", "proj_1234567890abcdefGHIJKL")));
 
     // Directory-walk fallback when .git is absent: skips refs, node_modules, .evrim
     const nogit = tmpDir("nogit");
@@ -261,18 +262,24 @@ test("upgrade: blocks.js 5s blok/burnRate/projeksiyon, round alt-ajan sayımı v
     });
     eq([gTight.decision, gTight.quotaSource], ["KISITLI", "local-blocks"]);
 
-    // cycle.begin local fallback + noLocalFallback opt-out
+    // cycle.begin & cycle.end local fallback + noLocalFallback opt-out
     process.env.CV_STATE_HOME = path.join(tmpDir("cyc-auto-home"), "home");
-    const b1 = cycle.begin(cfg, { five: "unknown", week: "unknown", session: "sb1" }, new Date(qNow), {
-        quotaOpts: { quota: { fiveHourTokenLimit: 100000, weeklyTokenLimit: 1000000 }, skipMtimePrune: true }
-    });
+    const cycQuotaOpts = { quota: { fiveHourTokenLimit: 100000, weeklyTokenLimit: 1000000 }, skipMtimePrune: true };
+    const b1 = cycle.begin(cfg, { five: "unknown", week: "unknown", session: "sb1" }, new Date(qNow), { quotaOpts: cycQuotaOpts });
     eq([b1.decision, b1.quotaSource], ["GO", "local-blocks"]);
     ok(b1.lines.some((l) => l.includes("KOTA_KAYNAGI: local-blocks")), "KOTA_KAYNAGI satırı basılmalı");
-    cycle.end(cfg, { id: "sb1", did: "ok" }, new Date(qNow));
+    const e1 = cycle.end(cfg, { id: "sb1", did: "ok", five: "unknown", week: "unknown" }, new Date(qNow), { quotaOpts: cycQuotaOpts });
+    ok(e1.some((l) => l.startsWith("KOTA_KAYNAGI: local-blocks")), "cycle.end local-blocks yedeğini kullanmalı");
+    ok(e1.some((l) => l.startsWith("SONRAKI_KAPI: GO ")), "cycle.end local-blocks gate kararı eşleşmeli");
+    eq(cycle.lastQuota(cfg).source, "local-blocks", "quota.json local-blocks kaynağını saklamalı");
+    ok(memory.journalTail(cfg).includes("(local-blocks)"), "günlük satırı local-blocks göstermeli");
 
     const bNo = cycle.begin(cfg, { five: "unknown", week: "unknown", session: "sb2" }, new Date(qNow), { noLocalFallback: true });
     eq([bNo.decision, bNo.quotaSource], ["KUCUK", undefined]);
-    cycle.end(cfg, { id: "sb2", did: "skip" }, new Date(qNow));
+    const eNo = cycle.end(cfg, { id: "sb2", did: "skip", five: "unknown", week: "unknown" }, new Date(qNow), { noLocalFallback: true });
+    ok(!eNo.some((l) => l.startsWith("KOTA_KAYNAGI:")), "noLocalFallback iken local-blocks çalışmamalı");
+    ok(eNo.some((l) => l.startsWith("SONRAKI_KAPI: KUCUK")), "noLocalFallback sonrası kapı KUCUK olmalı");
+    ok(memory.journalTail(cfg).includes("kota okunamadı"), "noLocalFallback günlüğe kota okunamadı yazmalı");
 
     // cv gate --auto CLI
     writeJson(path.join(cfg.root, ".evrim/config.json"), { ...readJson(path.join(cfg.root, ".evrim/config.json")), metrics: { ...cfg.metrics, claudeProjectDir: claudeLogs }, quota: { fiveHourTokenLimit: 100000, weeklyTokenLimit: 1000000 } });
@@ -383,6 +390,7 @@ test("upgrade: agent.js durgunluk kesici, üstel yedekleme/failover, güvenli ev
 
     // Pre-drop a sensitive file in worktree to verify safeStage filters it out while staging src/app.js
     writeText(path.join(ctx.wt, ".env"), "SECRET=123\n");
+    ok(agent.isSensitivePath(".envrc") && agent.isSensitivePath("keys/id_rsa.pub"), "isSensitivePath privacy.js kurallarını yeniden ihraç etmeli");
 
     // Plugin mutation updates ctx.track.lastWrite & inside() denies symlink escape
     const outsideDir = tmpDir("agent-out");
@@ -485,10 +493,71 @@ test("upgrade: verifyTask kapsam, gizli sızıntı, test kalitesi, treeSha tazel
     ok(cats.has("secret_leak"), "diff gizli anahtar sızıntısı yakalanmalı");
     ok(cats.has("test_quality"), "skip/önemsiz test yakalanmalı");
 
-    // CLI cv delegate verify
+    // CLI cv delegate verify + non-test inspectTestQuality guard + scanDiffSecrets fake-key allowlist
     eq(parseDeclaredScope("Scope: src/a.js, tests/a.test.js"), ["src/a.js", "tests/a.test.js"]);
+    const fakeKeyDiff = `+++ b/src/example.js\n@@ -1,0 +1,1 @@\n+const demo = '${J("sk-abcdefghij", "1234567890abcdef")}';\n`;
+    eq(scanDiffSecrets(fakeKeyDiff), [], "scanDiffSecrets test sahte anahtarına (sk-abcdefghij...) izin vermeli");
     eq(scanDiffSecrets(J("+const x = '", "AIza", "SyA1234567890abcdefghijKLMNOPQRSTUV';")).length, 1);
+
+    const nonTestDiff = [
+        "+++ b/core/delegate/verify.js",
+        "@@ -1,0 +1,2 @@",
+        "+const ex = 'test.skip(\"x\", () => { ok(true); });';",
+        "+++ b/docs/METHOD.md",
+        "@@ -1,0 +1,2 @@",
+        "+Example: `it('empty', () => {})` and `ok(true)`",
+    ].join("\n");
+    eq(inspectTestQuality(nonTestDiff, ["docs/OLD.md"]), [], "test dışı .js/.md dosyalarında yanlış pozitif olmamalı");
+    const realTestDiff = "+++ b/tests/real.test.js\n@@ -1,0 +1,1 @@\n+test.skip('x', () => { ok(true); });\n";
+    ok(inspectTestQuality(realTestDiff).length >= 2, "gerçek test dosyasında skip/ok(true) yakalanmalı");
     eq(inspectTestQuality("", ["tests/old.test.js"]).length, 1);
+
+    // Multi-perspective rubric review (--review) via extractJson
+    writeText(path.join(cfg.root, "docs/tasks/T-002.md"), "# T-002\n\nScope: src/clean.js\n\n## Goal\nAdd helper.\n");
+    git(["add", "docs/tasks/T-002.md"], cfg.root);
+    ok(git(["commit", "-qm", "spec2"], cfg.root).ok);
+    ok(git(["checkout", "-qb", "cv/T-002"], cfg.root).ok);
+    writeText(path.join(cfg.root, "src/clean.js"), "export const clean = (n) => n * 2;\n");
+    git(["add", "src/clean.js"], cfg.root);
+    ok(git(["commit", "-qm", "clean impl"], cfg.root).ok);
+    ok(git(["checkout", "-q", "main"], cfg.root).ok);
+
+    let sawXmlPrompt = false;
+    const passReview = await verifyTask(cfg.root, "T-002", {
+        cfg,
+        review: true,
+        chat: async (_c, msgs) => {
+            sawXmlPrompt = msgs[1].content.includes("<spec>") && msgs[1].content.includes("</spec>") && msgs[1].content.includes("<diff>");
+            return {
+                message: {
+                    content: "Verdict below:\n```json\n" + JSON.stringify({
+                        verdict: "PASS",
+                        perspectives: { security: "PASS", correctness: "PASS", scope: "PASS" },
+                        findings: []
+                    }) + "\n```"
+                }
+            };
+        }
+    });
+    ok(sawXmlPrompt, "--review <spec> ve <diff> XML yalıtımı kullanmalı");
+    eq([passReview.verdict, passReview.checks.review.ok, passReview.checks.review.perspectives.security], ["PASS", true, "PASS"]);
+
+    const failReview = await verifyTask(cfg.root, "T-002", {
+        cfg,
+        skipRun: true,
+        review: true,
+        chat: async () => ({
+            message: {
+                content: "Found blocker:\n```json\n" + JSON.stringify({
+                    verdict: "FAIL",
+                    perspectives: { security: "FAIL", correctness: "PASS", scope: "PASS" },
+                    findings: [{ perspective: "security", severity: "critical", blocker: true, file: "src/clean.js", line: 1, description: "unsanitized input" }]
+                }) + "\n```"
+            }
+        })
+    });
+    eq([failReview.ok, failReview.verdict, failReview.checks.review.ok, failReview.checks.review.perspectives.security], [false, "FAIL", false, "FAIL"]);
+    ok(failReview.findings.some((f) => f.category === "review_security" && f.file === "src/clean.js" && f.line === 1 && f.blocker === true), "review_security bulgusu aktarılmalı");
 
     const logs = [];
     const origLog = console.log;

@@ -3,19 +3,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { exists, git, readJson, readText, run as defaultRun, slash, writeJson } from "../lib/util.js";
+import { exists, extractJson, git, readJson, readText, run as defaultRun, slash, writeJson } from "../lib/util.js";
 import * as configLib from "../lib/config.js";
-import { isSensitivePath } from "./agent.js";
-
-const FALLBACK_SECRET_RES = [
-    /(sk-[A-Za-z0-9_-]{20,})/g,
-    /(gh[pousr]_[A-Za-z0-9]{20,})/g,
-    /(github_pat_[A-Za-z0-9_]{20,})/g,
-    /(AKIA[0-9A-Z]{16})/g,
-    /(xox[baprs]-[A-Za-z0-9-]{10,})/g,
-    /(AIza[0-9A-Za-z_-]{35})/g,
-    /(-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----)/g
-];
+import { allowFakeKey, isSensitiveFile } from "../evolve/privacy.js";
+import { chat, provider } from "./agent.js";
 
 const TEST_FILE_RE = /(^|\/)(?:tests?|__tests__|specs?)\//i;
 const TEST_NAME_RE = /(?:^|\/)(?:test|spec)[._-][^/]*$|\.(?:test|spec)\.[a-z0-9]+$|_test\.[a-z0-9]+$/i;
@@ -95,7 +86,7 @@ export function matchesScope(filePath, scopeList, allowedExtras = []) {
 }
 
 function resolveSecretRegexes(override) {
-    const src = override || configLib.SECRET_RES || FALLBACK_SECRET_RES;
+    const src = override || configLib.SECRET_RES || [];
     return (Array.isArray(src) ? src : [src]).map((item) => {
         if (item instanceof RegExp) return new RegExp(item.source, item.flags.includes("g") ? item.flags : item.flags + "g");
         if (item && item.re instanceof RegExp) return new RegExp(item.re.source, item.re.flags.includes("g") ? item.re.flags : item.re.flags + "g");
@@ -103,7 +94,7 @@ function resolveSecretRegexes(override) {
     });
 }
 
-// Scan only added ("+") lines in a unified diff for leaked secrets.
+// Scan only added ("+") lines in a unified diff for leaked secrets (reusing SECRET_RES and allowFakeKey).
 export function scanDiffSecrets(diffText, secretRes = null) {
     const regexes = resolveSecretRegexes(secretRes);
     const hits = [];
@@ -116,14 +107,18 @@ export function scanDiffSecrets(diffText, secretRes = null) {
         if (line.startsWith("+") && !line.startsWith("+++")) {
             lineNum++;
             const body = line.slice(1);
+            let matched = false;
             for (const re of regexes) {
                 re.lastIndex = 0;
-                const m = re.exec(body);
-                if (m) {
+                let m;
+                while ((m = re.exec(body)) !== null) {
                     const tok = m[0];
+                    if (allowFakeKey(tok)) continue;
                     hits.push({ file, line: lineNum, preview: tok.slice(0, 6) + "..." });
+                    matched = true;
                     break;
                 }
+                if (matched) break;
             }
         } else if (!line.startsWith("-")) {
             lineNum++;
@@ -163,7 +158,7 @@ export function inspectTestQuality(diffText, deletedFiles = []) {
         if (line.startsWith("+++ ")) { file = ""; continue; }
         const hunk = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
         if (hunk) { lineNum = Number(hunk[1]) - 1; continue; }
-        if (!file || deletedSet.has(file)) continue;
+        if (!file || deletedSet.has(file) || !isTestFile(file)) continue;
 
         if (line.startsWith("+") && !line.startsWith("+++")) {
             lineNum++;
@@ -205,18 +200,19 @@ export function inspectTestQuality(diffText, deletedFiles = []) {
                     evidence: `${file}:${lineNum} — ${body.trim().slice(0, 120)}`,
                     description: `Trivial/tautological assertion added in ${file}:${lineNum}`
                 });
-            } else if (isTestFile(file) && ASSERTION_RE.test(body)) {
+            } else if (ASSERTION_RE.test(body)) {
                 if (PRESENCE_ONLY_RE.test(body)) rec.presenceOnly++;
                 else rec.added++;
             }
         } else if (line.startsWith("-") && !line.startsWith("---")) {
-            if (isTestFile(file) && ASSERTION_RE.test(line.slice(1))) ensureFile(file).removed++;
+            if (ASSERTION_RE.test(line.slice(1))) ensureFile(file).removed++;
         } else if (!line.startsWith("\\")) {
             lineNum++;
         }
     }
 
     for (const [f, rec] of perFile.entries()) {
+        if (!isTestFile(f)) continue;
         // Multi-line empty test body: `test("x", () => {` followed immediately by `});`
         for (let i = 0; i + 1 < rec.addedLines.length; i++) {
             const cur = rec.addedLines[i], nxt = rec.addedLines[i + 1];
@@ -310,6 +306,134 @@ function prepareExecWorktree(root, branch, cfg, opts) {
     };
 }
 
+// Multi-perspective adversarial LLM rubric review (security, correctness, scope) with XML isolation & JSON extraction.
+export async function reviewWithLenses(cfg, taskId, specText, diffText, opts = {}) {
+    const p = provider(cfg) || {};
+    const chatFn = opts.chat || chat;
+    const key = opts.key || (p.keyEnv && process.env[p.keyEnv]) || (opts.chat ? "offline-review-key" : "");
+    if (!key) {
+        const finding = {
+            category: "review_error",
+            perspective: "security",
+            severity: "major",
+            blocker: true,
+            protects: "Independent LLM review configuration",
+            evidence: `${p.keyEnv || "API key"} is not set`,
+            description: `Cannot run --review without ${p.keyEnv || "API key"}`
+        };
+        return { ok: false, verdict: "FAIL", perspectives: { security: "FAIL", correctness: "FAIL", scope: "FAIL" }, findings: [finding] };
+    }
+
+    const rawDiff = String(diffText || "");
+    const maxChars = opts.maxDiffChars || 60000;
+    const boundedDiff = rawDiff.length > maxChars
+        ? `${rawDiff.slice(0, maxChars)}\n... (diff truncated: ${rawDiff.length - maxChars} more chars)`
+        : (rawDiff || "(empty diff)");
+
+    const messages = [
+        {
+            role: "system",
+            content: [
+                `You are an independent adversarial code reviewer evaluating task ${taskId} using three required perspectives:`,
+                "1. security: secret leaks, path/symlink escapes, auth/permission flaws, injection, unsafe file writes.",
+                "2. correctness: logic bugs, unhandled edge cases, broken invariants, deleted/weakened test assertions.",
+                "3. scope: unrequested edits, unnecessary abstractions, violations of declared task scope.",
+                "",
+                "Respond ONLY with a JSON object matching this exact structure:",
+                "{",
+                '  "verdict": "PASS" | "FAIL",',
+                '  "perspectives": { "security": "PASS" | "FAIL", "correctness": "PASS" | "FAIL", "scope": "PASS" | "FAIL" },',
+                '  "findings": [{ "perspective": "security"|"correctness"|"scope", "severity": "critical"|"major"|"minor", "blocker": true|false, "file": "path", "line": 1, "protects": "...", "evidence": "file:line - reason", "description": "..." }]',
+                "}",
+                'Set verdict to "FAIL" whenever any blocker is true or any perspective is "FAIL".'
+            ].join("\n")
+        },
+        {
+            role: "user",
+            content: `<spec>\n${String(specText || "(none)").trim()}\n</spec>\n\n<diff>\n${boundedDiff}\n</diff>`
+        }
+    ];
+
+    let reply;
+    try {
+        reply = await chatFn(cfg, messages, key, [], opts.chatOpts || {});
+    } catch (e) {
+        const finding = {
+            category: "review_error",
+            perspective: "correctness",
+            severity: "major",
+            blocker: true,
+            protects: "Independent LLM review execution",
+            evidence: String(e.message || e).slice(0, 200),
+            description: `Rubric review request failed: ${String(e.message || e).slice(0, 120)}`
+        };
+        return { ok: false, verdict: "FAIL", perspectives: { security: "FAIL", correctness: "FAIL", scope: "FAIL" }, findings: [finding] };
+    }
+
+    const rawText = typeof reply === "string" ? reply : (reply?.message?.content ?? reply?.content ?? "");
+    const parsed = (reply && typeof reply === "object" && "verdict" in reply && !("message" in reply))
+        ? reply
+        : (typeof rawText === "string" ? extractJson(rawText) : (rawText && typeof rawText === "object" ? rawText : null));
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        const finding = {
+            category: "review_parse",
+            perspective: "correctness",
+            severity: "major",
+            blocker: true,
+            protects: "Structured binary rubric output",
+            evidence: String(rawText || "(empty)").slice(0, 200),
+            description: "Rubric review response did not contain valid JSON"
+        };
+        return { ok: false, verdict: "FAIL", perspectives: null, findings: [finding] };
+    }
+
+    const rawPersp = parsed.perspectives && typeof parsed.perspectives === "object" ? parsed.perspectives : {};
+    const perspectives = {};
+    for (const lens of ["security", "correctness", "scope"]) {
+        if (rawPersp[lens] !== undefined) perspectives[lens] = String(rawPersp[lens]).toUpperCase() === "FAIL" ? "FAIL" : "PASS";
+    }
+
+    const rawFindings = Array.isArray(parsed.findings) ? parsed.findings : [];
+    const findings = rawFindings.map((f) => {
+        const perspective = f.perspective || "correctness";
+        const severity = f.severity || (f.blocker ? "major" : "minor");
+        const blocker = f.blocker === true || f.blocker === "yes" || severity === "critical";
+        const file = f.file ? slash(String(f.file)) : undefined;
+        const line = typeof f.line === "number" ? f.line : undefined;
+        const loc = file ? `${file}${line ? `:${line}` : ""}` : "";
+        return {
+            category: f.category || `review_${perspective}`,
+            perspective,
+            severity,
+            blocker,
+            ...(file ? { file } : {}),
+            ...(line !== undefined ? { line } : {}),
+            protects: f.protects || `Multi-perspective lens: ${perspective}`,
+            evidence: f.evidence || loc || f.description || "review finding",
+            description: f.description || f.message || (loc ? `Review issue at ${loc}` : "Review blocker found")
+        };
+    });
+
+    const rawVerdict = String(parsed.verdict || "").toUpperCase();
+    const anyLensFail = Object.values(perspectives).some((v) => v === "FAIL");
+    const anyBlocker = findings.some((f) => f.blocker === true);
+    const failed = rawVerdict === "FAIL" || anyLensFail || anyBlocker || (!rawVerdict && rawFindings.length > 0);
+    if (failed && !anyBlocker) {
+        findings.push({
+            category: "review",
+            perspective: Object.entries(perspectives).find(([, v]) => v === "FAIL")?.[0] || "correctness",
+            severity: "major",
+            blocker: true,
+            protects: "Binary PASS/FAIL rubric gate",
+            evidence: `verdict=${rawVerdict || "FAIL"}, perspectives=${JSON.stringify(perspectives)}`,
+            description: `Multi-perspective rubric review returned FAIL`
+        });
+    }
+    const verdict = failed ? "FAIL" : "PASS";
+    return { ok: verdict === "PASS", verdict, perspectives, findings };
+}
+
 // Independently verify a task branch using the adversarial binary rubric (PASS | FAIL).
 export async function verifyTask(root, taskId, opts = {}) {
     const cfg = opts.cfg || (exists(path.join(root, configLib.CONFIG_REL)) ? configLib.loadConfig(root) : { ...configLib.defaults(), root });
@@ -325,6 +449,7 @@ export async function verifyTask(root, taskId, opts = {}) {
         testQuality: { ok: true, issues: 0 },
         build: { ok: true, skipped: true, code: 0 },
         test: { ok: true, skipped: true, code: 0 },
+        review: { ok: true, skipped: !opts.review, verdict: null, perspectives: null, findingsCount: 0 },
         receipt: { present: false, fresh: false, treeSha: null }
     };
 
@@ -382,7 +507,7 @@ export async function verifyTask(root, taskId, opts = {}) {
     const isForb = configLib.isForbiddenWrite || configLib.isForbidden;
     for (const f of changedFiles) {
         let forbiddenHit = false;
-        try { forbiddenHit = isForb(cfg, f) || isSensitivePath(f); } catch (_) { forbiddenHit = true; }
+        try { forbiddenHit = isForb(cfg, f) || isSensitiveFile(f); } catch (_) { forbiddenHit = true; }
         if (forbiddenHit) {
             checks.forbiddenWrite.ok = false;
             checks.forbiddenWrite.violations.push(f);
@@ -544,6 +669,18 @@ export async function verifyTask(root, taskId, opts = {}) {
         } finally {
             if (wt.cleanup) wt.cleanup();
         }
+    }
+
+    if (opts.review) {
+        const rev = await reviewWithLenses(cfg, taskId, specText, diffText, opts);
+        checks.review = {
+            ok: rev.ok,
+            skipped: false,
+            verdict: rev.verdict,
+            perspectives: rev.perspectives || null,
+            findingsCount: rev.findings.length
+        };
+        findings.push(...rev.findings);
     }
 
     const hasBlocker = findings.some((f) => f.blocker === true || f.blocker === "yes");

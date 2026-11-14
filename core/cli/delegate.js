@@ -3,7 +3,7 @@
 // cv delegate run <TASK> | fix <TASK> <notes-file> | scout <TASK> | auto <TASK>   [--lane N]  (foreground)
 // cv delegate ask "<question>"
 // cv delegate which | brief <TASK>   who does the work (API key or fallback) and the fallback brief
-// cv delegate verify <TASK> [--base <branch>] [--skip-run]   independent adversarial verifier + receipt
+// cv delegate verify <TASK> [--base <branch>] [--skip-run] [--review]   independent adversarial verifier + receipt
 import { num } from "../lib/util.js";
 import { project } from "./_project.js";
 import * as agent from "../delegate/agent.js";
@@ -18,11 +18,12 @@ export async function run(args) {
     if (sub === "which") { console.log(choose.line(choose.choose(cfg))); return 0; }
     if (sub === "brief" && rest[0]) { console.log(choose.brief(cfg, rest[0])); return 0; }
     if (sub === "verify") {
-        const task = rest[0] || (typeof args["skip-run"] === "string" ? args["skip-run"] : null);
-        if (!task) throw new Error("kullanım: cv delegate verify <iş> [--base <dal>] [--skip-run]");
+        const task = rest[0] || (typeof args["skip-run"] === "string" ? args["skip-run"] : (typeof args.review === "string" ? args.review : null));
+        if (!task) throw new Error("kullanım: cv delegate verify <iş> [--base <dal>] [--skip-run] [--review]");
         const base = typeof args.base === "string" ? args.base : undefined;
         const skipRun = Boolean(args["skip-run"]);
-        const res = await verify.verifyTask(cfg.root, task, { cfg, base, skipRun });
+        const review = Boolean(args.review);
+        const res = await verify.verifyTask(cfg.root, task, { cfg, base, skipRun, review });
         console.log(`${res.verdict} ${res.taskId} (${res.branch}${res.treeSha ? ", tree " + res.treeSha.slice(0, 8) : ""})`);
         for (const f of res.findings) {
             console.log(`- [${f.blocker ? "BLOCKER" : "WARN"}] ${f.category}: ${f.description || f.evidence}`);
@@ -63,5 +64,5 @@ API işi başlatılmadı. ${picked.mode === "bekle" ? "Kod işi yapılmaz (deleg
         await agent.runTask(ctx, rest[0], null);
         return 0;
     }
-    throw new Error("kullanım: cv delegate batch [--lanes N] [--from N] <iş>... | status | stop <şerit> | run|fix|scout|auto <iş> [--lane N] | verify <iş> [--base <dal>] [--skip-run] | ask \"<soru>\" | which | brief <iş>");
+    throw new Error("kullanım: cv delegate batch [--lanes N] [--from N] <iş>... | status | stop <şerit> | run|fix|scout|auto <iş> [--lane N] | verify <iş> [--base <dal>] [--skip-run] [--review] | ask \"<soru>\" | which | brief <iş>");
 }
