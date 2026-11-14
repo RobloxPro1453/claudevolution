@@ -104,7 +104,7 @@ export function gate(usage, autonomy, now = new Date(), opts = {}) {
                 if (resolved.week >= ceiling - g.weeklyMargin) {
                     return { ...base, decision: "KUCUK", sleepSeconds: 3600, reason: `haftalık yerel tahmin %${resolved.week}, tavana ${Math.round((ceiling - resolved.week) * 10) / 10} puan kaldı` };
                 }
-                const p = pace(resolved, g, nowDate);
+                const p = pace(resolved, g, nowDate, (g.paceWindowHours || 5) * 3600, g.paceBand || 8, (opts && opts.paceHistory) || []);
                 if (q.approachingCap) {
                     return {
                         ...base,
@@ -147,39 +147,130 @@ export function gate(usage, autonomy, now = new Date(), opts = {}) {
     if (usage.week >= ceiling - g.weeklyMargin) {
         return { ...base, decision: "KUCUK", sleepSeconds: 3600, reason: `haftalık %${usage.week}, tavana ${Math.round((ceiling - usage.week) * 10) / 10} puan kaldı` };
     }
-    const p = pace(usage, g, nowDate);
+    const p = pace(usage, g, nowDate, (g.paceWindowHours || 5) * 3600, g.paceBand || 8, (opts && opts.paceHistory) || []);
     return { ...base, decision: "GO", sleepSeconds: p ? p.wakeSeconds : 90, pace: p, reason: `kota uygun (5s %${usage.five}, haftalık %${usage.week} / tavan %${ceiling})` + (p ? `; tempo ${p.mode}: hedef çizgi %${p.target}` : "") };
+}
+
+export function sameWindow(a, b) {
+    if (!a || !b) return false;
+    if (a === b) return true;
+    const ta = Date.parse(a), tb = Date.parse(b);
+    return Number.isFinite(ta) && Number.isFinite(tb) && Math.abs(ta - tb) <= 5 * 60 * 1000;
 }
 
 // Pace the 5-hour window so it reaches fiveHourExit just before it resets (owner, 2026-11-14: "sıfırlamaya
 // 10 dakika kala %90"). Target line = exit * elapsed fraction of the window. Ahead of the line by more than
 // the band -> YAVAS (light work, long sleep); behind -> HIZLAN (heavy work allowed, short sleep); else NORMAL.
-export function pace(usage, g, now = new Date(), windowSeconds = 5 * 3600, band = g.paceBand || 8) {
-    const t = usage.fiveResetsAt ? new Date(usage.fiveResetsAt).getTime() : NaN;
+export function pace(usage, g, now = new Date(), windowSeconds = 5 * 3600, band = (g && g.paceBand) || 8, history = []) {
+    const t = usage && usage.fiveResetsAt ? new Date(usage.fiveResetsAt).getTime() : NaN;
     if (!Number.isFinite(t)) return null;
-    const left = Math.max(0, (t - now.getTime()) / 1000);
+    const nowDate = now instanceof Date ? now : new Date(now);
+    const left = Math.max(0, (t - nowDate.getTime()) / 1000);
+    const minutesLeft = Math.max(0, Math.round(left / 60));
     const elapsed = Math.min(1, Math.max(0, 1 - left / windowSeconds));
-    const target = Math.round(g.fiveHourExit * elapsed);
+    const exit = (g && Number.isFinite(g.fiveHourExit)) ? g.fiveHourExit : 90;
+    const target = Math.round(exit * elapsed);
     const diff = usage.five - target;
     const mode = diff > band ? "YAVAS" : diff < -band ? "HIZLAN" : "NORMAL";
     const wakeSeconds = mode === "YAVAS" ? 1800 : mode === "HIZLAN" ? 300 : 900;
-    return { mode, target, diff: Math.round(diff), wakeSeconds };
+
+    const res = usage.fiveResetsAt || null;
+    const pts = [];
+    for (const item of Array.isArray(history) ? history : []) {
+        if (typeof item === "number" && Number.isFinite(item)) {
+            pts.push({ five: item, atMs: NaN });
+            continue;
+        }
+        if (!item || typeof item !== "object") continue;
+        if (typeof item.five !== "number" || !Number.isFinite(item.five)) continue;
+        if (res && item.resets && !sameWindow(item.resets, res)) continue;
+        const atMs = item.at ? Date.parse(item.at) : NaN;
+        pts.push({ five: item.five, atMs });
+    }
+    let avgTurnBurn = null;
+    if (pts.length >= 2) {
+        const deltas = [];
+        for (let i = 1; i < pts.length; i++) {
+            const d = pts[i].five - pts[i - 1].five;
+            if (d > 0) deltas.push(d);
+        }
+        if (deltas.length > 0) {
+            avgTurnBurn = Math.round((deltas.reduce((a, b) => a + b, 0) / deltas.length) * 10) / 10;
+        }
+    }
+
+    let projectedEndPct = null;
+    const timed = pts.filter((p) => Number.isFinite(p.atMs));
+    if (timed.length >= 2) {
+        const spanMin = (timed[timed.length - 1].atMs - timed[0].atMs) / 60000;
+        const gain = timed[timed.length - 1].five - timed[0].five;
+        if (spanMin >= 5 && gain > 0) {
+            projectedEndPct = Math.min(100, Math.round((usage.five + (gain / spanMin) * minutesLeft) * 10) / 10);
+        }
+    }
+    if (projectedEndPct === null) {
+        projectedEndPct = elapsed >= 0.01
+            ? Math.min(100, Math.round((usage.five / elapsed) * 10) / 10)
+            : Math.min(100, Math.round(usage.five * 10) / 10);
+    }
+
+    const usedStr = Math.round(usage.five * 10) / 10;
+    const timeStr = minutesLeft > 0 ? `pencere ${minutesLeft} dakika sonra sıfırlanıyor` : "pencere sıfırlanmak üzere";
+    const burnStr = avgTurnBurn !== null
+        ? `; ort. tur yakımı ~%${avgTurnBurn}`
+        : (projectedEndPct !== null ? `; pencere sonu tahmini ~%${projectedEndPct}` : "");
+    const advice = mode === "HIZLAN"
+        ? "→ iş ağırlığını / paralel şeritleri artır"
+        : mode === "YAVAS"
+            ? "→ hafif iş ve uzun uyku (pencere erken dolmasın)"
+            : "→ tempoyu koru";
+    const summary = `${mode} (%${usedStr} kullanıldı / hedef çizgi %${target}; ${timeStr}${burnStr} ${advice})`;
+
+    return { mode, target, diff: Math.round(diff), wakeSeconds, minutesLeft, avgTurnBurn, projectedEndPct, summary };
 }
 
-// The pacing measured: when the newest log row belongs to a new window, judge the window that just closed.
-// Ended well below the exit -> we were too slow (narrow the band / shorter sleeps); hit CIK -> too fast.
-// The architect reads the hint and tunes autonomy.gates.paceBand (or the code) and logs why.
-export function paceReview(rows, current, g) {
-    if (!current.resets || !rows.length) return null;
+// The pacing measured: when the newest log row belongs to a new window, judge the window that just closed
+// by weighing both quota % and work accomplished (commits, tasksDone).
+export function paceReview(rows, current, g, opts = {}) {
+    if (!current || !current.resets || !Array.isArray(rows) || !rows.length) return null;
     const prev = rows[rows.length - 1];
-    if (!prev.resets || prev.resets === current.resets) return null;
-    const win = rows.filter((r) => r.resets === prev.resets);
-    const last = Math.max(...win.map((r) => r.five));
+    if (!prev.resets || sameWindow(prev.resets, current.resets)) return null;
+    const win = rows.filter((r) => sameWindow(r.resets, prev.resets));
+    const last = Math.max(...win.map((r) => Number(r.five) || 0));
     const count = (m) => win.filter((r) => r.mode === m || r.decision === m).length;
     const slow = count("YAVAS"), fast = count("HIZLAN"), out = count("CIK");
-    const exit = g.fiveHourExit;
-    const hint = last < exit - 15 ? `yavaş kaldı (%${exit - last} boşa gitti): bandı daralt ya da HIZLAN'da daha ağır iş ver`
-        : out > 2 ? "erken doldu (CIK turları): bandı genişlet ya da HIZLAN uykusunu uzat"
-        : "iyi (hedefe yakın kapandı)";
-    return { last, turns: win.length, slow, fast, out, hint };
+    const commits = win.reduce((s, r) => s + (Number(r.commits) || 0), 0);
+    const tasksDone = win.reduce((s, r) => s + (Number(r.tasksDone) || 0), 0);
+    const workTotal = commits + tasksDone;
+    const avgWorkPerTurn = Math.round((workTotal / win.length) * 100) / 100;
+    const hasWorkTelemetry = win.some((r) => typeof r.commits === "number" || typeof r.tasksDone === "number");
+    const exit = (g && Number.isFinite(g.fiveHourExit)) ? g.fiveHourExit : 90;
+    const wastedPct = Math.max(0, Math.round((100 - last) * 10) / 10);
+    const hasOpenWork = opts.openRoadmapItems === undefined ? true : opts.openRoadmapItems > 0;
+
+    let status, efficiency, hint;
+    if (out > 2) {
+        status = "saturated";
+        efficiency = hasWorkTelemetry && workTotal === 0 ? "low" : "mixed";
+        hint = "erken doldu (CIK turları): bandı genişlet ya da HIZLAN uykusunu uzat";
+    } else if (last < exit - 15) {
+        if (!hasOpenWork) {
+            status = "idle_complete";
+            efficiency = workTotal > 0 ? "good" : "neutral";
+            hint = `düşük kullanım (%${last}), açık yol haritası maddesi yok`;
+        } else if (hasWorkTelemetry && (avgWorkPerTurn >= 1.5 || (workTotal >= 3 && workTotal / Math.max(1, last / 10) >= 1))) {
+            status = "high_efficiency_underutilized";
+            efficiency = "high";
+            hint = `yavaş kaldı (%${wastedPct} boşa gitti, %${last} ile ${workTotal} iş): yöntem verimli, kapasite/paralellik ölçeklenebilir`;
+        } else {
+            status = "underutilized";
+            efficiency = hasWorkTelemetry && workTotal === 0 ? "low" : "moderate";
+            hint = `yavaş kaldı (%${exit - last} hedef altı / %${wastedPct} boşa gitti): bandı daralt ya da HIZLAN'da daha ağır iş ver`;
+        }
+    } else {
+        status = "balanced";
+        efficiency = hasWorkTelemetry && workTotal === 0 ? "low" : "good";
+        hint = "iyi (hedefe yakın kapandı)";
+    }
+    return { status, last, turns: win.length, slow, fast, out, commits, tasksDone, avgWorkPerTurn, efficiency, wastedPct, resets: prev.resets, hint };
 }

@@ -39,6 +39,8 @@ export const ALWAYS_FORBIDDEN = [
     "^\\.git(/|$)",
     "^\\.evrim/",
     "^\\.claude/",
+    "^\\.codex/",
+    "^\\.agent/",
     "^AGENTS\\.md$",
     "^CLAUDE\\.md$",
     "^docs/VISION\\.md$",
@@ -140,6 +142,9 @@ export const SECRET_RES = [
 const isCmd = (v) => v === null || (Array.isArray(v) && v.length > 0 && v.every((s) => typeof s === "string" && s));
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 
+const isPlainObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+const isOptStr = (v) => v === undefined || v === null || typeof v === "string";
+
 // Returns { errors, warnings } in the owner's language (plain Turkish).
 export function validate(cfg) {
     const errors = [], warnings = [];
@@ -147,6 +152,25 @@ export function validate(cfg) {
     if (cfg.schema !== 1) err("schema 1 olmalı");
     if (!cfg.project || typeof cfg.project !== "string") err("project (proje adı) boş");
     if (!cfg.baseBranch) err("baseBranch (ana dal) boş");
+    if (cfg.projectMode !== undefined && cfg.projectMode !== null && !["greenfield", "adopted"].includes(cfg.projectMode)) {
+        err('projectMode: "greenfield" veya "adopted" olmalı');
+    }
+    if (cfg.licensePolicy !== undefined && cfg.licensePolicy !== null && !["auto", "personal", "open-source", "commercial"].includes(cfg.licensePolicy)) {
+        err("licensePolicy: auto | personal | open-source | commercial olmalı");
+    }
+    if (cfg.finalForm !== undefined && cfg.finalForm !== null) {
+        if (!isPlainObj(cfg.finalForm)) err("finalForm: nesne olmalı");
+        else {
+            const ff = cfg.finalForm;
+            if (!isOptStr(ff.deliverable)) err("finalForm.deliverable: metin veya null olmalı");
+            if (ff.verifyCmd !== undefined && ff.verifyCmd !== null && typeof ff.verifyCmd !== "string" && !isCmd(ff.verifyCmd)) {
+                err('finalForm.verifyCmd: null, metin ya da ["program", "argüman", ...] olmalı');
+            }
+            if (ff.criteria !== undefined && ff.criteria !== null && (!Array.isArray(ff.criteria) || !ff.criteria.every((c) => typeof c === "string"))) {
+                err("finalForm.criteria: metin listesi olmalı");
+            }
+        }
+    }
     for (const k of ["build", "test"]) {
         if (!isCmd(cfg[k])) err(`${k}: null ya da ["program", "argüman", ...] biçiminde olmalı`);
     }
@@ -187,6 +211,16 @@ export function validate(cfg) {
         if (g.fiveHourExit > 95) err("autonomy.gates.fiveHourExit en çok 95 olabilir (limit %100'e dayanırsa döngü ölür)");
     }
     if (isNum(g.weeklyBase) && isNum(g.weeklySlope) && g.weeklyBase + g.weeklySlope > 95) err("autonomy.gates: weeklyBase + weeklySlope en çok 95 olabilir");
+    if (g.paceBand !== undefined && (!isNum(g.paceBand) || g.paceBand <= 0)) err("autonomy.gates.paceBand: pozitif sayı olmalı");
+    if (a.office !== undefined && a.office !== null) {
+        if (!isPlainObj(a.office)) err("autonomy.office: nesne olmalı");
+        else {
+            const o = a.office;
+            if (o.autoTune !== undefined && typeof o.autoTune !== "boolean") err("autonomy.office.autoTune: true/false olmalı");
+            if (o.maxLanes !== undefined && (!isNum(o.maxLanes) || o.maxLanes < 1)) err("autonomy.office.maxLanes: en az 1 olmalı");
+            if (o.strategyPivotCycles !== undefined && (!isNum(o.strategyPivotCycles) || o.strategyPivotCycles < 1)) err("autonomy.office.strategyPivotCycles: en az 1 olmalı");
+        }
+    }
     if (!isNum(a.lockStaleMinutes) || a.lockStaleMinutes < 5) err("autonomy.lockStaleMinutes: en az 5");
     const wr = a.weeklyReset || {};
     if (!(wr.weekdayUtc >= 0 && wr.weekdayUtc <= 6) || !(wr.hourUtc >= 0 && wr.hourUtc <= 23)) err("autonomy.weeklyReset: weekdayUtc 0-6, hourUtc 0-23");
