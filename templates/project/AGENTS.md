@@ -4,16 +4,16 @@
 
 ## Oturumun ilk işi
 
-- `.evrim/config.json` > `kurulum` `"bekliyor"` ise sahibinin ilk mesajı ne olursa olsun ("merhaba" bile) `cv-init` becerisini uygula: keşif görüşmesi, plan, sonunda "yeni oturum aç, merhaba yaz, `/loop başla` yaz".
-- Kurulum tamamsa: selama `durum` becerisiyle kısa durum; sonunda döngü için `/loop başla` yazılacağını söyle. `başla` (çoğunlukla `/loop başla` içinden) = `otonom` becerisiyle bir çevrim.
+- `.evrim/config.json` > `kurulum` `"bekliyor"` ise sahibinin ilk mesajı ne olursa olsun ("merhaba" bile) `cv-init` becerisini uygula: sessiz tarama, başmimar sohbeti, `finalForm` sözleşmesi, sonunda "yeni oturum aç, merhaba yaz, `/loop başla` yaz" (veya platform eşdeğeri: Codex / Antigravity iş akışı).
+- Kurulum tamamsa: selama `durum` becerisiyle kısa durum; sonunda döngü için `/loop başla` yazılacağını söyle. `başla` (çoğunlukla `/loop başla` ya da `.agent/workflows/loop.md` içinden) = `otonom` becerisiyle bir çevrim; `finalForm` tamamlanınca `KARAR: BITTI` döngüyü durdurur.
 
 ## claudevolution
 
-Bu proje **claudevolution** düzeniyle çalışır. Sistemin tamamı paketin README'sindedir: paketin yeri `.evrim/local.json` > `packageHome` (`<packageHome>/README.md`). Kısaca:
+Bu proje **claudevolution** düzeniyle çalışır (`Claude`, `Codex`, `Antigravity` uyumlu). Sistemin tamamı paketin README'sindedir: paketin yeri `.evrim/local.json` > `packageHome` (`<packageHome>/README.md`). Kısaca:
 
-- `cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`. Ayarlar `.evrim/config.json`, otonom hafıza `.evrim/otonom/`.
-- Beceriler (`.claude/skills/`): `durum` ("neredeyiz"), `calis` ("çalış": bir tur iş), `otonom` (gözetimsiz tek çevrim), `damit` ("damıt"), `cv-init` (kurulum, VISION).
-- **Ders kuralı, her oturumda (döngü dışında da):** tekrar eden ya da pahalıya patlayan bir şey öğrendiğin an tek satır yaz. Yalnız bu projeye özgüyse `cv lesson "<ders>"` (`.evrim/otonom/DERSLER.md`). Proje adı çıkınca da doğruysa `cv lesson "<genelleştirilmiş ders>" --evrensel`: ders hemen bütün projelere gider (geliştirici makinesinde pakete: ölçülür, GitHub'a push edilir; diğer makinelerde bu makinenin evrensel katmanına, `~/.claudevrim/evrensel/`); damıtmayı bekleme. Bu projenin gördüğü evrensel dersler (paket + bu makine, birleşik): `.evrim/evrensel.md`. Ciddi hata kalıbı: `--hata`.
+- `cv` = `.evrim\cv.cmd` (Windows) ya da `.evrim/cv`. Ayarlar `.evrim/config.json` (`licensePolicy`, `finalForm`, `delegate`, `autonomy`), otonom hafıza `.evrim/otonom/` (`KARARNAMELER.md` dahil).
+- Beceriler (`.claude/skills/`, `.codex/skills/`, `.agent/skills/`): `durum` ("neredeyiz"), `calis` ("çalış": bir tur iş), `otonom` (gözetimsiz tek çevrim; `TEMPO`, `OFIS_MUHAKEMESI`, `KARAR: BITTI`), `damit` ("damıt"), `cv-init` (kurulum, VISION). Zor kararlar ve maliyet tartımı için `cv council` (Meclis) kullanılabilir.
+- **Ders ve kararname kuralı, her oturumda (döngü dışında da):** tekrar eden ya da pahalıya patlayan bir şey öğrendiğin an tek satır yaz. Yalnız bu projeye özgüyse `cv lesson "<ders>"` (`.evrim/otonom/DERSLER.md`); projeye özgü kalıcı yöntem/mimari kuralı için `.evrim/otonom/KARARNAMELER.md`. Proje adı çıkınca da doğruysa `cv lesson "<genelleştirilmiş ders>" --evrensel`: ders hemen bütün projelere gider (geliştirici makinesinde pakete: ölçülür, GitHub'a push edilir; diğer makinelerde bu makinenin evrensel katmanına, `~/.claudevrim/evrensel/`); damıtmayı bekleme. Bu projenin gördüğü evrensel dersler (paket + bu makine, birleşik): `.evrim/evrensel.md`. Ciddi hata kalıbı: `--hata`.
 - **Push:** bu projenin deposunda yok (sahibi istemedikçe). Paketin push'unu yalnız `cv lesson --evrensel` ve `cv evolve` yapar. Paket yeni sürüm aldıysa: `claudevrim guncelle` (ya da `cv update --apply`).
 
 ## Nereye bakmalı
@@ -29,7 +29,7 @@ Bu proje **claudevolution** düzeniyle çalışır. Sistemin tamamı paketin REA
 | Bilinen hata, elle denenecekler? | `docs/CHECKUP.md` |
 | Kendi başına sürekli çalışma? | `docs/WORKER.md`; gözetimsiz döngü: `otonom` becerisi |
 | Kod işini ucuz modele nasıl veririm? | `calis` becerisi; ajan kuralları ve tarifler `docs/tasks/` |
-| Gözetimsiz döngünün hafızası, sahibinin notları? | `.evrim/otonom/` (DERSLER, GUNLUK, HATALAR, OZET, SORULAR, NOTLAR) |
+| Gözetimsiz döngünün hafızası, kararnameler, sahibinin notları? | `.evrim/otonom/` (DERSLER, GUNLUK, HATALAR, KARARNAMELER, OZET, SORULAR, NOTLAR) |
 
 Belgeleri baştan sona okumayın: tablodaki "yalnız" notlarına uyun, gerisini `grep` ile arayın.
 
