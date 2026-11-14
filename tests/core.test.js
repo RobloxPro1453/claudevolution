@@ -5,7 +5,7 @@ import { test, tmpDir, eq, ok, throws } from "./harness.js";
 import { git, readJson, readText, writeJson, writeText } from "../core/lib/util.js";
 import { defaults, isForbidden, loadConfig, safeRel, validate, detect, VERSION } from "../core/lib/config.js";
 import { init } from "../core/cli/init.js";
-import { gate, weekFraction, weeklyCeiling, sleepUntil } from "../core/autonomy/gates.js";
+import { gate, pace, weekFraction, weeklyCeiling, sleepUntil } from "../core/autonomy/gates.js";
 import { acquire, lockInfo, release } from "../core/autonomy/lock.js";
 import * as share from "../core/autonomy/share.js";
 import * as memory from "../core/autonomy/memory.js";
@@ -354,4 +354,14 @@ test("doctor: powercfg çıktısı dilden bağımsız okunur", () => {
     eq(powerSetting(text, "9d7815a6-7ee4-497e-8888-515a05f02364"), { ac: 10800, dc: 10800 });
     eq(powerSetting(text, "5ca83367-6e45-459f-a27b-476b1d01c936"), { ac: 1, dc: 1 });
     eq(powerSetting(text, "00000000-0000-0000-0000-000000000000"), null);
+});
+
+test("gate: tempo 5 saatlik pencereyi sıfırlanmadan hemen önce çıkış eşiğine yayar", () => {
+    const g = { fiveHourExit: 90 };
+    const now = new Date("2026-11-14T09:00:00Z");
+    const resets = (h) => new Date(now.getTime() + h * 3600e3).toISOString();
+    eq(pace({ five: 45, fiveResetsAt: resets(2.5) }, g, now).mode, "NORMAL");
+    eq(pace({ five: 70, fiveResetsAt: resets(2.5) }, g, now).mode, "YAVAS");
+    eq(pace({ five: 10, fiveResetsAt: resets(2.5) }, g, now).mode, "HIZLAN");
+    eq(pace({ five: 10 }, g, now), null);
 });

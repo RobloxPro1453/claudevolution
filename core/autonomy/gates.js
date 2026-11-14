@@ -59,5 +59,21 @@ export function gate(usage, autonomy, now = new Date()) {
     if (usage.week >= ceiling - g.weeklyMargin) {
         return { ...base, decision: "KUCUK", sleepSeconds: 3600, reason: `haftalık %${usage.week}, tavana ${Math.round((ceiling - usage.week) * 10) / 10} puan kaldı` };
     }
-    return { ...base, decision: "GO", sleepSeconds: 90, reason: `kota uygun (5s %${usage.five}, haftalık %${usage.week} / tavan %${ceiling})` };
+    const p = pace(usage, g, now);
+    return { ...base, decision: "GO", sleepSeconds: p ? p.wakeSeconds : 90, pace: p, reason: `kota uygun (5s %${usage.five}, haftalık %${usage.week} / tavan %${ceiling})` + (p ? `; tempo ${p.mode}: hedef çizgi %${p.target}` : "") };
+}
+
+// Pace the 5-hour window so it reaches fiveHourExit just before it resets (owner, 2026-11-14: "sıfırlamaya
+// 10 dakika kala %90"). Target line = exit * elapsed fraction of the window. Ahead of the line by more than
+// the band -> YAVAS (light work, long sleep); behind -> HIZLAN (heavy work allowed, short sleep); else NORMAL.
+export function pace(usage, g, now = new Date(), windowSeconds = 5 * 3600, band = 8) {
+    const t = usage.fiveResetsAt ? new Date(usage.fiveResetsAt).getTime() : NaN;
+    if (!Number.isFinite(t)) return null;
+    const left = Math.max(0, (t - now.getTime()) / 1000);
+    const elapsed = Math.min(1, Math.max(0, 1 - left / windowSeconds));
+    const target = Math.round(g.fiveHourExit * elapsed);
+    const diff = usage.five - target;
+    const mode = diff > band ? "YAVAS" : diff < -band ? "HIZLAN" : "NORMAL";
+    const wakeSeconds = mode === "YAVAS" ? 1800 : mode === "HIZLAN" ? 300 : 900;
+    return { mode, target, diff: Math.round(diff), wakeSeconds };
 }

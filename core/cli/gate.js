@@ -11,5 +11,6 @@ export async function run(args) {
     rememberQuota(cfg, usage);
     const g = gate(usage, cfg.autonomy);
     console.log(`KARAR: ${g.decision}\nNEDEN: ${g.reason}\nUYKU: ${g.sleepSeconds}\nHAFTALIK_TAVAN: %${g.ceiling} (haftanın %${Math.round(g.f * 100)}'i geçti)`);
+    if (g.pace) console.log(`TEMPO: ${g.pace.mode} (5s %${usage.five}, hedef çizgi %${g.pace.target}, fark ${g.pace.diff}); YAVAS = hafif iş, HIZLAN = ağır iş serbest`);
     return 0;
 }
