@@ -224,8 +224,78 @@ test("office: setupAll, init ve adopt tüm platformları (Claude, Codex, Antigra
     );
     eq(cvRes.status, 0, `claudevrim kur exit: ${cvRes.stderr || cvRes.stdout}`);
     ok(cvRes.stdout.includes("Her şey tamamlandı, başlamaya hazırsınız!"), "kurulum bitiş mesajı görünmeli");
+    ok(cvRes.stdout.includes("zaten en güncel sürüm kurulu"), "aynı sürümde güncel mesajı vermeli");
     ok(fs.existsSync(path.join(cliHome, ".codex/skills/claudevolution/SKILL.md")), "claudevrim codex skill");
     ok(fs.existsSync(path.join(cliHome, ".gemini/antigravity/skills/claudevolution/SKILL.md")), "claudevrim agy skill");
+
+    // Version upgrade check: 1.0.20 (outdated gelistirici clone) -> local bare repo package upgrade + idempotent 2nd run.
+    const upgRoot = tmpDir("cv-upgrade-check");
+    const oldClone = path.join(upgRoot, "old-clone");
+    const remoteRepo = path.join(upgRoot, "remote.git");
+    const seedWork = path.join(upgRoot, "seed");
+    const upgHome = path.join(upgRoot, "cv-home");
+
+    writeJson(path.join(oldClone, "package.json"), { name: "claudevolution", version: "1.0.20" });
+    writeText(path.join(oldClone, "bin/cv.js"), "export async function main() { return 0; }\n");
+
+    git(["init", "-q", "--bare", remoteRepo], upgRoot);
+    git(["init", "-q", "-b", "main", seedWork], upgRoot);
+    for (const [k, v] of [["user.email", "test@example.invalid"], ["user.name", "test"], ["commit.gpgsign", "false"]]) git(["config", k, v], seedWork);
+    const currentPkg = readJson(path.join(PKG_ROOT, "package.json"));
+    const curVer = String(currentPkg.version || "1.0.21");
+    const [maj, min, pat] = curVer.split(".").map((n) => parseInt(n, 10) || 0);
+    const upgradedVer = `${maj}.${min}.${pat + 1}`;
+    writeJson(path.join(seedWork, "package.json"), { ...currentPkg, version: upgradedVer });
+    for (const rel of ["bin/cv.js", "core/lib/config.js", "core/lib/util.js", "core/cli/setup.js", "templates/user/claudevolution/SKILL.md", "templates/project/.evrim/config.json"]) {
+        writeText(path.join(seedWork, rel), readText(path.join(PKG_ROOT, rel)));
+    }
+    git(["add", "-A"], seedWork);
+    ok(git(["commit", "-qm", "seed"], seedWork).ok, "seed bare remote commit");
+    ok(git(["remote", "add", "origin", remoteRepo], seedWork).ok, "add remote");
+    ok(git(["push", "-q", "origin", "main"], seedWork).ok, "push bare remote");
+
+    writeJson(path.join(upgHome, "kurulum.json"), { repo: remoteRepo, paket: oldClone, gelistirici: true });
+    const upgEnv = {
+        ...process.env,
+        CLAUDEVRIM_HOME: upgHome,
+        CLAUDEVRIM_REPO: remoteRepo,
+        USERPROFILE: upgHome,
+        HOME: upgHome,
+        CLAUDE_CONFIG_DIR: path.join(upgHome, ".claude"),
+        CODEX_HOME: path.join(upgHome, ".codex"),
+        ANTIGRAVITY_HOME: path.join(upgHome, ".gemini/antigravity"),
+        CV_NO_NOTIFY: "1",
+    };
+    delete upgEnv.CLAUDEVRIM_OFFLINE;
+
+    const upgRes = spawnSync(
+        process.execPath,
+        [...(process.versions.deno ? ["run", "-A"] : []), path.join(PKG_ROOT, "bin/claudevrim.js"), "kur", "--no-path"],
+        { cwd: PKG_ROOT, encoding: "utf8", timeout: 15000, input: "", env: upgEnv }
+    );
+    eq(upgRes.status, 0, `claudevrim upgrade exit: ${upgRes.stderr || upgRes.stdout}`);
+    ok(upgRes.stdout.includes(`v1.0.20 → v${upgradedVer}`), `yükseltme sürüm bilgisi bekleniyordu:\n${upgRes.stdout}`);
+    ok(upgRes.stdout.includes(`Sürüm güncellendi: v1.0.20 → v${upgradedVer}`), "banner yükseltme bilgisi göstermeli");
+    eq(readJson(path.join(upgHome, "kurulum.json")).gelistirici, false, "eski geliştirici klonundan standart pakete geçmeli");
+
+    // Re-running now must detect already-latest installed version.
+    const sameRes = spawnSync(
+        process.execPath,
+        [...(process.versions.deno ? ["run", "-A"] : []), path.join(PKG_ROOT, "bin/claudevrim.js"), "kur", "--no-path"],
+        { cwd: PKG_ROOT, encoding: "utf8", timeout: 15000, input: "", env: upgEnv }
+    );
+    eq(sameRes.status, 0, `claudevrim idempotent exit: ${sameRes.stderr || sameRes.stdout}`);
+    ok(sameRes.stdout.includes(`Zaten güncel sürüm kurulu (v${upgradedVer})`), `ikinci çalıştırma güncel demeli:\n${sameRes.stdout}`);
+
+    // Newer installed version (9.9.9) must be preserved when older/lower installer runs offline.
+    writeJson(path.join(upgHome, "paket/package.json"), { ...currentPkg, version: "9.9.9" });
+    const newerRes = spawnSync(
+        process.execPath,
+        [...(process.versions.deno ? ["run", "-A"] : []), path.join(PKG_ROOT, "bin/claudevrim.js"), "kur", "--no-path"],
+        { cwd: PKG_ROOT, encoding: "utf8", timeout: 15000, input: "", env: { ...upgEnv, CLAUDEVRIM_OFFLINE: "1" } }
+    );
+    eq(newerRes.status, 0, `claudevrim newer installed exit: ${newerRes.stderr || newerRes.stdout}`);
+    ok(newerRes.stdout.includes("kurulu sürüm (v9.9.9)") && newerRes.stdout.includes("daha güncel"), `kurulu yüksek sürüm korunmalı:\n${newerRes.stdout}`);
 });
 
 // ---------------------------------------------------------------- 2. pace() rich metrics & summary
