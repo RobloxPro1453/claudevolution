@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { appendText, exists, expand, num, readJson, readText, slash, writeJson, writeText } from "../lib/util.js";
 import { PKG_ROOT, forbiddenRegexes, safeRel } from "../lib/config.js";
 import { slotCount, withSlot } from "./slots.js";
@@ -21,7 +21,13 @@ export function sh(cmd, args, cwd, timeoutMs = 600000) {
         const finish = (code) => { if (!done) { done = true; clearTimeout(timer); resolve({ code, text }); } };
         let child;
         try { child = spawn(cmd, args, { cwd, windowsHide: true }); } catch (e) { return resolve({ code: 127, text: String(e.message) }); }
-        const timer = setTimeout(() => { text += `\nTIMEOUT after ${Math.round(timeoutMs / 1000)} s`; try { child.kill(); } catch (_) { /* gone */ } finish(124); }, timeoutMs);
+        // On Windows kill the whole tree: killing only the shell left the app it started running, which then
+        // locked the build output for every later build in that lane (Fotosop, 2026-11-14: 5 jobs blocked).
+        const kill = () => {
+            if (process.platform === "win32" && child.pid) { try { spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true }); return; } catch (_) { /* fall back */ } }
+            try { child.kill(); } catch (_) { /* gone */ }
+        };
+        const timer = setTimeout(() => { text += `\nTIMEOUT after ${Math.round(timeoutMs / 1000)} s`; kill(); finish(124); }, timeoutMs);
         child.stdout.on("data", (d) => { text += d; });
         child.stderr.on("data", (d) => { text += d; });
         child.on("error", (e) => { text += String(e.message); finish(127); });
