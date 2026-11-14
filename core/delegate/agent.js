@@ -407,7 +407,14 @@ export async function auto(ctx, task, deps = {}) {
     const notes = path.join(stateDir(cfg), task + ".auto-review.md");
     if (!exists(path.join(stateDir(cfg), task + ".scout.md"))) { try { await scout(ctx, task, deps); } catch (e) { ctx.log(`${task}: scout failed: ${e.message}`); } }
     let first;
-    if (resumed) {
+    // The merge train leaves "<task>.train-fix.md" when this branch broke the combined build/test; that
+    // note (failing checks, the fix to make) is the reason the task is back, so the run starts from it.
+    const trainFix = path.join(stateDir(cfg), task + ".train-fix.md");
+    if (exists(trainFix)) {
+        writeText(notes, "The merge train (not a person) sent this task back: merged with develop and the other approved branches, the build or full test failed. Merge develop into your branch first (git merge develop), then fix:\n\n" + fs.readFileSync(trainFix, "utf8"));
+        fs.renameSync(trainFix, trainFix.replace(/\.md$/, ".used.md"));
+        first = await runTask(ctx, task, notes, deps);
+    } else if (resumed) {
         writeText(notes, "The runner (not a person) resumes this task: your previous pass was stopped from outside. Your previous commit is in place; continue from the current files, finish the spec, build and test until they pass.\n");
         first = await runTask(ctx, task, notes, deps);
     } else first = await runTask(ctx, task, null, deps);
