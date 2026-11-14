@@ -7,18 +7,19 @@ import { SECRET_RES } from "../lib/config.js";
 import { exists, git } from "../lib/util.js";
 
 const BENCH_TRAP = ["sk", "live", "4f9a2b7c", "1d8e6f3a", "5b0c9d2e"].join("-");
-const allowKey = (m) => /^sk-abcdefghij/.test(m) || m === BENCH_TRAP;
+export const allowFakeKey = (m) => /^sk-abcdefghij/.test(String(m || "")) || m === BENCH_TRAP;
 
 const RULES = [
-    ...SECRET_RES.map((r) => ({ id: "anahtar", re: new RegExp(r.source, r.flags.replace(/g/g, "") + "g"), allow: allowKey })),
+    ...SECRET_RES.map((r) => ({ id: "anahtar", re: new RegExp(r.source, r.flags.replace(/g/g, "") + "g"), allow: allowFakeKey })),
     { id: "e-posta", re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g, allow: (m) => /@example\.(invalid|com|org)$/i.test(m) || /^no-?reply@/i.test(m) },
     { id: "kişisel yol", re: /(?:[A-Za-z]:[\\/]+Users[\\/]+|\/c\/Users\/|\/home\/|\/Users\/)([A-Za-z0-9][A-Za-z0-9._-]*)/g, allow: (m, user) => /^(public|default|shared)$/i.test(user) },
 ];
 
 const SENSITIVE_FILE_RES = [
     /(^|\/)\.env($|\.(?!example$|sample$|template$))/i,
+    /(^|\/)\.envrc(?:\..*)?$/i,
     /(^|\/)\.(npmrc|netrc)$/i,
-    /(^|\/)id_(rsa|ed25519)(\.pub)?$/i,
+    /(^|\/)id_(?:rsa|ed25519|ecdsa|dsa)(?:\.pub)?$/i,
     /\.(pem|key|p12|pfx)$/i,
 ];
 const SKIP_DIRS = new Set([".git", "node_modules", "refs", ".evrim"]);

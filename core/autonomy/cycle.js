@@ -127,13 +127,29 @@ export function begin(cfg, args = {}, now = new Date(), opts = {}) {
 }
 
 // Close the cycle: journal entry, idle/distill counters, share charge, unlock. Returns lines[].
-export function end(cfg, args, now = new Date(), { sleepOnly = false } = {}) {
+export function end(cfg, args = {}, now = new Date(), opts = {}) {
+    args = args || {};
+    opts = opts || {};
+    const sleepOnly = Boolean(opts.sleepOnly);
     const state = loadState(cfg);
     const open = state.open || {};
     const id = typeof args.id === "string" ? args.id : open.id;
     const usage = parseUsage(args);
-    rememberQuota(cfg, usage, now);
-    const quota = usage ? `kota 5s %${usage.five} / hafta %${usage.week}` : "kota okunamadı";
+    const tryLocalFallback = !usage && !opts.noLocalFallback && !args["no-local-fallback"] &&
+        (opts.autoFallback === true || args.auto === true || (args.five === "unknown" && args.week === "unknown"));
+    let resolvedUsage = usage;
+    let fallbackGate = null;
+    if (!usage && tryLocalFallback) {
+        const fg = gate({ five: "unknown", week: "unknown" }, cfg.autonomy, now, { ...opts, autoFallback: true, root: cfg.root, cfg });
+        if (fg.quotaSource === "local-blocks") {
+            fallbackGate = fg;
+            resolvedUsage = { five: fg.five, week: fg.week, fiveResetsAt: fg.fiveResetsAt || null, weekResetsAt: null, source: "local-blocks" };
+        }
+    }
+    rememberQuota(cfg, resolvedUsage, now);
+    const quota = usage
+        ? `kota 5s %${usage.five} / hafta %${usage.week}`
+        : (fallbackGate ? `kota 5s %${fallbackGate.five} / hafta %${fallbackGate.week} (local-blocks)` : "kota okunamadı");
     let commits = 0;
     if (open.head) { const r = git(["rev-list", "--count", `${open.head}..HEAD`], cfg.root); if (r.ok) commits = parseInt(r.out, 10) || 0; }
     if (open.tips && open.tips.length) {
@@ -160,10 +176,17 @@ export function end(cfg, args, now = new Date(), { sleepOnly = false } = {}) {
     release(lockFile, id, true);
     release(share.machineLock(), cfg.project + ":" + id);
 
-    const g = usage ? gate(usage, cfg.autonomy, now) : { decision: "KUCUK", sleepSeconds: 1800, reason: "kota okunamadı" };
-    const out = [`KAPANDI: ${sleepOnly ? "uyku çevrimi" : `çevrim ${state.total}, ${commits} commit`}`, `UYKU: ${g.sleepSeconds}`, `SONRAKI_KAPI: ${g.decision} (${g.reason})`];
-    if (!sleepOnly && open.usage && usage) {
-        const spent = Math.round((usage.five - open.usage.five) * 10) / 10;
+    const g = usage
+        ? gate(usage, cfg.autonomy, now)
+        : (fallbackGate || { decision: "KUCUK", sleepSeconds: 1800, reason: "kota okunamadı" });
+    const out = [
+        `KAPANDI: ${sleepOnly ? "uyku çevrimi" : `çevrim ${state.total}, ${commits} commit`}`,
+        ...(fallbackGate ? [`KOTA_KAYNAGI: local-blocks (${quota})`] : []),
+        `UYKU: ${g.sleepSeconds}`,
+        `SONRAKI_KAPI: ${g.decision} (${g.reason})`
+    ];
+    if (!sleepOnly && open.usage && resolvedUsage) {
+        const spent = Math.round((resolvedUsage.five - open.usage.five) * 10) / 10;
         const gates = cfg.autonomy.gates;
         if (spent > gates.stepShareAlarm) out.push(`UYARI: bu çevrim pencerenin %${spent}'ini yedi (alarm eşiği %${gates.stepShareAlarm}); sebebini bul ve DERSLER'e yaz`);
         else if (spent > gates.cycleShareMax) out.push(`UYARI: bu çevrim pencerenin %${spent}'ini yedi (hedef ≤ %${gates.cycleShareMax}); sonraki çevrimi küçült`);
