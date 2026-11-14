@@ -25,6 +25,21 @@ export function split(tasks, lanes) {
 export function batch(cfg, tasks, { lanes = cfg.delegate.lanes, from = 1 } = {}) {
     for (const t of tasks) if (!fs.existsSync(path.join(cfg.root, cfg.tasks.dir, t + ".md"))) throw new Error(`tarif yok: ${cfg.tasks.dir}/${t}.md`);
     if (!process.env[provider(cfg).keyEnv]) throw new Error(`${provider(cfg).keyEnv} ortam değişkeni tanımlı değil`);
+    // A task already queued on a running lane must not start twice (two lanes on one branch fight over it).
+    const busy = new Map();
+    try {
+        for (const f of fs.readdirSync(lanesDir(cfg)).filter((x) => /^lane-\d+\.json$/.test(x))) {
+            const l = readJson(path.join(lanesDir(cfg), f), null);
+            if (l && l.state === "running" && pidAlive(l.pid)) for (const t of l.tasks) if (!(l.done || []).some((d) => String(d).split(":")[0] === t)) busy.set(t, l.lane);
+        }
+    } catch (_) { /* no lanes yet */ }
+    const dup = tasks.filter((t) => busy.has(t));
+    if (dup.length) throw new Error(`zaten bir şeritte: ${dup.map((t) => `${t} (şerit ${busy.get(t)})`).join(", ")}`);
+    // Check every target lane before starting any, so a refusal never leaves half of a batch running.
+    split(tasks, lanes).forEach((_, i) => {
+        const n = from + i, old = readJson(laneFile(cfg, n), null);
+        if (old && old.state === "running" && pidAlive(old.pid)) throw new Error(`şerit ${n} zaten çalışıyor (${old.tasks.join(", ")}); --from ile başka numara verin`);
+    });
     const started = [];
     split(tasks, lanes).forEach((mine, i) => {
         const n = from + i, old = readJson(laneFile(cfg, n), null);
