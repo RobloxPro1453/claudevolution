@@ -90,7 +90,7 @@ export function paceReview(rows, current, g) {
     const count = (m) => win.filter((r) => r.mode === m || r.decision === m).length;
     const slow = count("YAVAS"), fast = count("HIZLAN"), out = count("CIK");
     const exit = g.fiveHourExit;
-    const hint = last < exit - 15 ? `yavaş kaldı (%${exit - last} boşa gitti): bandı daralt ya da HIZLAN'da daha ağır iş ver`
+    const hint = last < exit - 6 ? `yavaş kaldı (%${exit - last} boşa gitti): bandı daralt ya da HIZLAN'da daha ağır iş ver`
         : out > 2 ? "erken doldu (CIK turları): bandı genişlet ya da HIZLAN uykusunu uzat"
         : "iyi (hedefe yakın kapandı)";
     return { last, turns: win.length, slow, fast, out, hint };
