@@ -6,6 +6,15 @@
   "baseBranch": "main",
   "_comment_kurulum": "bekliyor: proje yeni, sahibinin ilk mesajı (merhaba bile) cv-init keşif görüşmesini başlatır. Görüşme bitince cv-init tamam yapar.",
   "kurulum": "bekliyor",
+  "projectMode": "greenfield",
+  "_comment_licensePolicy": "auto: proje türüne göre keşif görüşmesinde belirlenir; personal | open-source | commercial.",
+  "licensePolicy": "auto",
+  "_comment_finalForm": "Hedeflenen son ürün biçimi. deliverable: beklenen çalıştırılabilir çıktı yolu (ör. dist/app.exe); verifyCmd: [program, arg, ...] ya da null; criteria: bitiş kontrol listesi.",
+  "finalForm": {
+    "deliverable": null,
+    "verifyCmd": null,
+    "criteria": []
+  },
 
   "_comment_build": "Komutlar dizi olarak yazılır (kabuk yok): [program, argüman, ...]. Yoksa null. Dakikalar süre sınırıdır; aşan komut öldürülür.",
   "build": null,
@@ -17,7 +26,7 @@
   "codePaths": ["src/", "tests/"],
   "forbiddenWrite": [
     "^\\.git(/|$)", "^\\.gitignore$", "^\\.gitattributes$",
-    "^\\.evrim/", "^\\.claude/",
+    "^\\.evrim/", "^\\.claude/", "^\\.codex/", "^\\.agent/",
     "^AGENTS\\.md$", "^docs/VISION\\.md$", "^docs/WORKER\\.md$",
     "^docs/tasks/(?!.*\\.report\\.md$)",
     "^(build|dist|node_modules|vendor)/"
@@ -99,7 +108,8 @@
       "weeklySlope": 30,
       "weeklyMargin": 5,
       "cycleShareMax": 8,
-      "stepShareAlarm": 15
+      "stepShareAlarm": 15,
+      "paceBand": 8
     },
     "weeklyReset": { "weekdayUtc": 6, "hourUtc": 3 },
     "safetyWakeSeconds": 1800,
@@ -111,6 +121,11 @@
       "idleCyclesChangeApproach": 2,
       "idleCyclesSleep": 3,
       "stepTimeboxCycles": 4
+    },
+    "office": {
+      "autoTune": true,
+      "maxLanes": 4,
+      "strategyPivotCycles": 2
     }
   },
 

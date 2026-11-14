@@ -3,8 +3,9 @@
 // because the package code it runs lives in ~/.claudevrim/paket and is updated from GitHub, not from here.
 //
 //   claudevrim            (double-click, first time) install: copy itself to ~/.claudevrim/bin, put that on
-//                         the user PATH, fetch the package from GitHub, write the machine skill (cv setup)
+//                         the user PATH, fetch the package from GitHub, write the machine skills (cv setup)
 //   claudevrim init       in a project folder: refresh the package from GitHub, then `cv init`
+//   claudevrim adopt      in an existing repo: refresh the package, then `cv adopt --apply` (unless --dry-run/--out)
 //   claudevrim guncelle   refresh the package; inside a project also `cv update --apply`
 //   claudevrim gelistirici <clone>   developer machine: use this git clone, lessons go to the package
 //   claudevrim <any cv command>      e.g. status, doctor, lesson
@@ -12,6 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import readline from "node:readline";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
@@ -77,10 +79,37 @@ function addToPath() {
     return set.ok ? "PATH'e eklendi (yeni açılan terminallerde geçerli)" : "PATH'e eklenemedi: " + set.out;
 }
 
+function isStdinTty() {
+    if (typeof Deno !== "undefined" && Deno.stdin && typeof Deno.stdin.isTerminal === "function") {
+        try { return Deno.stdin.isTerminal(); } catch (_) { /* fall through */ }
+    }
+    return !!(process.stdin && process.stdin.isTTY);
+}
+
+async function waitForEnter() {
+    if (!isStdinTty()) return;
+    say("\nKapatmak için Enter'a basın.");
+    try {
+        if (typeof Deno !== "undefined" && Deno.stdin && typeof Deno.stdin.read === "function") {
+            await Deno.stdin.read(new Uint8Array(64));
+            return;
+        }
+        try {
+            fs.readSync(0, Buffer.alloc(64), 0, 64, null);
+        } catch (_) {
+            await new Promise((resolve) => {
+                const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+                rl.once("close", resolve);
+                rl.question("", () => { rl.close(); resolve(); });
+            });
+        }
+    } catch (_) { /* not interactive */ }
+}
+
 async function install(args) {
     fs.mkdirSync(BIN, { recursive: true });
     const self = process.execPath;
-    if (path.resolve(self).toLowerCase() !== path.resolve(EXE).toLowerCase() && !/[\\/]deno(\.exe)?$/i.test(self)) fs.copyFileSync(self, EXE);
+    if (path.resolve(self).toLowerCase() !== path.resolve(EXE).toLowerCase() && !/[\\/](deno|node)(\.exe)?$/i.test(self)) fs.copyFileSync(self, EXE);
     const k = readKur() || {};
     if (!k.gelistirici) writeKur({ paket: path.join(HOME, "paket"), gelistirici: false });
     say("claudevrim kuruluyor → " + HOME);
@@ -91,9 +120,21 @@ async function install(args) {
         if (!fs.existsSync(p)) { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, h); }
     }
     const code = await runCv(["setup"]);
-    say("");
-    say("Hazır. Yeni bir proje için: proje klasöründe terminal aç, `claudevrim init` yaz.");
-    say("Sonra Claude uygulamasında o klasörü aç ve \"merhaba\" yaz; gerisini Claude sorar.");
+    if (code === 0) {
+        const banner = "  ✓ Her şey tamamlandı, başlamaya hazırsınız!  ";
+        const bar = "═".repeat(banner.length);
+        say("");
+        say(`╔${bar}╗`);
+        say(`║${banner}║`);
+        say(`╚${bar}╝`);
+        say("");
+        say("Yeni proje için: proje klasöründe terminal açıp `claudevrim init` yazın.");
+        say("Var olan proje için: proje klasöründe `claudevrim adopt` yazın.");
+        say("Sonra Claude, Codex veya Antigravity uygulamasında o klasörü açıp \"merhaba\" yazın; gerisini sistem sorar.");
+    } else {
+        say("");
+        say(`! Kurulum tamamlanamadı (çıkış ${code}); yukarıdaki adımı kontrol edin.`);
+    }
     return code;
 }
 
@@ -102,11 +143,11 @@ async function main(argv) {
     const runningInstalled = path.resolve(process.execPath).toLowerCase() === path.resolve(EXE).toLowerCase();
     if (cmd === "kur" || cmd === "install" || (!cmd && !runningInstalled)) {
         const code = await install(rest);
-        if (!cmd && isWin && process.stdin.isTTY) { say("\nKapatmak için Enter'a basın."); try { const b = new Uint8Array(8); await Deno.stdin.read(b); } catch (_) { /* not interactive */ } }
+        if (!cmd && isWin) await waitForEnter();
         return code;
     }
     if (!cmd || cmd === "help" || cmd === "-h" || cmd === "--help") {
-        say(`claudevrim (başlatıcı ${LAUNCHER})\n\n  claudevrim init                 bu klasörü claudevolution projesi yap\n  claudevrim guncelle             paketi GitHub'dan güncelle (projede: cv update --apply)\n  claudevrim gelistirici <klon>   geliştirici makinesi: bu git klonunu kullan\n  claudevrim surum                sürümler\n  claudevrim <cv komutu>          ör. status, doctor, lesson\n`);
+        say(`claudevrim (başlatıcı ${LAUNCHER})\n\n  claudevrim init                 bu klasörü claudevolution projesi yap\n  claudevrim adopt                var olan projeyi claudevolution'a geçir (--apply varsayılan)\n  claudevrim guncelle             paketi GitHub'dan güncelle (projede: cv update --apply)\n  claudevrim gelistirici <klon>   geliştirici makinesi: bu git klonunu kullan\n  claudevrim surum                sürümler\n  claudevrim <cv komutu>          ör. status, doctor, lesson\n`);
         return cmd ? 0 : 1;
     }
     if (cmd === "surum" || cmd === "version" || cmd === "--version") {
@@ -126,6 +167,12 @@ async function main(argv) {
         await runCv(["setup"]);
         if (fs.existsSync(path.join(process.cwd(), ".evrim", "config.json"))) return await runCv(["update", "--apply"]);
         return 0;
+    }
+    if (cmd === "adopt") {
+        if (!rest.includes("--no-sync")) say("paket: " + await sync(readKur()));
+        const cleanRest = rest.filter((a) => a !== "--no-sync");
+        const hasMode = cleanRest.some((a) => a === "--dry-run" || a === "--apply" || a === "--out" || a.startsWith("--out=") || a === "-h" || a === "--help");
+        return await runCv(["adopt", ...(hasMode ? cleanRest : [...cleanRest, "--apply"])]);
     }
     if (cmd === "init" && !rest.includes("--no-sync")) say("paket: " + await sync(readKur()));
     return await runCv([cmd, ...rest]);
