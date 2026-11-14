@@ -47,8 +47,8 @@ bin/cv.cmd setup          # Windows (Linux/macOS: bin/cv setup) — makineye bir
 Bir projeye uygulamak için proje klasöründe:
 
 ```bash
-<paket>/bin/cv.cmd init   # yeni proje (Linux/macOS: bin/cv init)
-<paket>/bin/cv.cmd adopt  # var olan proje; --yes ile varsayılan ayarlarla hızlı geçiş
+<paket>/bin/cv.cmd init   # yeni proje (`cv init`; Linux/macOS: bin/cv init)
+<paket>/bin/cv.cmd adopt  # var olan proje (`cv adopt`); --yes ile varsayılan ayarlarla hızlı geçiş
 ```
 
 - Varsayılan yerleşimde çekirdek kopyası `<proje>/claudevolution/` altında tutulabilir (`.gitignore` ayarlı) ya da makinedeki merkezi `~/.claudevrim/paket` kullanılır; mevcut projeye paket güncellemesi **`cv update --apply`** ile uygulanır.

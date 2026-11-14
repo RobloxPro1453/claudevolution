@@ -239,6 +239,7 @@ test("office: setupAll, init ve adopt tüm platformları (Claude, Codex, Antigra
     writeText(path.join(oldClone, "bin/cv.js"), "export async function main() { return 0; }\n");
 
     git(["init", "-q", "--bare", remoteRepo], upgRoot);
+    git(["symbolic-ref", "HEAD", "refs/heads/main"], remoteRepo);
     git(["init", "-q", "-b", "main", seedWork], upgRoot);
     for (const [k, v] of [["user.email", "test@example.invalid"], ["user.name", "test"], ["commit.gpgsign", "false"]]) git(["config", k, v], seedWork);
     const currentPkg = readJson(path.join(PKG_ROOT, "package.json"));

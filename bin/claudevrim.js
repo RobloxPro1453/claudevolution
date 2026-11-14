@@ -57,7 +57,8 @@ async function sync(k) {
     const dir = pkgDir(k);
     if (k && k.gelistirici) return "geliştirici klonu: elle yönetilir";
     if (process.env.CLAUDEVRIM_OFFLINE) return "çevrimdışı (CLAUDEVRIM_OFFLINE)";
-    const cloneUrl = REPO.endsWith(".git") ? REPO : REPO + ".git";
+    const isLocal = fs.existsSync(REPO);
+    const cloneUrl = isLocal || REPO.endsWith(".git") ? REPO : REPO + ".git";
     if (fs.existsSync(path.join(dir, ".git"))) {
         const r = sh("git", ["-C", dir, "pull", "--ff-only", "-q"], { timeout: 120000 });
         if (r.ok) return "GitHub'dan güncellendi";
@@ -68,7 +69,8 @@ async function sync(k) {
     const tmp = dir + ".yeni";
     fs.rmSync(tmp, { recursive: true, force: true });
     if (sh("git", ["--version"]).ok) {
-        const r = sh("git", ["clone", "-q", "--depth", "1", cloneUrl, tmp], { timeout: 300000 });
+        const cloneArgs = isLocal ? ["clone", "-q", "-b", "main", cloneUrl, tmp] : ["clone", "-q", "-b", "main", "--depth", "1", cloneUrl, tmp];
+        const r = sh("git", cloneArgs, { timeout: 300000 });
         if (!r.ok) return "indirilemedi: " + r.out.split("\n")[0];
     } else {
         // No git: the branch zip through tar (bsdtar ships with Windows 10+).
@@ -80,6 +82,10 @@ async function sync(k) {
         const r = sh("tar", ["-xf", zip, "-C", tmp, "--strip-components", "1"]);
         fs.rmSync(zip, { force: true });
         if (!r.ok) return "açılamadı: " + r.out.split("\n")[0];
+    }
+    if (!fs.existsSync(path.join(tmp, "package.json"))) {
+        fs.rmSync(tmp, { recursive: true, force: true });
+        return "indirilemedi: paket eksik";
     }
     fs.rmSync(dir, { recursive: true, force: true });
     fs.renameSync(tmp, dir);
@@ -159,9 +165,11 @@ async function install(args) {
         switchedFromDev = true;
     }
 
+    let syncFailedRollback = false;
     const syncMsg = await sync(readKur());
     if (switchedFromDev && !readPkgVersion(pkgDir(readKur())) && beforeVer && fs.existsSync(path.join(k.paket || "", "bin", "cv.js"))) {
         writeKur(k);
+        syncFailedRollback = true;
         say("  uyarı: yeni paket indirilemedi, önceki geliştirici klonu korundu");
     } else {
         say("  paket: " + syncMsg);
@@ -179,6 +187,9 @@ async function install(args) {
         const newerVer = compareSemver(beforeVer, afterVer) >= 0 ? beforeVer : afterVer;
         versionMsg = `kurulu sürüm (v${newerVer}) bu yükleyiciden (v${BUNDLE_VERSION}) zaten daha güncel; korundu`;
         bannerVersion = `Zaten güncel sürüm kurulu (v${newerVer})`;
+    } else if (syncFailedRollback || (beforeVer && compareSemver(BUNDLE_VERSION, afterVer) > 0)) {
+        versionMsg = `yeni sürüm (v${BUNDLE_VERSION}) indirilemedi; kurulu sürüm (v${afterVer}) korundu`;
+        bannerVersion = `Kurulu sürüm korundu (v${afterVer})`;
     } else {
         versionMsg = `zaten en güncel sürüm kurulu (v${afterVer})`;
         bannerVersion = `Zaten güncel sürüm kurulu (v${afterVer})`;
