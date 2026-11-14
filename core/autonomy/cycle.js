@@ -3,16 +3,18 @@
 import path from "node:path";
 import { git, nowIso, num, readJson, stamp, writeJson } from "../lib/util.js";
 import { autonomyDir, stateDir } from "../lib/config.js";
-import { gate, weekStartIso } from "./gates.js";
+import { gate, pace, sameWindow, weekStartIso } from "./gates.js";
 import { acquire, release } from "./lock.js";
 import * as share from "./share.js";
 import * as memory from "./memory.js";
 import { find } from "./recover.js";
 import { projectLessons } from "../evolve/merge.js";
+import { auditMethodology, checkFinalForm, evaluateWindowAndTune, recordWindowObservation } from "./office.js";
+import { notifyOwner } from "./notify.js";
 
 const cycleState = (cfg) => path.join(stateDir(cfg), "cycle.json");
 const quotaFile = (cfg) => path.join(stateDir(cfg), "quota.json");
-const fresh = () => ({ total: 0, idleCycles: 0, sinceDistill: 0, lastDistillAt: null, unknownStreak: 0, wasted: 0, open: null });
+const fresh = () => ({ total: 0, idleCycles: 0, sinceDistill: 0, lastDistillAt: null, unknownStreak: 0, wasted: 0, open: null, windowHistory: [], tunedWindows: [] });
 export const loadState = (cfg) => ({ ...fresh(), ...readJson(cycleState(cfg), {}) });
 export const lastQuota = (cfg) => readJson(quotaFile(cfg), null);
 
@@ -32,7 +34,7 @@ export function distillDue(cfg, state, now = new Date()) {
     return state.sinceDistill > 0 && now.getTime() - last > 24 * 3600 * 1000 && state.total >= 3;
 }
 
-// Returns { decision, id, quotaSource, lines[] }. Decisions: GO, KUCUK, KISITLI, CIK, MESGUL, DUR, SIRA_DEGIL.
+// Returns { decision, id, quotaSource, lines[] }. Decisions: GO, KUCUK, KISITLI, CIK, MESGUL, DUR, SIRA_DEGIL, BITTI.
 export function begin(cfg, args = {}, now = new Date(), opts = {}) {
     args = args || {};
     const out = [];
@@ -57,21 +59,44 @@ export function begin(cfg, args = {}, now = new Date(), opts = {}) {
     if (!machine.ok) { release(lockFile, id); return done("MESGUL", [`NEDEN: bu makinede başka bir proje çevrimde (${machine.holder.note || machine.holder.session})`]); }
     const unlock = () => { release(lockFile, id); release(share.machineLock(), cfg.project + ":" + id); };
 
+    if (!args["ignore-final"] && !opts.ignoreFinal && !notes.unread.length) {
+        const finalCheck = checkFinalForm(cfg, state, { skipVerify: Boolean(args["skip-verify"] || opts.skipVerify) });
+        if (finalCheck.done) {
+            unlock();
+            if (!opts.noNotify) {
+                notifyOwner(cfg, {
+                    deliverablePath: finalCheck.deliverablePath,
+                    deliverable: finalCheck.deliverable,
+                    criteria: finalCheck.criteria,
+                    silent: opts.silentNotify,
+                    now
+                });
+            }
+            return done("BITTI", [
+                `NEDEN: ${finalCheck.reason}`,
+                `DELIVERABLE: ${finalCheck.deliverablePath}`,
+                "UYKU: 0",
+                `KIMLIK: ${id}`
+            ]);
+        }
+    }
+
     const usage = parseUsage(args);
     const t = share.turn(cfg.root, cfg.project, cfg.autonomy.share.weight, now, weekStartIso(now, cfg.autonomy.weeklyReset, usage && usage.weekResetsAt));
     if (!t.ok) { unlock(); return done("SIRA_DEGIL", [`NEDEN: kota payı sırası başka projede (${t.active.map((p) => `${p.name} ${p.used}/${p.weight}`).join(", ")})`]); }
 
     // Gate. Unknown usage: try local-blocks fallback when explicit unknown or --auto (unless disabled); otherwise three unknowns -> wait.
     let g;
+    const paceHistory = state.windowHistory || [];
     const tryLocalFallback = !usage && !opts.noLocalFallback && !args["no-local-fallback"] &&
         (opts.autoFallback === true || args.auto === true || (args.five === "unknown" && args.week === "unknown"));
     if (usage) {
         quotaSource = "args";
         state.unknownStreak = 0;
         rememberQuota(cfg, usage, now);
-        g = gate(usage, cfg.autonomy, now);
+        g = gate(usage, cfg.autonomy, now, { ...opts, paceHistory });
     } else if (tryLocalFallback) {
-        g = gate({ five: "unknown", week: "unknown", state }, cfg.autonomy, now, { ...opts, autoFallback: true, root: cfg.root, cfg });
+        g = gate({ five: "unknown", week: "unknown", state }, cfg.autonomy, now, { ...opts, autoFallback: true, root: cfg.root, cfg, paceHistory });
         if (g.quotaSource === "local-blocks") {
             quotaSource = "local-blocks";
             rememberQuota(cfg, { five: g.five, week: g.week, fiveResetsAt: g.fiveResetsAt || null, weekResetsAt: null, source: "local-blocks" }, now);
@@ -83,15 +108,23 @@ export function begin(cfg, args = {}, now = new Date(), opts = {}) {
             ? { decision: "CIK", sleepSeconds: 3600, reason: "kota üç kez üst üste okunamadı; bekleniyor" }
             : { decision: "KUCUK", sleepSeconds: 1800, reason: "kota okunamadı; yalnız tek küçük adım" };
     }
+    const openUsage = usage || (quotaSource === "local-blocks" ? { five: g.five, week: g.week, fiveResetsAt: g.fiveResetsAt || null, weekResetsAt: null, source: "local-blocks" } : null);
+    const tune = openUsage ? evaluateWindowAndTune(cfg, state, openUsage, now, opts) : { tuned: false, lines: [] };
+    if (tune.tuned && openUsage && g.pace) {
+        const gatesCfg = cfg.autonomy.gates;
+        g.pace = pace(openUsage, gatesCfg, now, (gatesCfg.paceWindowHours || 5) * 3600, gatesCfg.paceBand || 8, paceHistory);
+        if (g.decision === "GO" && g.pace) g.sleepSeconds = g.pace.wakeSeconds;
+    }
+
     out.push(`NEDEN: ${g.reason}`, `UYKU: ${g.sleepSeconds}`, `KIMLIK: ${id}`);
     if (g.ceiling !== undefined) out.push(`HAFTALIK_TAVAN: %${g.ceiling} (haftanın %${Math.round(g.f * 100)}'i geçti)`);
+    if (tune.lines.length) out.push(...tune.lines);
 
     if (g.decision === "CIK") { writeJson(cycleState(cfg), state); unlock(); return done("CIK"); }
 
     const head = git(["rev-parse", "HEAD"], cfg.root);
     // Every branch tip, so work committed in another worktree/branch of the same repo counts too.
     const tips = git(["for-each-ref", "--format=%(objectname)", "refs/heads"], cfg.root);
-    const openUsage = usage || (quotaSource === "local-blocks" ? { five: g.five, week: g.week, fiveResetsAt: g.fiveResetsAt || null, weekResetsAt: null, source: "local-blocks" } : null);
     state.open = { id, startedAt: nowIso(now), head: head.ok ? head.out : null, tips: tips.ok ? [...new Set(tips.out.split(/\s+/).filter(Boolean))] : null, usage: openUsage };
     writeJson(cycleState(cfg), state);
 
@@ -99,7 +132,9 @@ export function begin(cfg, args = {}, now = new Date(), opts = {}) {
     out.push(`CEVRIM: ${state.total + 1}. çevrim; üst üste commit'siz çevrim: ${state.idleCycles}` +
         (state.idleCycles >= w.idleCyclesSleep ? " → takıldın: OZET'e yaz, bu çevrimi uyku olarak kapat" : state.idleCycles >= w.idleCyclesChangeApproach ? " → yaklaşımı değiştir (işi küçült ya da sıradakine geç)" : ""));
     out.push(`DAMITMA: ${g.decision === "GO" && distillDue(cfg, state, now) ? "evet" : "hayır"}`);
-    for (const f of find(cfg, now).filter((x) => x.id !== "kirli-agac" || g.decision === "GO")) out.push(`KURTARMA: ${f.text}${f.fixable ? " (cv recover --fix düzeltir)" : ""}`);
+    const rec = find(cfg, now);
+    for (const f of rec.filter((x) => x.id !== "kirli-agac" || g.decision === "GO")) out.push(`KURTARMA: ${f.text}${f.fixable ? " (cv recover --fix düzeltir)" : ""}`);
+    out.push(...auditMethodology(cfg, state, g, now, { recovery: rec }));
 
     if (notes.unread.length) out.push("", "SAHIBININ OKUNMAMIS NOTLARI:", ...notes.unread.map((l) => "  " + l));
     const q = memory.answered(cfg);
@@ -135,12 +170,13 @@ export function end(cfg, args = {}, now = new Date(), opts = {}) {
     const open = state.open || {};
     const id = typeof args.id === "string" ? args.id : open.id;
     const usage = parseUsage(args);
+    const paceHistory = state.windowHistory || [];
     const tryLocalFallback = !usage && !opts.noLocalFallback && !args["no-local-fallback"] &&
         (opts.autoFallback === true || args.auto === true || (args.five === "unknown" && args.week === "unknown"));
     let resolvedUsage = usage;
     let fallbackGate = null;
     if (!usage && tryLocalFallback) {
-        const fg = gate({ five: "unknown", week: "unknown" }, cfg.autonomy, now, { ...opts, autoFallback: true, root: cfg.root, cfg });
+        const fg = gate({ five: "unknown", week: "unknown" }, cfg.autonomy, now, { ...opts, autoFallback: true, root: cfg.root, cfg, paceHistory });
         if (fg.quotaSource === "local-blocks") {
             fallbackGate = fg;
             resolvedUsage = { five: fg.five, week: fg.week, fiveResetsAt: fg.fiveResetsAt || null, weekResetsAt: null, source: "local-blocks" };
@@ -157,6 +193,10 @@ export function end(cfg, args = {}, now = new Date(), opts = {}) {
         if (r.ok) commits = Math.max(commits, parseInt(r.out, 10) || 0);
     }
 
+    const cycleBurn = (!sleepOnly && open.usage && resolvedUsage && (!open.usage.fiveResetsAt || !resolvedUsage.fiveResetsAt || sameWindow(open.usage.fiveResetsAt, resolvedUsage.fiveResetsAt)))
+        ? Math.round((resolvedUsage.five - open.usage.five) * 10) / 10
+        : null;
+
     if (sleepOnly) memory.appendJournal(cfg, `${stamp(now)} · uyku · ${quota}`, [String(args.reason || "kapı kapalı")]);
     else {
         const worth = String(args.worth || "").toLowerCase();
@@ -170,26 +210,59 @@ export function end(cfg, args = {}, now = new Date(), opts = {}) {
         if (commits > 0) state.idleCycles = 0; else { state.idleCycles += 1; state.wasted += 1; }
         share.charge(cfg.root, now);
     }
+
+    const g = usage
+        ? gate(usage, cfg.autonomy, now, { ...opts, paceHistory })
+        : (fallbackGate || { decision: "KUCUK", sleepSeconds: 1800, reason: "kota okunamadı" });
+
+    if (resolvedUsage) {
+        recordWindowObservation(state, resolvedUsage, sleepOnly ? 0 : commits, now, {
+            mode: g.pace ? g.pace.mode : null,
+            decision: g.decision,
+            burn: cycleBurn,
+            sleepOnly
+        });
+    }
+    const tune = resolvedUsage ? evaluateWindowAndTune(cfg, state, resolvedUsage, now, opts) : { tuned: false, lines: [] };
+    if (tune.tuned && g.pace && resolvedUsage) {
+        const gatesCfg = cfg.autonomy.gates;
+        g.pace = pace(resolvedUsage, gatesCfg, now, (gatesCfg.paceWindowHours || 5) * 3600, gatesCfg.paceBand || 8, state.windowHistory || []);
+        if (g.decision === "GO" && g.pace) g.sleepSeconds = g.pace.wakeSeconds;
+    }
+
     state.open = null;
     writeJson(cycleState(cfg), state);
     const lockFile = path.join(autonomyDir(cfg), "lock");
     release(lockFile, id, true);
     release(share.machineLock(), cfg.project + ":" + id);
 
-    const g = usage
-        ? gate(usage, cfg.autonomy, now)
-        : (fallbackGate || { decision: "KUCUK", sleepSeconds: 1800, reason: "kota okunamadı" });
+    const notes = memory.notes(cfg);
+    const finalCheck = (!sleepOnly && !args["ignore-final"] && !opts.ignoreFinal && !notes.unread.length && !notes.stop)
+        ? checkFinalForm(cfg, state, { skipVerify: Boolean(args["skip-verify"] || opts.skipVerify) })
+        : { done: false };
+    if (finalCheck.done && !opts.noNotify) {
+        notifyOwner(cfg, {
+            deliverablePath: finalCheck.deliverablePath,
+            deliverable: finalCheck.deliverable,
+            criteria: finalCheck.criteria,
+            silent: opts.silentNotify,
+            now
+        });
+    }
+
     const out = [
         `KAPANDI: ${sleepOnly ? "uyku çevrimi" : `çevrim ${state.total}, ${commits} commit`}`,
         ...(fallbackGate ? [`KOTA_KAYNAGI: local-blocks (${quota})`] : []),
-        `UYKU: ${g.sleepSeconds}`,
-        `SONRAKI_KAPI: ${g.decision} (${g.reason})`
+        `UYKU: ${finalCheck.done ? 0 : g.sleepSeconds}`,
+        `SONRAKI_KAPI: ${finalCheck.done ? `BITTI (${finalCheck.reason})` : `${g.decision} (${g.reason})`}`,
+        ...(finalCheck.done ? [`DELIVERABLE: ${finalCheck.deliverablePath}`] : []),
+        ...(g.pace && g.pace.summary ? [`TEMPO: ${g.pace.summary}`] : []),
+        ...tune.lines
     ];
-    if (!sleepOnly && open.usage && resolvedUsage) {
-        const spent = Math.round((resolvedUsage.five - open.usage.five) * 10) / 10;
+    if (cycleBurn !== null) {
         const gates = cfg.autonomy.gates;
-        if (spent > gates.stepShareAlarm) out.push(`UYARI: bu çevrim pencerenin %${spent}'ini yedi (alarm eşiği %${gates.stepShareAlarm}); sebebini bul ve DERSLER'e yaz`);
-        else if (spent > gates.cycleShareMax) out.push(`UYARI: bu çevrim pencerenin %${spent}'ini yedi (hedef ≤ %${gates.cycleShareMax}); sonraki çevrimi küçült`);
+        if (cycleBurn > gates.stepShareAlarm) out.push(`UYARI: bu çevrim pencerenin %${cycleBurn}'ini yedi (alarm eşiği %${gates.stepShareAlarm}); sebebini bul ve DERSLER'e yaz`);
+        else if (cycleBurn > gates.cycleShareMax) out.push(`UYARI: bu çevrim pencerenin %${cycleBurn}'ini yedi (hedef ≤ %${gates.cycleShareMax}); sonraki çevrimi küçült`);
     }
     return out;
 }
