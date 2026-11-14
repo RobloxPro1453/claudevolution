@@ -8,7 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { appendText, git, readJson, run, today, writeJson } from "../lib/util.js";
+import { appendText, git, readJson, readText, run, today, writeJson, writeText } from "../lib/util.js";
 import { compare } from "../bench/bench.js";
 import { scan } from "./privacy.js";
 
@@ -76,10 +76,20 @@ export function evolve({ root, branch, why = "", live = false, push = true, remo
     const pkgFile = path.join(root, "package.json"), pkg = readJson(pkgFile, {});
     pkg.version = bumpPatch(pkg.version);
     writeJson(pkgFile, pkg);
+    const stageFiles = ["package.json", "evolution/CHANGELOG.md", "bench/baseline.json"];
+    const launcherFile = path.join(root, "bin", "claudevrim.js");
+    if (fs.existsSync(launcherFile)) {
+        const lText = readText(launcherFile, "");
+        const nextText = lText.replace(/const BUNDLE_VERSION = "[^"]*";/, `const BUNDLE_VERSION = "${pkg.version}";`);
+        if (nextText !== lText) {
+            writeText(launcherFile, nextText);
+            stageFiles.push("bin/claudevrim.js");
+        }
+    }
     const delta = [...cmp.better, ...cmp.worse.map((w) => "kötü: " + w)].join("; ") || "ölçüler eşit";
     appendText(path.join(root, "evolution", "CHANGELOG.md"), `- ${today()} · ${name} (v${pkg.version}) · ${why || "(gerekçe yazılmadı)"} · ${delta} · kabul\n`);
     writeJson(path.join(root, "bench", "baseline.json"), { ...result, version: pkg.version });
-    git(["add", "package.json", "evolution/CHANGELOG.md", "bench/baseline.json"], root);
+    git(["add", ...stageFiles], root);
     git(["commit", "-qm", `evrim: ${name} kabul (v${pkg.version})`], root);
     lines.push(`KABUL: v${pkg.version}`);
 
