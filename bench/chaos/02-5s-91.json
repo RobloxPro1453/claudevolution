@@ -1,0 +1,16 @@
+{
+  "id": "02-5s-91",
+  "title": "5 saatlik pencere %91: sıfırlanmaya kadar uyu",
+  "kind": "gate",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 91,
+    "week": 30,
+    "fiveResetsAt": "2026-11-11T14:00:00Z"
+  },
+  "expect": {
+    "decision": "CIK",
+    "sleepMin": 3500,
+    "sleepMax": 3600
+  }
+}

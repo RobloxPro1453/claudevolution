@@ -1,0 +1,15 @@
+{
+  "id": "19-kapanista-soru-yok",
+  "title": "gözetimsiz modda kapanışta soru/düğme yok",
+  "kind": "skill",
+  "files": [
+    "skills/tr/otonom/SKILL.md",
+    "skills/en/otonom/SKILL.md"
+  ],
+  "expect": {
+    "contains": [
+      "(Soru sorma|Do not ask questions)",
+      "(wrap_up)"
+    ]
+  }
+}

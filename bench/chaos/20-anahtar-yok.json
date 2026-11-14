@@ -1,0 +1,16 @@
+{
+  "id": "20-anahtar-yok",
+  "title": "ucuz model anahtarı yoksa iş durmaz",
+  "kind": "skill",
+  "files": [
+    "skills/tr/calis/SKILL.md",
+    "skills/en/calis/SKILL.md",
+    "skills/tr/otonom/SKILL.md",
+    "skills/en/otonom/SKILL.md"
+  ],
+  "expect": {
+    "contains": [
+      "cv delegate which"
+    ]
+  }
+}

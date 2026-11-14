@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.evrim/otonom/lock
+/refs/
+.evrim/lanes/
+.evrim/slots/
+.evrim/receipts/
+*.corrupt
+*.tmp.*

@@ -1,0 +1,18 @@
+{
+  "id": "17-dur-notu",
+  "title": "sahibi DUR yazdı: çalışma",
+  "kind": "cycle",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 20,
+    "week": 30
+  },
+  "setup": {
+    "notes": [
+      "DUR"
+    ]
+  },
+  "expect": {
+    "decision": "DUR"
+  }
+}

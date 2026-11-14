@@ -1,0 +1,15 @@
+{
+  "id": "12-ucuz-model-15dk",
+  "title": "ucuz model 15 dk commit'siz: durdur",
+  "kind": "skill",
+  "files": [
+    "skills/tr/otonom/SKILL.md",
+    "skills/en/otonom/SKILL.md"
+  ],
+  "expect": {
+    "contains": [
+      "15 (dk|min)",
+      "cv delegate stop"
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+otonom becerisini yükle ve bir çevrim yap. Soru sorma; çevrim bitince tek cümleyle ne yaptığını yaz ve bitir.

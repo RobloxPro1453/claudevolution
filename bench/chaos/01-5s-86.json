@@ -1,0 +1,13 @@
+{
+  "id": "01-5s-86",
+  "title": "5 saatlik pencere %86: yeni adım yok",
+  "kind": "gate",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 86,
+    "week": 30
+  },
+  "expect": {
+    "decision": "KUCUK"
+  }
+}

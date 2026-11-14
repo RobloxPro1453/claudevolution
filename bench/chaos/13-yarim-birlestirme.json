@@ -1,0 +1,18 @@
+{
+  "id": "13-yarim-birlestirme",
+  "title": "yarım kalmış birleştirme bulunur",
+  "kind": "cycle",
+  "now": "2026-11-11T12:00:00Z",
+  "usage": {
+    "five": 20,
+    "week": 30
+  },
+  "setup": {
+    "gitMarker": "MERGE_HEAD"
+  },
+  "expect": {
+    "contains": [
+      "KURTARMA: yarım kalmış birleştirme"
+    ]
+  }
+}

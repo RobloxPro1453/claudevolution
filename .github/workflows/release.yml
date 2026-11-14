@@ -1,0 +1,40 @@
+# Every accepted evolution bumps package.json (cv evolve). This builds the claudevrim launcher for that
+# version and publishes it as a GitHub release; owners download it from Releases > latest.
+name: claudevrim release
+on:
+  push:
+    branches: [main]
+    paths: [package.json, bin/claudevrim.js, .github/workflows/release.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Version
+        id: v
+        run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+      - name: Skip if released
+        id: have
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.v.outputs.version }}" >/dev/null 2>&1; then echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+      - name: Build
+        if: steps.have.outputs.skip != '1'
+        run: |
+          deno compile -A --target x86_64-pc-windows-msvc -o dist/claudevrim.exe bin/claudevrim.js
+          deno compile -A --target x86_64-unknown-linux-gnu -o dist/claudevrim-linux bin/claudevrim.js
+          deno compile -A --target aarch64-apple-darwin -o dist/claudevrim-macos bin/claudevrim.js
+      - name: Publish
+        if: steps.have.outputs.skip != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.v.outputs.version }}" dist/* --title "claudevrim ${{ steps.v.outputs.version }}" --latest \
+            --notes "Windows: claudevrim.exe dosyasını indir, çift tıkla. Sonra proje klasöründe terminal aç: claudevrim init. Ayrıntı: README."
