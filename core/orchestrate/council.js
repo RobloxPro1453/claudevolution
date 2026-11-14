@@ -125,13 +125,30 @@ export function detectPool(cfg, env = process.env, opts = {}) {
     };
 }
 
+const WORD_START = "(?:^|[^a-zçğıöşü0-9_])";
+const WORD_END = "(?=$|[^a-zçğıöşü0-9_])";
+const termRe = (alts) => new RegExp(`${WORD_START}(?:${alts})${WORD_END}`);
+
+const LOW_COMPLEXITY_RE = termRe([
+    "typo[a-z]*", "yaz[ıi]m", "renk", "etiket[a-zçğıöşü]*",
+    "tek dosya[a-zçğıöşü]*", "single-?file", "small fix",
+    "küçük", "basit", "rename", "copy", "metin düzelt[a-zçğıöşü]*"
+].join("|"));
+
+const HIGH_COMPLEXITY_RE = termRe([
+    "mimari[a-zçğıöşü]*", "architectur[a-z]*", "sistem[a-zçğıöşü]*", "systems?",
+    "migrations?", "göç[a-zçğıöşü]*", "güvenli[kğ][a-zçğıöşü]*", "security",
+    "sıfırdan", "from scratch", "multi(?:-[a-z]+)?", "çoklu",
+    "orkestrasyon[a-zçğıöşü]*", "orchestrat[a-z]*", "tasar[ıi]m[a-zçğıöşü]*", "design[a-z]*",
+    "refactor[a-z]*", "dağıtık", "distributed", "ölçek[a-zçğıöşü]*", "scal(?:e|ing|able|ability)",
+    "motor[a-zçğıöşü]*", "engines?", "meclis[a-zçğıöşü]*", "council[a-z]*"
+].join("|"));
+
 export function inferComplexity(topic = "") {
-    const s = String(topic || "").toLowerCase();
+    const s = String(topic || "").replace(/İ/g, "i").toLowerCase();
     if (!s.trim()) return "medium";
-    const lowRe = /\b(typo|yaz[ıi]m|renk|etiket|tek dosya|single-?file|small fix|küçük|basit|rename|copy|metin düzelt)\b/i;
-    const highRe = /\b(mimari|architecture|sistem|system|migration|göç|güvenlik|security|sıfırdan|from scratch|multi|çoklu|orkestrasyon|orchestrat|tasar[ıi]m|design|refactor|dağıtık|distributed|ölçek|scale|motor|engine|meclis|council)\b/i;
-    if (highRe.test(s)) return "high";
-    if (lowRe.test(s)) return "low";
+    if (HIGH_COMPLEXITY_RE.test(s)) return "high";
+    if (LOW_COMPLEXITY_RE.test(s)) return "low";
     return "medium";
 }
 
