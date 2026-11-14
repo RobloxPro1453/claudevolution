@@ -11,13 +11,13 @@ description: Yeni oturum başında ya da sahibi "neredeyiz", "durum ne" dediğin
 
 1. Tek mesajda, paralel:
    - `cv status` (git durumu, son commit'ler, açık tur ve son 5 tur, şeritler ve bekleyen dallar, son bilinen kota, otonom hafıza özeti, açık yol haritası maddeleri, son PROGRESS kaydı, "Elle bakılacak" listesi; hepsi tek çıktıda)
-   - `mcp__ccd_session_mgmt__get_usage` (yüklü değilse `ToolSearch select:mcp__ccd_session_mgmt__get_usage`)
+   - Yalnız Claude Code içindeysen: `mcp__ccd_session_mgmt__get_usage` (yüklü değilse `ToolSearch select:mcp__ccd_session_mgmt__get_usage`). Antigravity veya Codex içindeysen bu aracı arama; varsa sistem mesajındaki `[quota]` bilgisini ve `cv status` içindeki yerel blok/kota özetini kullan.
 2. Sahibine kendi dilinde, kısa:
    - Son yapılanlar (2-3 madde) ve son turların ölçüsü (biten iş / kota puanı; `cv status` çıktısından, ezberden sayı yazma).
    - Açık kalanlar: gözden geçirilmemiş ucuz model dalı, kirli çalışma alanı, açık tur, sahibinin elle denemesi gerekenler, cevap bekleyen sorular (`SORULAR.md`).
    - Kota: 5 saatlik ve haftalık yüzde.
    - **Sıradaki paket:** `docs.roadmap` sırasına göre 8-10 madde; Claude'da kalacak olan varsa hangisi (AGENTS.md > İş bölümü); kabaca ucuz model maliyeti. Tarama turu ya da tek işlik tur önerme.
-   - Bitiş: sahibi başındaysa "Başlayayım mı?" (bir tur, `calis`); gözetimsiz çalışma içinse "Döngüyü başlatmak için `/loop başla` yaz." Proje yeni kurulduysa (kurulum az önce `tamam` oldu) ikincisini söyle.
+   - Bitiş: sahibi başındaysa "Başlayayım mı?" (bir tur, `calis`); gözetimsiz çalışma içinse çalıştığın platforma göre söyle: **Antigravity**'de `"başla"`, `/goal` (kesintisiz hedef modu) veya `/schedule`; **Claude Code**'da `/loop başla`; **Codex**'te `"başla"`. Proje yeni kurulduysa (kurulum az önce `tamam` oldu) gözetimsiz başlatma yolunu söyle.
 3. Sahibi onaylarsa turu aç: `cv round start --quota <haftalık %> --type <tür>`, sonra `calis` becerisi.
 
 Bu oturum yeni değilse (önceki bir tur bu oturumda yapıldıysa) turu yeni oturumda başlatmayı öner: bağlam her çağrıda yeniden okunur ve kotanın çoğunu o yer.
