@@ -5,7 +5,7 @@ import { test, tmpDir, eq, ok, throws } from "./harness.js";
 import { git, readJson, readText, writeJson, writeText } from "../core/lib/util.js";
 import { defaults, isForbidden, loadConfig, safeRel, validate, detect, VERSION } from "../core/lib/config.js";
 import { init } from "../core/cli/init.js";
-import { gate, pace, weekFraction, weeklyCeiling, sleepUntil } from "../core/autonomy/gates.js";
+import { gate, pace, paceReview, weekFraction, weeklyCeiling, sleepUntil } from "../core/autonomy/gates.js";
 import { acquire, lockInfo, release } from "../core/autonomy/lock.js";
 import * as share from "../core/autonomy/share.js";
 import * as memory from "../core/autonomy/memory.js";
@@ -364,4 +364,12 @@ test("gate: tempo 5 saatlik pencereyi sıfırlanmadan hemen önce çıkış eşi
     eq(pace({ five: 70, fiveResetsAt: resets(2.5) }, g, now).mode, "YAVAS");
     eq(pace({ five: 10, fiveResetsAt: resets(2.5) }, g, now).mode, "HIZLAN");
     eq(pace({ five: 10 }, g, now), null);
+});
+
+test("gate: tempo ölçülür; kapanan pencere düşük bittiyse 'yavaş kaldı' der", () => {
+    const g = { fiveHourExit: 90 };
+    const old = [{ five: 30, resets: "A", mode: "YAVAS" }, { five: 55, resets: "A", mode: "NORMAL" }];
+    eq(paceReview(old, { five: 2, resets: "B" }, g).hint.startsWith("yavaş"), true);
+    eq(paceReview(old, { five: 60, resets: "A" }, g), null);
+    eq(paceReview([{ five: 88, resets: "A", mode: "NORMAL" }], { five: 1, resets: "B" }, g).hint.startsWith("iyi"), true);
 });

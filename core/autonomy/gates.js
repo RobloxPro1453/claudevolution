@@ -66,7 +66,7 @@ export function gate(usage, autonomy, now = new Date()) {
 // Pace the 5-hour window so it reaches fiveHourExit just before it resets (owner, 2026-11-14: "sıfırlamaya
 // 10 dakika kala %90"). Target line = exit * elapsed fraction of the window. Ahead of the line by more than
 // the band -> YAVAS (light work, long sleep); behind -> HIZLAN (heavy work allowed, short sleep); else NORMAL.
-export function pace(usage, g, now = new Date(), windowSeconds = 5 * 3600, band = 8) {
+export function pace(usage, g, now = new Date(), windowSeconds = 5 * 3600, band = g.paceBand || 8) {
     const t = usage.fiveResetsAt ? new Date(usage.fiveResetsAt).getTime() : NaN;
     if (!Number.isFinite(t)) return null;
     const left = Math.max(0, (t - now.getTime()) / 1000);
@@ -76,4 +76,22 @@ export function pace(usage, g, now = new Date(), windowSeconds = 5 * 3600, band 
     const mode = diff > band ? "YAVAS" : diff < -band ? "HIZLAN" : "NORMAL";
     const wakeSeconds = mode === "YAVAS" ? 1800 : mode === "HIZLAN" ? 300 : 900;
     return { mode, target, diff: Math.round(diff), wakeSeconds };
+}
+
+// The pacing measured: when the newest log row belongs to a new window, judge the window that just closed.
+// Ended well below the exit -> we were too slow (narrow the band / shorter sleeps); hit CIK -> too fast.
+// The architect reads the hint and tunes autonomy.gates.paceBand (or the code) and logs why.
+export function paceReview(rows, current, g) {
+    if (!current.resets || !rows.length) return null;
+    const prev = rows[rows.length - 1];
+    if (!prev.resets || prev.resets === current.resets) return null;
+    const win = rows.filter((r) => r.resets === prev.resets);
+    const last = Math.max(...win.map((r) => r.five));
+    const count = (m) => win.filter((r) => r.mode === m || r.decision === m).length;
+    const slow = count("YAVAS"), fast = count("HIZLAN"), out = count("CIK");
+    const exit = g.fiveHourExit;
+    const hint = last < exit - 15 ? `yavaş kaldı (%${exit - last} boşa gitti): bandı daralt ya da HIZLAN'da daha ağır iş ver`
+        : out > 2 ? "erken doldu (CIK turları): bandı genişlet ya da HIZLAN uykusunu uzat"
+        : "iyi (hedefe yakın kapandı)";
+    return { last, turns: win.length, slow, fast, out, hint };
 }
