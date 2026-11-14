@@ -205,7 +205,11 @@ async function chat(cfg, messages, key, toolList, fetchImpl = fetch) {
         const data = await res.json(), u = data.usage || {};
         const hit = u.prompt_cache_hit_tokens ?? (u.prompt_tokens_details && u.prompt_tokens_details.cached_tokens) ?? 0;
         const tokens = { hit, miss: u.prompt_cache_miss_tokens ?? Math.max(0, (u.prompt_tokens || 0) - hit), out: u.completion_tokens || 0 };
-        return { message: data.choices[0].message, cost: costOf(p, tokens), tokens };
+        const cost = costOf(p, tokens);
+        // Every call goes to the spend ledger at once: run records are written only when a run ends, so stopped,
+        // killed and in-flight runs were missing from the daily total (Fotosop 2026-11-14: counter $0.32, provider $1.36).
+        try { fs.appendFileSync(path.join(stateDir(cfg), "spend.jsonl"), JSON.stringify({ at: new Date().toISOString(), cost, ...tokens }) + "\n"); } catch (_) { /* never block a call */ }
+        return { message: data.choices[0].message, cost, tokens };
     }
     throw new Error("API kept failing");
 }
@@ -263,6 +267,11 @@ const saveState = (cfg, state) => writeJson(path.join(stateDir(cfg), state.task 
 // Money spent today (UTC) over all tasks; no new task starts once delegate.dailyBudget is reached.
 export function spentToday(cfg, now = new Date()) {
     const day = now.toISOString().slice(0, 10);
+    // The ledger (every API call) is the truth once it exists; run records are the fallback for older state.
+    try {
+        const ledger = fs.readFileSync(path.join(stateDir(cfg), "spend.jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+        if (ledger.length) return ledger.filter((r) => String(r.at).startsWith(day)).reduce((s, r) => s + (r.cost || 0), 0);
+    } catch (_) { /* no ledger yet */ }
     let total = 0, files = [];
     try { files = fs.readdirSync(stateDir(cfg)).filter((f) => f.endsWith(".json")); } catch (_) { /* nothing yet */ }
     for (const f of files) for (const r of (readJson(path.join(stateDir(cfg), f), {}).runs || [])) if (String(r.at || "").startsWith(day)) total += r.cost || 0;
