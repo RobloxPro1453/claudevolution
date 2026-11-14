@@ -26,3 +26,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-14 · promax-polish (v1.0.21) · bugfix test-file guard, cycle.end fallback, dedup secrets, multi-lens --review · test 78 → 86; kötü: codeLines %70 arttı (3611 → 6146) · kabul
 - 2026-11-14 · evolve-bundle-sync (v1.0.22) · cv evolve kabulunde bin/claudevrim.js BUNDLE_VERSION senkronizasyonu · ölçüler eşit · kabul
 - 2026-11-14 · yazilim-ofisi (v1.0.23) · otonom yazilim ofisi, 3 platform (Claude/Codex/Antigravity), uyarlanabilir meclis, BITTI kapisi, surum denetimli claudevrim ve guncel README · test 86 → 92; kötü: codeLines %27 arttı (6156 → 7814) · kabul
+- 2026-11-14 · antigravity-uyumu (v1.0.24) · Antigravity platform oz-farkindaligi (/goal, /schedule, schedule araci, [quota] ve dogrudan basla destegi) · ölçüler eşit · kabul

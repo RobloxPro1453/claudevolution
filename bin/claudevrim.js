@@ -18,7 +18,7 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const LAUNCHER = "1";
-const BUNDLE_VERSION = "1.0.23";
+const BUNDLE_VERSION = "1.0.24";
 const REPO = process.env.CLAUDEVRIM_REPO || "https://github.com/RobloxPro1453/claudevolution";
 const isWin = process.platform === "win32";
 const HOME = process.env.CLAUDEVRIM_HOME || path.join(process.env.USERPROFILE || process.env.HOME || os.homedir(), ".claudevrim");
