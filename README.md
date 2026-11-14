@@ -1,42 +1,60 @@
 # claudevolution
 
-**Claude Code projeleri için kendini geliştiren çalışma sistemi.** Bir projeye tek komutla belge ve kural sistemi, ucuz modele iş dağıtımı, gözetimsiz (kota yöneten) otonom çalışma ve her turdan ders çıkaran bir evrim döngüsü kurar.
+**Claude Code, Codex ve Antigravity'yi tek seferlik sohbet aracından çıkarıp; kalıcı hafızalı, kendi kota temposunu yöneten, plan/kota duyarlı meclis kuran ve ölçülü öz-evrim geçiren otonom bir yazılım ofisine dönüştüren katman.**
 
-*A self-evolving operating system for Claude Code projects: one `cv init` gives a project its rules and memory docs, cheap-model delegation, unattended quota-aware autonomy, and a learning loop that keeps project-specific lessons local and sends general ones to the package, so every project gets them.*
+Sahip yalnızca ne istediğini söyler (`HEDEF`); ajan projeyi analiz eder, yaklaşım seçer, işi böler, alt ajanları veya paralel şeritleri orkestre eder, kota penceresini boşa harcamadan hızını ayarlar, işi bitirince (`KARAR: BITTI`) sonucu doğrular ve durur.
 
-> **Bu dosyayı okuyan model:** sistemin tamamı aşağıdaki beş bölümde. Ayrıntı becerilerde (`skills/tr/*/SKILL.md`, İngilizcesi `skills/en/`) ve `core/*/README.md` içinde. Bu paketin kendisinde çalışıyorsan kuralların [AGENTS.md](AGENTS.md).
+---
 
-## 1. Ne bu
+## Öne Çıkan Yetenekler
 
-İki katman:
+| Yetenek | Ne Sağlar |
+|---|---|
+| **Akıllı Kurulum ve Sürüm Denetimi** | `claudevrim.exe` çift tıklandığında mevcut kurulumu (`vX → vY`) denetler: yeni sürümse günceller, zaten güncel veya daha yeniyse üzerine yazıp bozmaz, eski geliştirici klonunu bile güvenle günceller. |
+| **Çoklu Platform Desteği** | Claude Code (`~/.claude/skills`), Codex CLI (`~/.agents/skills`, `AGENTS.md`) ve Antigravity Desktop/CLI (`.agents/skills`, `.agent/workflows`) tek `cv setup` / `claudevrim init` ile otomatik ayarlanır. |
+| **Otonom Yazılım Ofisi (`TEMPO`)** | Her çevrimde kota ve verimliliği ölçer (`HIZLAN` / `DENGELE` / `FRENLE`), tıkanan yöntemi değiştirir ve kalıcı ilkeleri `.evrim/otonom/KARARNAMELER.md` dosyasına işler. |
+| **Plan / Kota Duyarlı Meclis** | `cv council` karmaşık kararlarda çoklu bakış açısı çalıştırır, sıradan işlerde boşa üst model token'ı yakmaz; bütçeye göre model/ajan derinliğini uyarlar. |
+| **İzole İş Dağıtımı & Doğrulama** | `cv delegate` paralel çalışma şeritleri ve harici API/alt ajan delegasyonu kurar; üretilen çıktılar `cv delegate verify` ile bağımsız doğrulanır. |
+| **Ölçülü Öz-Evrim** | Yeni beceri veya çekirdek değişiklikleri `bench/` altındaki deterministik test + kaos senaryolarından (Kat A + Kat B) ve gizlilik taramasından geçmeden `main` dalına alınmaz. |
 
-| Katman | Nerede | Ne tutar |
-|---|---|---|
-| **Paket (evrensel)** | bu depo (`git clone https://github.com/RobloxPro1453/claudevolution`) | `cv` komutu, beceriler, proje şablonu, ölçüm takımı, bütün projelerin evrensel dersleri (`evolution/universal/`) |
-| **Proje (yerel)** | projede `.evrim/`, `.claude/skills/`, `AGENTS.md`, `docs/` | proje ayarları (`.evrim/config.json`), otonom hafıza (`.evrim/otonom/`), projeye özgü dersler |
+---
 
-Projedeki `.evrim/cv.cmd` (Windows) ya da `.evrim/cv` paketi bulan kısayoldur; paketin yeri `.evrim/local.json` > `packageHome` (ya da `CV_HOME` ortam değişkeni). Aşağıda `cv` = o kısayol.
+## 1. Hızlı Başlangıç (Son Kullanıcı — 30 Saniye)
 
-## 2. Bir projeye kurmak
+1. **[Releases](../../releases) sayfasından** `claudevrim.exe` (Windows; Linux/macOS için `claudevrim-linux` / `claudevrim-macos`) dosyasını indir ve çalıştır.
+   - Başlatıcı paketi `%USERPROFILE%\.claudevrim\bin` (Linux/macOS: `~/.claudevrim/bin`) içine yerleştirir, `PATH`'e ekler ve tüm platformların kullanıcı becerilerini kurar.
+   - Zaten kuruluysa mevcut sürümü karşılaştırır: yeni sürüm varsa günceller, **zaten en güncel sürümse bildirir ve korur**.
+2. Proje klasöründe terminali aç ve tek komut yaz:
+   - **Yeni proje:** `claudevrim init`
+   - **Var olan proje (kodu taşı/devral):** `claudevrim adopt`
+3. Kullanacağın ajanı aç (**Claude Code**, **Codex** veya **Antigravity Desktop/CLI**), proje klasörünü seç ve sohbete yalnızca **`merhaba`** yaz.
+   - `.evrim/DURUM.md` içindeki `"kurulum": "bekliyor"` işaretini gören ajan sohbet içinde kısa kurulum mülakatını başlatır (`cv-init`), hedefi ve yol haritasını kurar.
+   - Sürekli otonom çalıştırmak istediğinde **`/loop başla`** (veya zamanlanmış görevde `otonom becerisini yükle ve bir çevrim yap`) demen yeterlidir.
+4. Paketi sonradan güncellemek için her yerden **`claudevrim guncelle`** (veya yeni indirdiğin `claudevrim.exe`'yi yeniden çalıştır).
 
-**Sahibinin yolu (hiçbir şey indirmeden, derlemeden):**
+---
 
-1. **Bilgisayara bir kez:** GitHub'da bu deponun **Releases** sayfasından en son `claudevrim.exe`'yi indir (macOS/Linux: `claudevrim-macos` / `claudevrim-linux`) ve çift tıkla. Kendini `%USERPROFILE%.claudevrimin`'e kopyalar, orayı kullanıcının PATH'ine ekler, paketi GitHub'dan `~/.claudevrim/paket`'e indirir, bu makinenin evrensel ders klasörünü (`~/.claudevrim/evrensel/`) açar ve makine becerisini yazar (`cv setup`). Node, Deno, npm gerekmez; exe kendi çalışma ortamını taşır. Git gerekir (Claude Code zaten ister).
-2. **Her yeni proje:** proje klasöründe terminal aç, `claudevrim init` yaz, terminali kapat. Komut önce paketi GitHub'dan günceller, sonra klasörü kurar (git deposu değilse açar, kurduğu dosyaları ilk commit'e koyar; projenin kendi dosyalarına dokunmaz).
-3. **Claude uygulamasında** o klasörü aç, **"merhaba"** yaz. Config'te `"kurulum": "bekliyor"` olduğu için oturum ilk mesaj ne olursa olsun `cv-init` keşif görüşmesini başlatır: projeyi sade sorularla öğrenir (ne, kim için, "bitti" ne demek, kodu kim yazsın), anlamadığını yeniden sorar, başmimar olarak tartıp planı belgelere yazar ve sonunda "yeni oturum aç, merhaba yaz, `/loop başla` yaz" der.
-4. Yeni oturumda **`/loop başla`**: `otonom` becerisi çevrim çevrim çalışır. Paket güncellemesi: `claudevrim guncelle` (projede ayrıca `cv update --apply` yapar).
+## 2. Geliştirici / Elle Kurulum (`git clone`)
 
-Paket klasörü bir projenin içine kopyalanmışsa da (`<proje>/claudevolution/`) makine becerisi onu tanır ve kurulumu oturum kendisi yapar; paket klasörü `.gitignore`'a girer.
+Önkoşul: **Node ≥ 18 ya da Deno** ve `git`.
 
-**Geliştirici (paketin bakımcısı):** paketi git ile klonla, `claudevrim gelistirici <klon>` (ya da exe olmadan doğrudan klondaki `bin/cv`). Evrensel dersler o zaman pakete gider (ölçülür, push edilir). Release'i `.github/workflows/release.yml` her kabul edilen sürümde kendisi derler ve yayınlar.
+```bash
+git clone <paket-depo-url> ~/.claudevrim/paket
+cd ~/.claudevrim/paket
+bin/cv.cmd setup          # Windows (Linux/macOS: bin/cv setup) — makineye bir kez
+```
 
-Elle (exe olmadan):
+Bir projeye uygulamak için proje klasöründe:
 
-1. Paketi bir kez klonla (yer serbest; ör. kullanıcı klasörü). **Node ≥ 18 ya da Deno 2** yeter, `npm install` yok.
-2. Projenin klasöründe: `<paket>/bin/cv.cmd init --name <ad>` (Windows; macOS/Linux `<paket>/bin/cv init`). Var olan dosyayı ezmez, farklıysa yanına `.new` bırakır; ikinci kez çalıştırmak bir şey değiştirmez. Kurar: `AGENTS.md` + `CLAUDE.md`, `docs/` (VISION, ROADMAP, PROGRESS…), `.evrim/` (config, hafıza, kısayollar), `.claude/skills/` (durum, calis, otonom, damit, cv-init). Git deposu olmalı.
-3. Claude oturumunda **`cv-init` becerisi** ("claudevolution kurulumunu tamamlayalım"): config'i doğrular, VISION'ı sahibinin sözleriyle doldurur, ilk yol haritasını yazar, `cv doctor` ile gözetimsiz çalışma önkoşullarını söyler.
-4. Projede zaten kendi düzeni varsa `init` yerine `cv adopt` (plan) → sahibi onaylarsa `cv adopt --apply`.
-5. Paket yeni sürüm aldığında projede `cv update` (farkı gösterir) → `cv update --apply` (yalnız beceri kopyaları, `.evrim/README.md`, kısayollar; config'e ve proje belgelerine dokunmaz).
+```bash
+<paket>/bin/cv.cmd init   # yeni proje (`cv init`; Linux/macOS: bin/cv init)
+<paket>/bin/cv.cmd adopt  # var olan proje (`cv adopt`); --yes ile varsayılan ayarlarla hızlı geçiş
+```
+
+- Varsayılan yerleşimde çekirdek kopyası `<proje>/claudevolution/` altında tutulabilir (`.gitignore` ayarlı) ya da makinedeki merkezi `~/.claudevrim/paket` kullanılır; mevcut projeye paket güncellemesi **`cv update --apply`** ile uygulanır.
+- Kurulum sonrası ajana `"kurulum"` / `merhaba` dendiğinde `cv-init` becerisi proje profilini tamamlar.
+
+---
 
 ## 3. Günlük kullanım
 
@@ -48,11 +66,13 @@ Elle (exe olmadan):
 | "damıt" | `damit` becerisi: yerel dersleri sınıfla, genel olanı pakete taşı, eski evrim değişikliklerini ölç |
 | `.evrim/otonom/NOTLAR.md`'ye `DUR` / `ÖNCE: <iş>` | döngü durur / o iş öne geçer |
 
-**Otonom çevrim** (`otonom` becerisi): `get_usage` → `cv cycle begin --five <5s %> --week <haftalık %> …` (kilit alır, kota kapısını hesaplar, DERSLER + GUNLUK sonu + sahibinin okunmamış notlarını basar) → çıktıdaki `KARAR`a uy: `GO` bir iş adımı, `KUCUK` yalnız yarım işi bitir, `CIK` → `cv cycle sleep`, `MESGUL` başka oturum çalışıyor, `DUR` sahibi durdurdu, `SIRA_DEGIL` makinede başka projenin sırası → adım içinde ara sıra `cv gate` → ders (§4) → `OZET.md` → `cv cycle end …` (GUNLUK'e yazar, kilidi bırakır, `UYKU` süresini verir) → commit → çık ya da uyu.
+**Otonom çevrim** (`otonom` becerisi): `get_usage` → `cv cycle begin --five <5s %> --week <haftalık %> …` (kilit alır, kota kapısını ve `TEMPO`/`OFIS_MUHAKEMESI` durumunu hesaplar, `get_usage` yoksa `local-blocks` oturum bloklarına düşer, DERSLER + GUNLUK sonu + sahibinin okunmamış notlarını basar) → çıktıdaki `KARAR`a uy: `GO` bir iş adımı, `KUCUK` / `KISITLI` yalnız yarım işi ya da dar adımı bitir, `CIK` → `cv cycle sleep`, `MESGUL` başka oturum çalışıyor, `DUR` sahibi durdurdu, `SIRA_DEGIL` makinede başka projenin sırası, `KARAR: BITTI` → `finalForm` ve yol haritası tamam: çıktıyı doğrula, `OZET.md`'ye sahibinin açacağı kesin yolu yaz ve döngüyü durdur → adım içinde ara sıra `cv gate` (`--auto` ile yerel blok yedeği) ve sıkışma sonrası `cv cycle prime` → iş/kota verimliliği için açık çerçeveli öz-gelişim (`.evrim/otonom/KARARNAMELER.md` veya ders §4) → `OZET.md` → `cv cycle end …` (GUNLUK'e yazar, pencere sonu öz-ayarını yapar, kilidi bırakır, `UYKU` ve `SONRAKI_KAPI` verir) → commit → çık ya da uyu.
 
-**Kodu kim yazar** (`delegate.policy`, kurulumda `cv-init` sorar): `kendisi` hiç dağıtma, ana model yazar (kritik projeler) · `yalniz-api` yalnız API modeli (`delegate.provider`, varsayılan DeepSeek; anahtar yalnız ortam değişkeninde), anahtar yoksa kod işi bekler · `api-yoksa-kendisi` API, yoksa ana model (varsayılan) · `api-yoksa-subagent` API, yoksa daha ucuz Claude alt ajanı (`delegate.subagentModel`). Claude alt ajanı (ör. Haiku) yalnız son seçenekte kullanılır.
+**Kodu kim yazar** (`delegate.policy`, kurulumda `cv-init` sorar): `kendisi` hiç dağıtma, ana model yazar (kritik projeler) · `yalniz-api` yalnız API modeli (`delegate.provider`, varsayılan DeepSeek; anahtar yalnız ortam değişkeninde), anahtar yoksa kod işi bekler · `api-yoksa-kendisi` API, yoksa ana model (varsayılan) · `api-yoksa-subagent` API, yoksa daha ucuz Claude alt ajanı (`delegate.subagentModel`) veya uygun yerel CLI (`codex`, `agy`, `gemini`). Çıktılar `cv delegate verify` ile bağımsız doğrulanır.
 
-**Kota kapıları** (`.evrim/config.json` > `autonomy.gates`, varsayılan): 5 saatlik pencere **%85**'te yeni adım yok (`KUCUK`), **%90**'da çık ve pencere yenilenince +2 dk uyan (`CIK`); haftalık tavan **60 + 30·f** (f = haftanın geçen kesri). Kota okunamazsa tek küçük adım, üç kez üst üste okunamazsa bekle. Kilit 90 dakikada bayatlar; `cv recover [--fix]` takılmayı toparlar.
+**Meclis ve açık çerçeve (`cv council` & `.evrim/otonom/KARARNAMELER.md`):** Başmimar veya otonom döngü her zaman ağır alt ajan çağırmaz; plan/kota ve iş zorluğuna göre solo muhakeme veya `cv council --topic "<konu>"` (hafif/derin çoklu bakış) seçer. Örnekler duvar değildir: ajan işe yaramayan yaklaşımdan döner, kendi verimliliğini ölçer ve kalıcı ilkeleri `.evrim/otonom/KARARNAMELER.md`'ye yazar.
+
+**Kota kapıları** (`.evrim/config.json` > `autonomy.gates`, varsayılan): 5 saatlik pencere **%85**'te yeni adım yok (`KUCUK`), **%90**'da çık ve pencere yenilenince +2 dk uyan (`CIK`); haftalık tavan **60 + 30·f** (f = haftanın geçen kesri). Kota okunamazsa tek küçük adım (`local-blocks` yoksa), üç kez üst üste okunamazsa bekle. Kilit 90 dakikada bayatlar; `cv recover [--fix]` takılmayı toparlar.
 
 ## 4. Evrim kuralı (her oturumda, döngü içinde ya da dışında)
 
@@ -75,12 +95,13 @@ Ders genelleştirilmiş olmalı: proje adı, yol, kişisel bilgi, anahtar geçer
 ## 5. Komutlar
 
 ```
-claudevrim [kur] | init | guncelle | gelistirici <klon> | <cv komutu>   indirilen başlatıcı (exe)
-cv setup                      makineye bir kez: her oturumun claudevolution'ı tanıdığı kullanıcı becerisi
+claudevrim [kur] | init | guncelle | gelistirici <klon> | surum | <cv komutu>   indirilen başlatıcı (exe)
+cv setup                      makineye bir kez: Claude, Codex ve Antigravity için kullanıcı becerisi
 cv init | adopt | update      kurulum, göç, paket sürümünü projeye uygulama
-cv doctor | status            önkoşul denetimi; tur, kota, şerit, hafıza özeti
-cv cycle begin|end|sleep      otonom çevrim;  cv gate  kota kapısı;  cv lock  kilit;  cv recover  takılma
-cv delegate which|brief|batch|status|stop|fix   iş dağıtımı ve ucuz model şeritleri
+cv doctor | status            önkoşul denetimi; tur, kota, şerit, blok ve hafıza özeti
+cv council --topic "<konu>"   plan/kota duyarlı uyarlanabilir mimari meclis
+cv cycle begin|end|sleep|prime  otonom çevrim (TEMPO, BITTI, compaction prime); cv gate [--auto]
+cv delegate which|brief|batch|status|stop|fix|verify  iş dağıtımı, paralel şeritler ve doğrulama
 cv round start|end|show       tur ölçümü (.evrim/metrics.jsonl)
 cv lesson "<ders>" [--evrensel] [--hata]        ders yaz (evrensel: hemen pakete)
 cv distill [--mark]           damıtma girdisi;  cv evolve evrim/<ad>  pakete ölçülü değişiklik

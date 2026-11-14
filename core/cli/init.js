@@ -47,11 +47,47 @@ export function skillSources(lang) {
     return out;
 }
 
-export function buildConfig(root, name, lang) {
+export function loopWorkflowText(lang = "tr") {
+    if (lang === "en") {
+        return [
+            "---",
+            "description: Autonomous cycle workflow — runs one claudevolution cycle and schedules the next wakeup.",
+            "---",
+            "",
+            "# /loop — Autonomous Cycle (Antigravity)",
+            "",
+            "1. Check `.evrim/config.json`: if `kurulum` is `\"bekliyor\"`, follow `.agent/skills/cv-init/SKILL.md` instead of starting the autonomous loop.",
+            "2. Otherwise load `.agent/skills/otonom/SKILL.md` and run **one** autonomous cycle:",
+            "   - Run `.evrim/cv cycle begin --five unknown --week unknown` (or pass live quota numbers if available).",
+            "   - Follow the `KARAR` line (`GO`, `KUCUK`, `CIK`, `MESGUL`, `DUR`, `SIRA_DEGIL`, `BITTI`).",
+            "   - On `DUR` or `BITTI`, stop cleanly without scheduling another wakeup.",
+            "   - After work (`GO` / `KUCUK`), update `.evrim/otonom/OZET.md`, run `cv cycle end`, and commit memory files.",
+            "3. When continuing the loop (and `KARAR` is neither `DUR` nor `BITTI`), schedule the next wakeup using the `UYKU` seconds reported by `cv cycle end` / `cv cycle sleep`.",
+        ].join("\n");
+    }
+    return [
+        "---",
+        "description: Gözetimsiz otonom döngü — claudevolution otonom becerisiyle tek çevrim çalıştırır ve bitince sonraki uyanışı kurar.",
+        "---",
+        "",
+        "# /loop — Otonom Çevrim (Antigravity)",
+        "",
+        "1. `.evrim/config.json` dosyasını kontrol et: `kurulum` alanı `\"bekliyor\"` ise döngüyü başlatma; `.agent/skills/cv-init/SKILL.md` becerisiyle keşif görüşmesini yap.",
+        "2. Kurulum tamamsa `.agent/skills/otonom/SKILL.md` becerisini yükle ve **tek** otonom çevrim çalıştır:",
+        "   - `.evrim/cv cycle begin --five unknown --week unknown` (veya güncel kota değerleriyle) komutunu çalıştır.",
+        "   - Çıktıdaki `KARAR` satırına uy (`GO`, `KUCUK`, `CIK`, `MESGUL`, `DUR`, `SIRA_DEGIL`, `BITTI`).",
+        "   - `DUR` veya `BITTI` kararında yeni zamanlayıcı kurmadan temiz şekilde dur.",
+        "   - İş bitince (`GO` / `KUCUK`) `.evrim/otonom/OZET.md` dosyasını güncelle, `cv cycle end` çalıştır ve hafıza dosyalarını commit et.",
+        "3. Döngü sürecekse (`DUR` veya `BITTI` değilse) `cv cycle end` ya da `cv cycle sleep` çıktısındaki `UYKU` saniyesiyle bir sonraki uyanışı zamanla.",
+    ].join("\n");
+}
+
+export function buildConfig(root, name, lang, { adoptMode = false } = {}) {
     const d = detect(root);
     const cfg = defaults();
     cfg.project = name || d.name;
     cfg.lang = lang;
+    cfg.projectMode = adoptMode ? "adopted" : "greenfield";
     cfg.baseBranch = d.baseBranch;
     cfg.build = d.build;
     cfg.test = d.test;
@@ -124,7 +160,7 @@ export function init(root, { name, lang = "tr", adoptMode = false, skipExisting 
     let cfg;
     if (exists(cfgFile)) { cfg = { ...defaults(), ...readJson(cfgFile, {}) }; report.same.push(CONFIG_REL); }
     else {
-        const built = buildConfig(root, name, lang);
+        const built = buildConfig(root, name, lang, { adoptMode });
         cfg = built.cfg;
         writeJson(cfgFile, cfg);
         report.created.push(CONFIG_REL);
@@ -139,11 +175,17 @@ export function init(root, { name, lang = "tr", adoptMode = false, skipExisting 
         place(path.join(root, rel), fill(readText(path.join(TEMPLATE_DIR, rel))), report, rel, { noNew: shouldSkipNew(rel) });
     }
 
-    // 3. Skills: version-stamped copies (docs/DECISIONS.md K3).
+    // 3. Skills: version-stamped copies across Claude Code, Codex, and Antigravity (docs/DECISIONS.md K3).
+    const skillDirs = [".claude/skills", ".codex/skills", ".agent/skills"];
     for (const [skill, src] of Object.entries(skillSources(cfg.lang || lang))) {
-        const rel = `.claude/skills/${skill}/SKILL.md`;
-        place(path.join(root, rel), stampSkill(readText(src)), report, rel, { noNew: shouldSkipNew(rel) });
+        const stamped = stampSkill(readText(src));
+        for (const base of skillDirs) {
+            const rel = `${base}/${skill}/SKILL.md`;
+            place(path.join(root, rel), stamped, report, rel, { noNew: shouldSkipNew(rel) });
+        }
     }
+    const loopRel = ".agent/workflows/loop.md";
+    place(path.join(root, loopRel), stampSkill(loopWorkflowText(cfg.lang || lang)), report, loopRel, { noNew: shouldSkipNew(loopRel) });
 
     // 4. Version, launchers, .gitignore lines.
     const versionFile = path.join(root, ".evrim", "version");
@@ -177,8 +219,17 @@ export async function run(args) {
         const c = git(["commit", "-q", "-m", "claudevolution kuruldu (cv init)", "--", ...paths], root);
         console.log(c.ok ? "  commit: claudevolution kuruldu" : "  not: ilk commit atılamadı (git kullanıcı adı/e-postası tanımlı mı?); dosyalar hazır, commit'i Claude atar");
     }
-    // Once per machine (idempotent): the user-level skill that lets any new session recognise the package.
-    if (!args["no-setup"]) { try { const { setup, userSkillFile } = await import("./setup.js"); const s = setup(); if (s !== "aynı") console.log(`  makine becerisi ${s}: ${userSkillFile()}`); } catch (e) { console.log("  not: makine becerisi yazılamadı (cv setup): " + e.message); } }
+    // Once per machine (idempotent): user-level skills for Claude, Codex, and Antigravity.
+    if (!args["no-setup"]) {
+        try {
+            const { setupAll } = await import("./setup.js");
+            for (const s of setupAll()) {
+                if (s.status !== "aynı") console.log(`  makine becerisi (${s.platform}) ${s.status}: ${s.file}`);
+            }
+        } catch (e) {
+            console.log("  not: makine becerisi yazılamadı (cv setup): " + e.message);
+        }
+    }
     // A project still waiting for its discovery conversation gets no checklist here: build/test commands and
     // machine settings are decided in that conversation (cv-init runs cv doctor), not by the owner in a terminal.
     const waiting = readJson(path.join(root, CONFIG_REL), {}).kurulum === "bekliyor";
@@ -187,6 +238,8 @@ export async function run(args) {
         const doctor = await import("./doctor.js");
         await doctor.run({ _: [], dir: root, quiet: true });
     }
-    console.log(lang === "tr" ? "\nSıradaki: Claude uygulamasında bu klasörü açın ve \"merhaba\" yazın; gerisini Claude sorar." : "\nNext: open this folder in the Claude app and write \"hello\"; Claude asks the rest.");
+    console.log(lang === "tr"
+        ? "\n✓ Her şey hazır! Bu terminali kapatabilirsiniz. Şimdi Claude, Codex veya Antigravity uygulamasında bu klasörü açın ve \"merhaba\" yazın; gerisini sistem sorar."
+        : "\nNext: open this folder in the Claude, Codex, or Antigravity app and write \"hello\"; the system asks the rest.");
     return 0;
 }

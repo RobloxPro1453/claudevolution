@@ -20,6 +20,7 @@ const COMMANDS = {
     cycle: "otonom çevrim: begin | end | sleep | prime",
     recover: "takılma bulguları (--fix: güvenli olanları düzelt)",
     delegate: "ucuz model: batch | status | stop | run | fix | ask | scout | auto | verify",
+    council: "plan/kota uyumlu meclis: --topic \"<konu>\" [--complexity ...] [--depth ...] [--license ...] [--execute] [--json]",
     round: "tur ölçümü: start | end | show | table",
     probe: "çalışan uygulamayı yokla: --preset AD | --script JS | --list",
     ref: "referans karşılaştırma: name | index | compare",

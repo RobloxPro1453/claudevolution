@@ -17,7 +17,7 @@ import { init, place } from "./init.js";
 const ls = (dir) => { try { return fs.readdirSync(dir, { withFileTypes: true }).map((e) => ({ name: e.name, dir: e.isDirectory() })); } catch (_) { return []; } };
 const LEGACY_CONFIGS = ["docs/workflow/config.json", "workflow/config.json", ".workflow/config.json"];
 const STD_DOCS = ["VISION", "PROGRESS", "ROADMAP", "CHECKUP", "KNOWLEDGE", "ARCHITECTURE", "DEVELOPMENT", "WORKER"];
-const MEMORY = ["DERSLER", "GUNLUK", "HATALAR", "OZET", "SORULAR", "NOTLAR"];
+const MEMORY = ["DERSLER", "GUNLUK", "HATALAR", "OZET", "SORULAR", "NOTLAR", "KARARNAMELER"];
 // Folders that are never read: dependencies, build output, third-party material.
 const NEVER_READ = /^(\.git|node_modules|vendor|dist|target|original|.*-readable|\.tools)$/i;
 
@@ -31,6 +31,7 @@ export function mapConfig(legacy, root) {
     const cfg = defaults(), notes = [];
     const set = (key, value, why) => { if (value !== undefined && value !== null) notes.push({ key, why }); return value; };
     const L = legacy || {};
+    cfg.projectMode = "adopted";
     cfg.project = L.project || path.basename(root);
     const head = git(["symbolic-ref", "--short", "HEAD"], root);
     cfg.baseBranch = L.baseBranch || (head.ok && head.out) || cfg.baseBranch;
@@ -132,14 +133,26 @@ export function plan(root) {
     }
 
     // 3. Skills and autonomy
-    const skillMap = { durum: "durum", calis: "calis", fullotonom: "otonom", otonom: "otonom", damit: "damit" };
-    for (const e of ls(path.join(root, ".claude", "skills"))) {
-        if (!e.dir) continue;
-        const to = skillMap[e.name];
-        if (to) add(`.claude/skills/${e.name}/`, `.claude/skills/${to}/`, to === e.name ? "birleştir" : "emekli", to === e.name ? "paket becerisi yanına .new olarak gelir; projeye özgü adımlar AGENTS/config'e taşınır" : `paket '${to}' becerisi yerini alır; faz içerikleri ROADMAP'e`);
-        else add(`.claude/skills/${e.name}/`, `.claude/skills/${e.name}/`, "kalır", "projeye özgü beceri");
+    const skillMap = { durum: "durum", calis: "calis", fullotonom: "otonom", otonom: "otonom", damit: "damit", "cv-init": "cv-init" };
+    for (const skillBase of [".claude/skills", ".codex/skills", ".agent/skills"]) {
+        for (const e of ls(path.join(root, skillBase))) {
+            if (!e.dir) continue;
+            const to = skillMap[e.name];
+            if (to) add(`${skillBase}/${e.name}/`, `${skillBase}/${to}/`, to === e.name ? "birleştir" : "emekli", to === e.name ? "paket becerisi yanına .new olarak gelir; projeye özgü adımlar AGENTS/config'e taşınır" : `paket '${to}' becerisi yerini alır; faz içerikleri ROADMAP'e`);
+            else add(`${skillBase}/${e.name}/`, `${skillBase}/${e.name}/`, "kalır", "projeye özgü beceri");
+        }
     }
     if (has(".claude/loop.md")) add(".claude/loop.md", "paket: otonom becerisi + zamanlanmış görev", "emekli", "eski /loop istemi (ders 9)");
+    if (has(".agent/workflows/loop.md")) add(".agent/workflows/loop.md", ".agent/workflows/loop.md", "birleştir", "paket Antigravity /loop iş akışı yanına .new olarak gelir");
+    for (const e of ls(path.join(root, ".agent/workflows"))) {
+        if (!e.dir && e.name !== "loop.md") add(`.agent/workflows/${e.name}`, `.agent/workflows/${e.name}`, "kalır", "projeye özgü iş akışı");
+    }
+    for (const e of ls(path.join(root, ".agent"))) {
+        if (e.name !== "skills" && e.name !== "workflows") add(`.agent/${e.name}${e.dir ? "/" : ""}`, `.agent/${e.name}${e.dir ? "/" : ""}`, "kalır", "mevcut Antigravity ayarı");
+    }
+    for (const e of ls(path.join(root, ".codex"))) {
+        if (e.name !== "skills") add(`.codex/${e.name}${e.dir ? "/" : ""}`, `.codex/${e.name}${e.dir ? "/" : ""}`, "kalır", "mevcut Codex ayarı");
+    }
     for (const base of ["build/otonom", ".otonom", "otonom"]) {
         for (const e of ls(path.join(root, base))) {
             const stem = e.name.replace(/\.md$/, "");
@@ -154,7 +167,7 @@ export function plan(root) {
     add("~/.claude/projects/<proje>/memory/", ".evrim/otonom/DERSLER.md (aday)", "kalır", "Claude'un kendi hafızası; ilk damıtmada dersler oradan okunur, dosyalara dokunulmaz");
 
     // 4. Everything else at the top: product code and third-party material, listed by name only.
-    const seen = new Set(["docs", "scripts", ".claude", ".evrim", "build", ".git"]);
+    const seen = new Set(["docs", "scripts", ".claude", ".codex", ".agent", ".evrim", "build", ".git"]);
     for (const e of ls(root)) {
         if (!e.dir || seen.has(e.name)) continue;
         add(`${e.name}/`, `${e.name}/`, "dokunulmaz", NEVER_READ.test(e.name) ? "bağımlılık / üçüncü taraf / çıktı: okunmadı" : "ürün kodu ya da verisi");
@@ -183,6 +196,7 @@ export function apply(p) {
     const cfgFile = path.join(root, CONFIG_REL);
     if (!exists(cfgFile)) {
         const { root: _r, ...clean } = p.cfg;
+        clean.projectMode = "adopted";
         writeJson(cfgFile, clean); done.push(CONFIG_REL);
     }
     const report = { created: [], same: [], kept: [], newFiles: [] };
@@ -205,7 +219,7 @@ export function apply(p) {
         if (row.action !== "kalır" && row.action !== "kopya") continue;
         const t = slash(row.target || "");
         if (!t || t.startsWith("paket:") || t.startsWith("(") || t === `${tdir}/`) continue;
-        if (t.startsWith(".claude/skills/") && t.endsWith("/")) {
+        if ((t.startsWith(".claude/skills/") || t.startsWith(".codex/skills/") || t.startsWith(".agent/skills/")) && t.endsWith("/")) {
             if (!mergeTargets.has(t)) skipExisting.push(`${t}SKILL.md`);
         } else if (!t.endsWith("/") && !mergeTargets.has(t)) {
             skipExisting.push(t);
@@ -229,6 +243,7 @@ export function run(args) {
         console.log(`uygulandı: ${r.written.length} yeni dosya; yanına bırakılan: ${r.newFiles.length}`);
         for (const f of r.newFiles) console.log("  " + f);
         console.log("plan: .evrim/adopt-plan.md · sonra: cv doctor");
+        console.log("✓ Her şey hazır! Şimdi Claude, Codex veya Antigravity uygulamasında bu klasörü açın ve \"merhaba\" yazın.");
         return 0;
     }
     writeText(path.join(root, ".evrim", "adopt-plan.md"), text);

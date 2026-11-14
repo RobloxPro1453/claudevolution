@@ -8,7 +8,9 @@ Gözetimsiz döngünün hesap ve durum kısmı. Karar ve sıra `otonom` becerisi
 | `lock.js` | Çevrim kilidi (`.evrim/otonom/lock`: oturum + zaman; 90 dk'dan eskiyse bayat). |
 | `share.js` | Aynı makinede birden çok proje: makine kilidi + ağırlıklı sıra. |
 | `memory.js` | Hafıza dosyalarını dar okur (DERSLER tamamı, GUNLUK kuyruğu, okunmamış NOTLAR, cevaplanmış SORULAR). |
-| `cycle.js` | `cv cycle begin / end / sleep`: yukarıdakileri tek komutta birleştirir, sayaçları tutar. |
+| `cycle.js` | `cv cycle begin / end / sleep / prime`: yukarıdakileri tek komutta birleştirir, sayaçları tutar. |
+| `office.js` | Çok katmanlı yazılım ofisi beyni: tempo/yakım izleme, öz-ayarlama kararnameleri (`KARARNAMELER.md`), yöntem denetimi (`OFIS_MUHAKEMESI` / `ACIK_CERCEVE`) ve `BITTI` bitiş kapısı (`checkFinalForm`). |
+| `notify.js` | `BITTI` durumunda `OZET.md`'ye çalıştırma yolunu yazar ve platforma uygun (engellemesiz) masaüstü bildirimi + terminal zili gönderir. |
 | `recover.js` | `cv recover [--fix]`: bayat kilit, yarım birleştirme, çakışma, ölü şerit kaydı. |
 | `TASK_PROMPT.txt` | Zamanlanmış göreve yapıştırılacak düz metin. |
 
@@ -21,10 +23,10 @@ Gözetimsiz döngünün hesap ve durum kısmı. Karar ve sıra `otonom` becerisi
 ## Bir çevrim
 
 ```
-get_usage → cv cycle begin        kilit · sıra · kapı · hafıza özeti · kurtarma bulguları
-            └ KARAR: GO | KUCUK | CIK | MESGUL | DUR | SIRA_DEGIL
+get_usage → cv cycle begin        kilit · bitiş kapısı · sıra · kapı · tempo/ofis muhakemesi · hafıza özeti
+            └ KARAR: GO | KUCUK | CIK | MESGUL | DUR | SIRA_DEGIL | BITTI
 iş adımı (≤ pencerenin %8'i), her 5-6 araçta ve her commit'te: cv gate
-get_usage → cv cycle end          GUNLUK kaydı · sayaçlar · kilidi bırak · UYKU saniyesi
+get_usage → cv cycle end          GUNLUK kaydı · pencere gözlemi · öz-ayarlama · bitiş kontrolü · kilidi bırak
 ```
 
 Her durumun kurtarma yolu:
