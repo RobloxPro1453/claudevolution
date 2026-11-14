@@ -24,3 +24,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-13 · test-yuvalari (v1.0.19) · 20 şerit aynı makinede: aynı anda en çok n build/test (delegate.slots), makine çökmesin; ölçü: Kat A/B aynı kalmalı · test 74 → 76 · kabul
 - 2026-11-14 · ders-ucuz-model-ajanina-derleme-test-412312 (v1.0.20) · evrensel ders: "Ucuz model ajanına derleme/test betiklerini (scripts/, build betiği, test koşuc · test 76 → 78 · kabul
 - 2026-11-14 · promax-polish (v1.0.21) · bugfix test-file guard, cycle.end fallback, dedup secrets, multi-lens --review · test 78 → 86; kötü: codeLines %70 arttı (3611 → 6146) · kabul
+- 2026-11-14 · evolve-bundle-sync (v1.0.22) · cv evolve kabulunde bin/claudevrim.js BUNDLE_VERSION senkronizasyonu · ölçüler eşit · kabul
