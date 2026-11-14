@@ -22,3 +22,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-12 · ders-windows-ta-calisirken-kendini-yeniden-108236 (v1.0.17) · evrensel ders: Windows'ta çalışırken kendini yeniden yazan bir .cmd dosyası kayan bayt konumund · ölçüler eşit · kabul
 - 2026-11-12 · ders-sayfaya-enjekte-edilen-test-betigi-183241 (v1.0.18) · evrensel ders: "Sayfaya enjekte edilen test betiği hiç sonuç vermiyor ve içindeki zaman bekçisi · ölçüler eşit · kabul
 - 2026-11-13 · test-yuvalari (v1.0.19) · 20 şerit aynı makinede: aynı anda en çok n build/test (delegate.slots), makine çökmesin; ölçü: Kat A/B aynı kalmalı · test 74 → 76 · kabul
+- 2026-11-14 · ders-ucuz-model-ajanina-derleme-test-412312 (v1.0.20) · evrensel ders: "Ucuz model ajanına derleme/test betiklerini (scripts/, build betiği, test koşuc · test 76 → 78 · kabul
