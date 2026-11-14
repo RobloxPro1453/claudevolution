@@ -51,34 +51,34 @@ export function loopWorkflowText(lang = "tr") {
     if (lang === "en") {
         return [
             "---",
-            "description: Autonomous cycle workflow — runs one claudevolution cycle and schedules the next wakeup.",
+            "description: Autonomous cycle workflow (Antigravity /goal, /schedule, or 'başla') — runs one claudevolution cycle and schedules the next wakeup.",
             "---",
             "",
-            "# /loop — Autonomous Cycle (Antigravity)",
+            "# Autonomous Cycle (Antigravity — `/goal`, `/schedule`, or `başla`)",
             "",
             "1. Check `.evrim/config.json`: if `kurulum` is `\"bekliyor\"`, follow `.agent/skills/cv-init/SKILL.md` instead of starting the autonomous loop.",
             "2. Otherwise load `.agent/skills/otonom/SKILL.md` and run **one** autonomous cycle:",
-            "   - Run `.evrim/cv cycle begin --five unknown --week unknown` (or pass live quota numbers if available).",
+            "   - If Antigravity sent a `[quota] ... (X% remaining, resets at <ISO>)` notice, pass `--five <100 - X> --five-resets <ISO>`; otherwise run `.evrim/cv cycle begin --five unknown --week unknown`.",
             "   - Follow the `KARAR` line (`GO`, `KUCUK`, `CIK`, `MESGUL`, `DUR`, `SIRA_DEGIL`, `BITTI`).",
-            "   - On `DUR` or `BITTI`, stop cleanly without scheduling another wakeup.",
+            "   - On `DUR` or `BITTI`, cancel any active timers with `manage_task` (`list` -> `kill`) and stop cleanly without calling `schedule`.",
             "   - After work (`GO` / `KUCUK`), update `.evrim/otonom/OZET.md`, run `cv cycle end`, and commit memory files.",
-            "3. When continuing the loop (and `KARAR` is neither `DUR` nor `BITTI`), schedule the next wakeup using the `UYKU` seconds reported by `cv cycle end` / `cv cycle sleep`.",
+            "3. When continuing unattended (`KARAR` is neither `DUR` nor `BITTI`), call Antigravity's built-in `schedule` tool (`DurationSeconds: <UYKU>`, `Prompt: \"otonom becerisini yükle ve bir çevrim yap\"`) and end the turn.",
         ].join("\n");
     }
     return [
         "---",
-        "description: Gözetimsiz otonom döngü — claudevolution otonom becerisiyle tek çevrim çalıştırır ve bitince sonraki uyanışı kurar.",
+        "description: Gözetimsiz otonom döngü (Antigravity /goal, /schedule veya 'başla') — tek çevrim çalıştırır ve bitince sonraki uyanışı kurar.",
         "---",
         "",
-        "# /loop — Otonom Çevrim (Antigravity)",
+        "# Otonom Çevrim (Antigravity — `/goal`, `/schedule` veya `başla`)",
         "",
         "1. `.evrim/config.json` dosyasını kontrol et: `kurulum` alanı `\"bekliyor\"` ise döngüyü başlatma; `.agent/skills/cv-init/SKILL.md` becerisiyle keşif görüşmesini yap.",
         "2. Kurulum tamamsa `.agent/skills/otonom/SKILL.md` becerisini yükle ve **tek** otonom çevrim çalıştır:",
-        "   - `.evrim/cv cycle begin --five unknown --week unknown` (veya güncel kota değerleriyle) komutunu çalıştır.",
+        "   - Antigravity sistem mesajında `[quota] ... (X% remaining, resets at <ISO>)` varsa `--five <100 - X> --five-resets <ISO>` geçir; yoksa `.evrim/cv cycle begin --five unknown --week unknown` çalıştır.",
         "   - Çıktıdaki `KARAR` satırına uy (`GO`, `KUCUK`, `CIK`, `MESGUL`, `DUR`, `SIRA_DEGIL`, `BITTI`).",
-        "   - `DUR` veya `BITTI` kararında yeni zamanlayıcı kurmadan temiz şekilde dur.",
+        "   - `DUR` veya `BITTI` kararında `manage_task` (`list` -> `kill`) ile aktif zamanlayıcıyı kapatıp yeni `schedule` kurmadan temiz şekilde dur.",
         "   - İş bitince (`GO` / `KUCUK`) `.evrim/otonom/OZET.md` dosyasını güncelle, `cv cycle end` çalıştır ve hafıza dosyalarını commit et.",
-        "3. Döngü sürecekse (`DUR` veya `BITTI` değilse) `cv cycle end` ya da `cv cycle sleep` çıktısındaki `UYKU` saniyesiyle bir sonraki uyanışı zamanla.",
+        "3. Döngü sürecekse (`DUR` veya `BITTI` değilse) Antigravity'nin yerleşik `schedule` aracını (`DurationSeconds: <UYKU>`, `Prompt: \"otonom becerisini yükle ve bir çevrim yap\"`) çağırıp turu bitir.",
     ].join("\n");
 }
 

@@ -13,11 +13,15 @@ The owner is not here; **you stand in for them.** Do not ask questions, do not w
 
 ## 1. Open (one message)
 
-1. Inside `/loop`, first the safety wake: `ScheduleWakeup(1800, prompt = the same loop text, reason "safety")`. Not needed in a scheduled task (the next trigger is the safety net). In the first cycle of a `/loop`, turn Remote Control on so the owner can watch from the phone (`set_remote_control`, `session_id: "self"`, `enabled: true`; load it with ToolSearch if deferred); if refused or "unavailable", move on and write one OZET line.
-2. `mcp__ccd_session_mgmt__get_usage` (if missing: `ToolSearch select:mcp__ccd_session_mgmt__get_usage`).
+1. **Detect your platform, set safety wake:**
+   - **Inside Claude Code (`/loop`):** first the safety wake `ScheduleWakeup(1800, prompt = the same loop text, reason "safety")`. In the first cycle of a `/loop`, turn Remote Control on (`set_remote_control`, `session_id: "self"`, `enabled: true`; load with ToolSearch if deferred); if refused or "unavailable", move on and write one OZET line. Not needed in a scheduled task.
+   - **Inside Antigravity (`/goal`, `/schedule`, or `"başla"`):** Antigravity has **no** `/loop` or `ScheduleWakeup`; instead it has built-in `schedule` and `manage_task` tools. Leave a safety timer with `schedule(DurationSeconds: 1800, Prompt: "otonom becerisini yükle ve bir çevrim yap")` before long steps if needed (regular sleep wakes are scheduled in §5).
+2. **Read quota:**
+   - **Claude Code:** `mcp__ccd_session_mgmt__get_usage` (if missing: `ToolSearch select:mcp__ccd_session_mgmt__get_usage`).
+   - **Antigravity / Codex:** do **not** search for this tool (`ToolSearch` unneeded). If Antigravity sent `[quota] ... (X% remaining, resets at <ISO>)` in `<SYSTEM_MESSAGE>`, pass `--five <100 - X> --five-resets <ISO> --week unknown`; otherwise pass `--five unknown --week unknown`.
 3. `cv cycle begin --five <5h %> --week <weekly %> --five-resets <resetsAt> --week-resets <resetsAt>`
 
-If `get_usage` is missing or cannot be read, pass `--five unknown --week unknown`: `cv cycle begin` falls back to local 5h session blocks (`local-blocks`); if no local block exists either, the command allows one small step and holds after three unreadable cycles in a row.
+If quota cannot be read, pass `--five unknown --week unknown`: `cv cycle begin` falls back to local 5h session blocks (`local-blocks`); if no local block exists either, the command allows one small step and holds after three unreadable cycles in a row.
 
 Follow the `KARAR` line of the output:
 
@@ -27,9 +31,9 @@ Follow the `KARAR` line of the output:
 | `KUCUK` / `KISITLI` | Start no large/parallel step; only finish a small half-done job or one narrow step (commit, build), then §4. |
 | `CIK` | Do no work. `cv cycle sleep --reason "<reason from the output>"`, then §5. |
 | `MESGUL` | Another session is working. Exit without touching any file. |
-| `DUR` | The owner wrote DUR in `NOTLAR.md`. Exit doing nothing; inside `/loop` also `ScheduleWakeup stop: true`. |
+| `DUR` | The owner wrote DUR in `NOTLAR.md`. Exit doing nothing; in Claude Code `/loop` call `ScheduleWakeup stop: true`, in Antigravity cancel active timers via `manage_task` (`list` → `kill`). |
 | `SIRA_DEGIL` | The quota belongs to another project on this machine right now. Exit. |
-| `BITTI` | `finalForm` and roadmap are complete. Verify the deliverable file/command, write the **exact executable/output path** (`DELIVERABLE`) in `OZET.md` so the owner can open and use it right away, stop `/loop` with `ScheduleWakeup stop: true`, and exit cleanly. |
+| `BITTI` | `finalForm` and roadmap are complete. Verify the deliverable file/command, write the **exact executable/output path** (`DELIVERABLE`) in `OZET.md` so the owner can open and use it right away; in Claude Code `/loop` call `ScheduleWakeup stop: true`, in Antigravity cancel timers with `manage_task` and exit cleanly without calling `schedule`. |
 
 The output also gives you: `TEMPO` (`HIZLAN` / `YAVAS` / `NORMAL`), `KARARNAME`, `OFIS_MUHAKEMESI`, `ACIK_CERCEVE`, DERSLER, GUNLUK tail, the owner's **unread notes**, answered questions, `KURTARMA`, `DAMITMA`, and the cycle id. Check `.evrim/otonom/KARARNAMELER.md` for persistent project decrees.
 
@@ -45,7 +49,7 @@ Order:
    - **Open-ended self-improvement (`ACIK_CERCEVE`):** Never follow old habits blindly when a better architecture, custom validation/test script, or workflow rule is needed: take initiative, author new project decrees in `.evrim/otonom/KARARNAMELER.md`, or generalize cross-project insights with `cv lesson "<generalised lesson>" --evrensel`.
 5. **One work step:** one step of the loop in `docs.worker` (open items of `docs.roadmap` and `docs.checkup`; honor `licensePolicy` when scouting references). If the code job can be specified, give it to the cheap model (`calis` steps 3-8; lanes are detached processes and keep running after this cycle; the next cycle collects them). If there is no key (`cv delegate which` names a fallback), follow the fallback path of `calis` step 5; do not stop. Write critical parts yourself (AGENTS.md > division of work).
 
-Inside the cycle, **every 5-6 tool calls and after every commit**: `get_usage` + `cv gate --five .. --week ..` (if `get_usage` is missing, `cv gate --auto` falls back to local 5h session blocks). On `KUCUK`/`CIK`, commit what you have (`WIP:` is fine, in a building state) and go to §4. A cycle should not eat more than 8% of the 5-hour window; if it does, make the next cycle smaller.
+Inside the cycle, **every 5-6 tool calls and after every commit**: in Claude Code run `get_usage` + `cv gate --five .. --week ..`; in Antigravity or Codex never search for `get_usage` — use `[quota]` if present, otherwise run `cv gate --auto` (falls back to local 5h session blocks). On `KUCUK`/`CIK`, commit what you have (`WIP:` is fine, in a building state) and go to §4. A cycle should not eat more than 8% of the 5-hour window; if it does, make the next cycle smaller.
 
 After context compaction, run `cv cycle prime` (with `--task <id>` if needed) to refresh the current phase, blockers, and task-relevant lessons.
 
@@ -65,15 +69,18 @@ You, not the owner, must notice wasted money and quota:
 1. Working tree clean or committed as `WIP:`; the build passes (if not, revert the last commit).
 2. **Lesson & decree:** if something repeated or was expensive this cycle, one line: project-specific, `cv lesson "<lesson>"`. If it would hold in another project as well (still true without the project name), **right away** `cv lesson "<generalised lesson>" --evrensel`: it enters the package now, is measured, committed and pushed to GitHub; do not wait for distillation. For a serious error the same command with `--hata` (`grep` `HATALAR.md` for a similar one first). If the command says it did not reach the package, the lesson stays `[evrensel]` locally and distillation looks again. Record lasting project-level workflow or architecture improvements in `.evrim/otonom/KARARNAMELER.md`.
 3. Update **OZET.md**: plain language, no jargon, in the owner's language; sections "Şu an" (now), "Bitenler" (done, with where to look), "Karar verdiklerim" (decisions), "Takıldıklarım" (stuck), "Harcama" (spending), "Senin bakman gerekenler" (for you to check).
-4. `get_usage`, then: `cv cycle end --id <id> --did "<what I did>" --cost "<quota %, $>" --worth evet|hayir --five .. --week .. --next "<next>"`. It writes GUNLUK, updates the counters, releases the lock and prints `UYKU` and `SONRAKI_KAPI`. Every number you report comes from a command output.
+4. Read quota (in Claude Code `get_usage`; in Antigravity `100 - remaining` from any `[quota]` notice, else `unknown`), then: `cv cycle end --id <id> --did "<what I did>" --cost "<quota %, $>" --worth evet|hayir --five .. --week .. --next "<next>"`. It writes GUNLUK, updates the counters, releases the lock and prints `UYKU` and `SONRAKI_KAPI`. Every number you report comes from a command output.
 5. Commit the memory files (`otonom: çevrim <date>`).
-6. **If `SONRAKI_KAPI` returns `BITTI`:** verify the deliverable path and check command, write the exact executable/output path the owner can open right away in `OZET.md`, and stop `/loop` with `ScheduleWakeup stop: true`.
+6. **If `SONRAKI_KAPI` returns `BITTI`:** verify the deliverable path and check command, write the exact executable/output path the owner can open right away in `OZET.md`; in Claude Code `/loop` call `ScheduleWakeup stop: true`, in Antigravity cancel active timers with `manage_task` and exit without calling `schedule`.
 
 ## 5. Exit or sleep
 
 - **Scheduled task:** write a one-sentence last word and stop. No rescheduling.
-- **Session getting long?** Past the 8th cycle in the same `/loop` session, or when the context has grown large (every call gets expensive), do not break the loop, but write in OZET's "for you to check" part and in your last word, in the owner's language: "This session got long; when convenient, open a new session, write 'merhaba', then write `/loop başla`. I continue where I left off." Not every cycle; at most once every 4 cycles.
-- **`/loop`:** unless `BITTI` or `DUR`, call `ScheduleWakeup(<UYKU>, prompt = the same text, reason "<one sentence>")`. Work going on: 60-120 s; waiting for background tests/lanes: 1200 s; gate closed: the command's value (in chunks of at most 3600). Do no work in sleep cycles.
+- **Session getting long?** Past the 8th cycle in the same continuous session, or when the context has grown large (every call gets expensive), do not break the loop, but write in OZET's "for you to check" part and in your last word, in the owner's language — for Claude Code: "open a new session, write 'merhaba', then write `/loop başla`"; for Antigravity: "open a new session and write `'başla'` or `/goal`". Not every cycle; at most once every 4 cycles.
+- **Schedule the next cycle (by platform):** unless `BITTI` or `DUR`:
+  - **Claude Code (`/loop`):** `ScheduleWakeup(<UYKU>, prompt = the same text, reason "<one sentence>")`.
+  - **Antigravity:** call the built-in `schedule` tool: `schedule(DurationSeconds: <UYKU>, Prompt: "otonom becerisini yükle ve bir çevrim yap")` and stop calling tools to wait cleanly at zero token cost. If running under `/goal` with `KARAR = GO` and `UYKU <= 120`, you may continue directly to the next cycle; still use `schedule` whenever sleeping (`CIK`, quota wait, or `UYKU > 120`).
+  - Durations: work going on 60-120 s; waiting for background tests/lanes 1200 s; gate closed: the command's value (in chunks of at most 3600). Do no work in sleep cycles.
 
 ## 6. Recovery (sticking points)
 
@@ -93,6 +100,6 @@ You, not the owner, must notice wasted money and quota:
 
 ## 8. If the owner writes in the session
 
-- **"what did you do":** give the gist of `OZET.md` (plainly) and answer the question. Inside `/loop` and not finished yet, afterwards **always** set the loop up again with `ScheduleWakeup`.
-- **"stop":** commit, OZET, `cv lock release`; inside `/loop` also `ScheduleWakeup stop: true`. For a scheduled task tell the owner: "write a single line DUR in `NOTLAR.md`, or turn the scheduled task off."
+- **"what did you do":** give the gist of `OZET.md` (plainly) and answer the question. Inside a continuous loop and not finished yet, afterwards **always** schedule the next wakeup again (`ScheduleWakeup` in Claude Code, `schedule` in Antigravity).
+- **"stop":** commit, OZET, `cv lock release`; inside Claude Code `/loop` call `ScheduleWakeup stop: true`, inside Antigravity cancel active timers with `manage_task` (`list` → `kill`). For a scheduled task tell the owner: "write a single line DUR in `NOTLAR.md`, or turn the scheduled task off."
 - **Is it running?** `cv lock status` and `cv status` answer clearly: running / sleeping (until when) / stopped.

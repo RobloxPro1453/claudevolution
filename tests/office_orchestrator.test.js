@@ -705,4 +705,19 @@ test("office: checkFinalForm(), KARAR: BITTI kapısı ve güvenli notifyOwner() 
         eq(calls[0].opts.windowsHide, true);
         ok(calls[0].opts.env.CV_NOTIFY_TITLE.includes("BITTI"));
     });
+
+    // Antigravity platform self-awareness in cv-init, durum, otonom, AGENTS.md, and .agent/workflows/loop.md
+    for (const lang of ["tr", "en"]) {
+        const cvInitDoc = readText(path.join(PKG_ROOT, `skills/${lang}/cv-init/SKILL.md`));
+        const durumDoc = readText(path.join(PKG_ROOT, `skills/${lang}/durum/SKILL.md`));
+        const otonomDoc = readText(path.join(PKG_ROOT, `skills/${lang}/otonom/SKILL.md`));
+        ok(cvInitDoc.includes("Antigravity") && cvInitDoc.includes("/goal") && cvInitDoc.includes("/schedule"), `${lang} cv-init: Antigravity komutlari`);
+        ok(cvInitDoc.includes("/loop başla"), `${lang} cv-init: Claude Code /loop başla korunmali`);
+        ok(durumDoc.includes("[quota]") && durumDoc.includes("/goal") && durumDoc.includes("/schedule"), `${lang} durum: Antigravity kotasi ve komutlari`);
+        ok(otonomDoc.includes("schedule(DurationSeconds:") && otonomDoc.includes("manage_task") && otonomDoc.includes("[quota]"), `${lang} otonom: Antigravity schedule/manage_task/[quota]`);
+    }
+    const tplAgents = readText(path.join(PKG_ROOT, "templates/project/AGENTS.md"));
+    ok(tplAgents.includes("/goal") && tplAgents.includes("/schedule") && tplAgents.includes("/loop başla"), "AGENTS şablonu tum platformlari kapsar");
+    const agyWf = readText(path.join(cfgReady.root, ".agent/workflows/loop.md"));
+    ok(agyWf.includes("schedule") && agyWf.includes("manage_task") && agyWf.includes("[quota]"), ".agent/workflows/loop.md Antigravity araclari");
 });
