@@ -234,8 +234,8 @@ export function makeTools(ctx) {
             }
         },
         run: {
-            description: `Run one of: build, test (takes up to ${cfg.testMinutes} minutes, needs the build first), git_status, git_diff (changes not yet committed).`,
-            parameters: { type: "object", properties: { command: { type: "string", enum: ["build", "test", "git_status", "git_diff"] } }, required: ["command"] },
+            description: `Run one of: build, test (takes up to ${cfg.testMinutes} minutes, needs the build first), check (start the app as the reviewer will: --screenshot / --self-test, numbers per step; needs the build), git_status, git_diff (changes not yet committed).`,
+            parameters: { type: "object", properties: { command: { type: "string", enum: ["build", "test", "check", "git_status", "git_diff"] } }, required: ["command"] },
             run: async ({ command }) => {
                 if (command === "build" || command === "test") {
                     const c = cfg[command];
@@ -248,6 +248,15 @@ export function makeTools(ctx) {
                         else { ctx.track.lastTestOk = tick(); ctx.track.lastTestTail = tail(r.text.trim(), 2); }
                     }
                     return `exit ${r.code}\n` + headTailLines(r.text, 15, 25);
+                }
+                // The builder's own look at the app (cv check round 0 in the lane worktree): the numbers decide,
+                // the picture is shown to a model that can see (provider "vision": true, ERRATA E4).
+                if (command === "check") {
+                    const { runChecks, summary } = await import("../check/check.js");
+                    const r = await runChecks({ ...cfg, root: ctx.wt }, { self: true, deps: { skipBuild: !!ctx.track.lastBuildOk && ctx.track.lastWrite < ctx.track.lastBuildOk } });
+                    const shot = (r.results.find((x) => x.id === "screenshot") || {}).artifacts || [];
+                    ctx.track.pendingShot = shot.length ? path.join(ctx.wt, shot[0]) : null;
+                    return (r.passed ? "exit 0\n" : "exit 1\n") + summary(r);
                 }
                 if (command === "git_status") return (await git(["status", "--short"])).text || "(clean)";
                 if (command === "git_diff") return (await git(["diff"])).text || "(no changes)";
@@ -640,6 +649,15 @@ export async function loop(ctx, messages, key, names, maxSteps, budget, finishNa
         }
         if (!warn && !finish && finishName === "finish" && !edited && nudgeAt.includes(steps)) warn = `You have used ${steps} of ${maxSteps} steps and changed no file. Stop exploring: write a first version now with what you know, build, and check it with the tests; refine after. If it truly cannot be done, call finish with status "blocked" and report what you found and the exact open question.`;
         if (warn && !finish) messages.push({ role: "user", content: warn });
+        // A screenshot from run(check) goes to the model as a picture, small ("detail: low", about 512x512),
+        // only when the provider sees pictures. Pictures sit in a user message, never an assistant one (E4).
+        if (ctx.track.pendingShot && !finish) {
+            const shot = ctx.track.pendingShot;
+            ctx.track.pendingShot = null;
+            if (provider(ctx.cfg) && provider(ctx.cfg).vision) {
+                try { messages.push({ role: "user", content: [{ type: "text", text: "The screenshot run(check) saved (evidence; the check's numbers decide):" }, { type: "image_url", image_url: { url: "data:image/png;base64," + fs.readFileSync(shot).toString("base64"), detail: "low" } }] }); } catch (_) { /* no picture */ }
+            }
+        }
     }
     if (!finish) { stopReason = "steps"; finish = { status: "blocked", report: `Stopped after ${maxSteps} steps without finishing.` }; }
     return { finish, cost, steps, tokens, stopReason: stopReason || "finish", apiKind };
