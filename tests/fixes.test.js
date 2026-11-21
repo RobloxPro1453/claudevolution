@@ -73,7 +73,7 @@ test("fix: döngü bekçisi 'exit 1' tekrarını ve değişmeyen dosyada aynı o
     const s = agent.stagnationGuard();
     ok(!s("test", "diff", "exit 1\nfail at 2026-11-21T10:00:01Z after 1.2s").stalled);
     ok(s("test", "diff", "exit 1\nfail at 2026-11-21T10:05:44Z after 3.9s").stalled, "zaman damgası farkı durgunluğu gizlememeli");
-    eq(agent.normalizeOutput("C:\\Users\\x\\AppData\\Local\\Temp\\cv-1\\a.txt 0x7ffde1234567"), "<tmp> <addr>");
+    eq(agent.normalizeOutput("D:\\build\\Temp\\cv-1\\a.txt /var/tmp/cv-2/b.log 0x7ffde1234567"), "<tmp> <tmp> <addr>");
 });
 
 test("fix: şerit planı bağımlıları ve aynı dosyaya dokunanları aynı şeride, sırayla koyar", () => {
