@@ -5,6 +5,7 @@ Yazılan masaüstü programının **gerçekten açıldığını, bir şey çizdi
 | Dosya | Tek işi |
 |---|---|
 | `check.js` | Tur koşucusu: derle → programı bul → `--screenshot` ya da konsol koşuları → `--self-test` → `check.json`; değişmeyen geçmiş turu yeniden kullanır |
+| `pe.js` | `.exe`nin içe aktarma tablosu (PE32/PE32+): hangi DLL'leri istiyor, hangileri Windows'ta yok (tek dosya kontrolü) |
 | `program.js` | Hangi program başlatılır: `check.program` → `finalForm.deliverable` → Cargo (`default-run`, pencere kütüphanesi kullanan paket, kök paket); en yeni dosya değil |
 | `selftest.js` | `--self-test` ve `--screenshot` sözleşme metinleri; rapor okuma ve hüküm (istenen adımlar + uygulamanın kendi adımları) |
 | `image.js` | Küçültme, boş ekran (tek renk), SSIM benzerliği, referansa en yakın görüntü, kare farkı (`diffShare`) |
@@ -19,6 +20,7 @@ Yazılan masaüstü programının **gerçekten açıldığını, bir şey çizdi
 ## Kapı (ERRATA E4/E7)
 
 - **Kapı sayıdır:** derleme geçti, program başladı, görüntü boş değil, yerleşim 120. ve 360. karede aynı (`diffShare` <= 0.03), dar pencerede (800x560) de çiziyor, self-test adımlarının hepsi geçti; konsol programında `--help`/`--version` çıkış 0 ve çıktı var (her vaka iki kez koşulur, farklı çıktı işaretlenir).
+- **Tek dosya:** program `.exe` ise içe aktarma tablosu okunur; Windows'un taşımadığı bir DLL istiyorsa (ör. `libunwind.dll`) tur kalır ve not çözümü söyler: statik C çalışma zamanıyla derle (Rust: `-C target-feature=+crt-static`). DLL'ler `.exe`nin yanındaysa program açılır ama tek dosya değildir; not bunu söyler.
 - Referans görüntüye benzerlik (`references/shots/*.png`, 0–100) yalnız `check.referenceGate` verilmişse kapıdır ("şunu yeniden kur"); yeni fikirde yalnız not. Görüntüler modelin bakması için `artifacts` olarak listelenir; DeepSeek de görebilir, ama karar `check.json`'dadır.
 - En çok 20 iddia (`claims`); kesilen liste kesildiğini söyler.
 

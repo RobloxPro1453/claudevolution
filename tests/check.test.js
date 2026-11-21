@@ -113,7 +113,9 @@ test("check: uçtan uca tur — çizen uygulama geçer, değişmeyince sonuç ge
     eq(validate(cfg).errors, []);
     const r1 = await runChecks(cfg);
     ok(r1.passed, summary(r1));
-    eq([r1.round, r1.results.map((r) => r.id), r1.program.why], [1, ["screenshot", "self-test"], "check.program"]);
+    // A Windows .exe program also gets the single-exe result (no stray DLL), appended last.
+    const exe = process.platform === "win32" ? ["single-exe"] : [];
+    eq([r1.round, r1.results.map((r) => r.id), r1.program.why], [1, ["screenshot", "self-test", ...exe], "check.program"]);
     ok(fs.existsSync(path.join(cfg.root, ".evrim/state/checks/round-1/check.json")) && fs.existsSync(path.join(cfg.root, ".evrim/state/checks/round-1/screenshot.png")));
     const r2 = await runChecks(cfg);
     eq([r2.round, r2.kept, r2.passed], [2, 1, true], "hiçbir şey değişmedi: tur 1 geçerli");

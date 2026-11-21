@@ -16,6 +16,7 @@ import { exists, git, isWindows, readJson, readText, slash, writeJson } from "..
 import { decodePng } from "./png.js";
 import { closestReference, diffShare, isBlank } from "./image.js";
 import { programFor } from "./program.js";
+import { importedDlls, strayDlls } from "./pe.js";
 import { launchTarget } from "../lib/process.js";
 import { SCREENSHOT_CONTRACT, SELF_TEST_CONTRACT, verdict } from "./selftest.js";
 
@@ -153,6 +154,21 @@ async function runsCheck(cfg, prog, deps) {
     return result("runs", passed, passed ? "The console program answers --help and --version." : "The console program does not answer every case.", { claims });
 }
 
+// "One .exe, no install": the import table may not need a DLL Windows does not ship. A stray DLL lying next
+// to the .exe still starts but is not one file; one that is missing means the build needs the static C runtime.
+function singleExeCheck(prog) {
+    let names = null;
+    try { names = importedDlls(fs.readFileSync(prog.program)); } catch (_) { /* unreadable: noted below */ }
+    if (!names) return result("single-exe", true, "The .exe's import table could not be read, so its DLLs are unknown.");
+    const stray = strayDlls(names);
+    const dir = path.dirname(prog.program);
+    const here = stray.filter((d) => exists(path.join(dir, d)));
+    const missing = stray.filter((d) => !here.includes(d));
+    if (!stray.length) return result("single-exe", true, `One .exe: it imports only DLLs Windows ships (${names.length} names read).`);
+    if (!missing.length) return result("single-exe", true, `Not one file, but it starts: ${stray.join(", ")} sit next to the .exe and must be installed with it.`);
+    return result("single-exe", false, `The .exe needs ${missing.join(", ")}, which Windows does not ship, so a bare copy will not start on another machine. Build with the static C runtime (for example \`-C target-feature=+crt-static\`) so the .exe needs nothing beside it.`);
+}
+
 // Layer boundary (clean-architecture skill): Engine -> Tools/Storage -> thin UI. Engine files may not use a
 // window library or the disk; UI files may not touch the disk. Read from the Rust source only (comments and
 // strings are skipped roughly: lines starting with //). Applies when src/engine.rs or src/engine/ exists.
@@ -220,6 +236,7 @@ export async function runChecks(cfg, { self = false, deps = {}, now = new Date()
             if (kind === "console") results.push(await runsCheck(cfg, prog, deps));
             else results.push(await screenshotCheck(cfg, prog, dir, deps));
             if (kind !== "console" && (c.selfTest && (c.selfTest.steps || []).length || c.selfTest === true)) results.push(await selfTestCheck(cfg, prog, dir, deps));
+            if (/\.exe$/i.test(prog.program)) results.push(singleExeCheck(prog));
         }
     }
     // At most MAX_CLAIMS claims in all: a capped list says so (a cut list must never look complete).
