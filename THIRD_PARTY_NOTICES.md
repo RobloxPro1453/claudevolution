@@ -4,6 +4,7 @@ claudevolution bazı parçaları izin verici lisanslı açık kaynak projelerden
 
 | Kaynak | Lisans | Uyarlanan |
 |---|---|---|
+| Anthropic skills (frontend-design) | Apache-2.0 | `skills/library/frontend-design-anthropic/` (değiştirilmeden; lisans metni yanında `LICENSE.txt`). Türkçe tasarım becerileri `skills/library/*-tr` bu paket için özgün yazıldı (Manus araştırması, 2026-11-21) |
 | Craft Anything (storytold) | MIT OR Apache-2.0 | `core/lib/util.js` atomik yazıcı (`platform/src/fs.rs`), `core/cli/migrate.js` sürümlü adımlar (`engine/src/versioned.rs`) ve işlemsel uygulama (`setup/src/plan.rs`), `core/delegate/agent.js` hata türleri (`ai/src/failure.rs`) ve başarısız koşu günlüğü (`ai/src/failure_log.rs`), `core/delegate/context.js` dönem sıkıştırması (`ai/src/context.rs`) ve `docs/pitfalls.md` dersleri |
 | Craft Anything (storytold), M3 | MIT OR Apache-2.0 | `core/check/` — `--self-test`/`--screenshot` sözleşmeleri ve hüküm (`rebuild/kinds/{self_test,screenshot}.rs`, `engine/src/self_test.rs`), boş ekran + SSIM + küçültme (`engine/src/tools/web_common.rs`), program seçimi (`engine/src/outputs.rs`), konsol vakaları (`rebuild/kinds/runs.rs`), saklanan tur (`rebuild/kept_check.rs`) |
 | craft-libs (storytold) | MIT OR Apache-2.0 | `core/lib/util.js` Windows kilit geri çekilmesi (`crates/atomic`) |

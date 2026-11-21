@@ -4,7 +4,7 @@
 
 ## First thing in a session
 
-- If `.evrim/config.json` > `kurulum` is `"bekliyor"`, apply the `cv-init` skill whatever the owner's first message is (even "hi"): quiet scan, lead-architect conversation, the `finalForm` contract, and at the end the real way to start on your own platform (**Antigravity**: `"başla"`, `/goal` or `/schedule` — there is no `/loop`; **Claude Code**: `/loop başla`; **Codex**: `"başla"`).
+- If `.evrim/config.json` > `kurulum` is `"bekliyor"`, apply the `cv-init` skill; read the request first (§0b): **a concrete job is done at once** (a working first slice, no mock-up); for a vague idea or a greeting: quiet scan, lead-architect conversation, the `finalForm` contract, and at the end the real way to start on your own platform (**Antigravity**: `"başla"`, `/goal` or `/schedule` — there is no `/loop`; **Claude Code**: `/loop başla`; **Codex**: `"başla"`).
 - Once set up: answer a greeting with the `durum` skill (short status and the right way to start unattended work on this platform). `"başla"`, `"otonom başla"`, `/goal` / `/schedule` / `.agent/workflows/loop.md` in Antigravity, or `/loop başla` in Claude Code = one cycle of the `otonom` skill; when `finalForm` is complete, `KARAR: BITTI` stops the loop.
 
 ## claudevolution

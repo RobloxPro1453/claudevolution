@@ -2,6 +2,12 @@
 
 En üstte en yeni; kayıt başına ≤5 satır.
 
+## 2026-11-21 · Esnek çekirdek: benchmark teşhisinin düzeltmesi (Opus 5.5 + DeepSeek)
+- **Teşhis:** aynı istekte ("Obsidian gibi hafif Markdown uygulaması, Rust tek exe") claudevolution'suz koşu 25 dk'da çalışan 7,4 bin satır verdi; bizimki 45 dk'da uydurma veriyle maket. Kök neden: `cv-init` kod yazmayı yasaklıyor, `kurulum: bekliyor` her mesajı görüşmeye çeviriyordu, "önce maket" üç yerde zorunluydu; öz-denetim kendi lehine ("neredeyse kusursuz"), `cv check` tek kare.
+- **Düzeltme:** istek yönlendirici (`cv-init` §0b: somut iş hemen, çalışan ilk dilim; maket yalnız belirsiz istekte, asla teslim değil), kurallar "varsayılan + ne zaman sapılır", komut tablosu (paket kodu okunmaz); `desktop-design`: referans çıkarma, egui ipuçları, madde madde puan, hatayı yeniden üret; `rust-desktop`: kaynak sürümü oku, tek-exe. `skills/library`: 7 tasarım becerisi her projeye kurulur (Anthropic frontend-design Apache-2.0).
+- **Kod (DeepSeek, 3 iş, $0.09):** `cv intent coverage --delivered` (✓/✗/~ karşılama tablosu), `cv check` 360. kare kayma + dar pencere görüntüsü (`diffShare`, şablon `CV_SHOT_FRAMES`/`CV_SHOT_SIZE`), `single-exe` (PE içe aktarma tablosu, Windows'ta olmayan DLL kalır). Node 163/163, Deno 163/163.
+- **Keşif:** kaynaklar `benchmark/*/session-logs` (adım adım düşünce + token), iki exe elle denendi; ertelenen: beceri bulucu (`cv skills find`) — sahibin kararıyla sonraki iş.
+
 ## 2026-11-21 · ProMax M6: yaşayan evrim + her zaman açık kota freni (Opus 5.5)
 - **Kota bekçisi (K39):** önceki döngü kotayı %100'e yakıp öldü; kapılar yalnız tavsiyeydi. `cv guard` her projede Claude Code kancası: tempo/%85 notu, gözetimsizken %90'da yeni işi engeller (commit/`cv`/uyku açık), sahibi başındayken yalnız uyarır; `init`/`update` ayarları koruyarak kurar, `doctor` denetler. **Kalibrasyon:** gerçek okumalar yerel yükle eşlenir (medyan, `limit reached` izi = %100); hata testle yeniden üretildi (varsayılan sınır %31 gösterirken sayaç %90).
 - **Öğrenme:** `.evrim/knowledge.jsonl` + `DERSLER`/`HATALAR` kayıpsız göçü, `cv tune` (tek sınırlı deneme → tut ya da geri al + ders), `cv usage` (Claude kalibre, Codex, Antigravity, proje bütçe freni), `cv evolve --auto` E10 kilidi, tam İngilizce proje belgeleri (`templates/project-en`), mimari testleri.

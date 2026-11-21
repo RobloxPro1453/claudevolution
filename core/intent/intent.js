@@ -125,3 +125,37 @@ export function coverage(cfg) {
     const covered = ids.filter((id) => text.includes(`[E:${id}]`) || text.includes(`E:${id}`));
     return { ids, covered, missing: ids.filter((id) => !covered.includes(id)), hasIntent: !!intent };
 }
+
+// Did the build really try every finalForm criterion? (A mock-up can be offered as "done" while half of
+// them were never run.) A criterion with [E:x] is matched to the self-test claim "Self-test: x"; one without
+// an id counts as tried only when it names `cv check` and the round passed. Round null: nothing was tried.
+export function delivered(cfg, round) {
+    const claims = new Map();
+    for (const r of (round && round.results) || []) {
+        for (const c of r.claims || []) {
+            const m = String(c.title || "").match(/^self-test:\s*(.+)$/i);
+            if (m) claims.set(lower(m[1].trim()), c);
+        }
+    }
+    const items = ((cfg.finalForm && cfg.finalForm.criteria) || []).map((text) => {
+        const t = String(text);
+        const m = t.match(/\[E:([\w-]+)\]/);
+        if (!m) return { text: t, id: null, state: /cv check/i.test(t) && round && round.passed ? "pass" : "untried", detail: "" };
+        const c = claims.get(lower(m[1]));
+        if (!c) return { text: t, id: m[1], state: "untried", detail: "" };
+        return { text: t, id: m[1], state: c.passed ? "pass" : "fail", detail: c.detail || "" };
+    });
+    const totals = { pass: 0, fail: 0, untried: 0 };
+    for (const it of items) totals[it.state]++;
+    return { items, totals };
+}
+
+// The table the owner reads: ✓ tried and passed, ✗ tried and failed (+ why), ~ not tried, and the totals line.
+export function renderDelivered(result) {
+    const mark = { pass: "✓", fail: "✗", untried: "~" };
+    const items = result.items || [], t = result.totals || { pass: 0, fail: 0, untried: 0 };
+    return [
+        ...items.map((it) => `${mark[it.state]} ${it.text}${it.state === "fail" && it.detail ? ` — ${it.detail}` : ""}`),
+        `Karşılanan: ${t.pass}/${items.length} · denenmedi: ${t.untried} · kalan: ${t.fail}`
+    ].join("\n");
+}

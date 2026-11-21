@@ -29,7 +29,26 @@ Kaynak: Craft Anything `docs/design-system.md` + `pitfalls.md` "Design" (MIT OR 
 - egui'nin kendi `Spinner`/`ProgressBar::animate`'i her kare yeniden çizer: tempolu kendi animasyonun ya da durağan "çalışıyor" yazısı.
 - Ölçüsü çizimden sonra bilinen öğe bir kare geç kalır: ölçüyü önceki kareden al.
 
-## Maket onayı (kod yazmadan önce)
-1. `cv stack new <yığın> --name "<ad>"` iskeleti; ekranlar içi boş ama düzen gerçek (1-2 dk).
-2. `cv check --self` → ekran görüntüsü (`.evrim/state/checks/round-0/screenshot.png`); önce kendin bak.
-3. Görüntüyü `docs/INTENT.md` "Anladığım şu" özetiyle **birlikte** sahibe göster; tek seferde düzeltsin.
+## "X gibi olsun" dendiğinde: önce referansı çıkar
+Kod yazmadan önce referansın (Obsidian, VS Code, Notion, Figma...) yerleşimini 8-10 maddeyle yaz ve ekranı ona göre kur. Örnek (Obsidian tipi not uygulaması):
+- Solda ince **ikon şeridi** (dosyalar, arama, etiketler), yanında sabit genişlikli ağaç; ağaç satırı ok + ad, kutu/çerçeve yok.
+- Üstte **düz sekmeler** (seçili sekme zemine kaynaşır), sekme kapatma × yalnız üstüne gelince.
+- Okuma sütunu ortalı ve dar (~700 px); başlıklar ölçekli, gövde 15-16 px, satır yüksekliği 1.5.
+- Düğmeler **ikon ve çerçevesiz** (üstüne gelince hafif zemin); yazılı düğme yalnız birincil iş için.
+- Sağ panel (içindekiler, geri bağlantılar) katlanabilir; durum çubuğu ince ve sessiz.
+- Renk: tek vurgu rengi (seçim, bağlantı); geri kalan gri tonları.
+
+## egui'de bu ilkeler nasıl uygulanır
+- Kenar panel: `SidePanel::left(..).resizable(true).default_width(250.0).width_range(180.0..=420.0)`; içindeki satırlar `ui.set_max_width(..)` ya da sabit genişlikle çizilir. Yoksa içerik paneli her karede büyütür ("sonsuza genişleyen kasa").
+- Çerçevesiz düğme: `Button::new(..).frame(false)` ya da kendi `ghost` düğmen; ikonlar vektörle çizilir (`Painter` çizgi/daire) ya da gömülü ikon yazı tipiyle; emoji ve ASCII ok ("v", "<", ">") kullanma.
+- Yazı tipi: Windows'ta sistem yazı tipini yükle (Segoe UI gövde, Consolas kod); Türkçe harfleri dene.
+- Uzun metin `LayoutJob` ile sarılır; `ui.horizontal` içindeki etiket sarılmaz, taşar.
+- Yerleşik tasarım becerileri (paket içinde, ihtiyaçta oku): `design-foundations-tr`, `beautiful-ui-builder-tr`, `ui-design-review-tr`, `frontend-design-anthropic`.
+
+## Ölçütlü öz-denetim (göz kararı yok)
+`cv check --self` görüntüsünü (ve dar pencere görüntüsünü) yukarıdaki referans maddelerine karşı **madde madde evet/hayır** puanla; sonuca yalnız sayıyı yaz ("10 maddeden 8'i"). "Neredeyse kusursuz", "harika görünüyor" gibi serbest yargı yazılmaz. Mümkünse puanlamayı ayrı bir inceleyici (alt ajan / ucuz model) yapar: kendi işini kendin notlama.
+
+Sahibi bir görsel hata bildirince önce **hatayı yeniden üret** (pencereyi büyüt/küçült, birkaç saniye bekle, tıkla); "bende görünmüyor" deyip sahibi yanlışlama.
+
+## Maket (yalnız belirsiz istekte)
+Somut iş istendiyse maket yapılmaz; ilk teslim çalışan dilimdir (`cv-init` §0b). İstek belirsizse ve sahibi görünüş seçecekse: iskelet + uydurma örnek veri, görüntü ve "Anladığım şu" birlikte gösterilir; maket asla teslim diye sunulmaz.

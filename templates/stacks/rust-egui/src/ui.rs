@@ -16,13 +16,17 @@ pub struct App {
     new_title: String,
     /// --screenshot: save the window's picture here after `frames` frames, then close.
     pub shot: Option<PathBuf>,
+    /// How many frames to draw before saving (env CV_SHOT_FRAMES, 120 by default).
+    shot_frames: u32,
     frames: u32,
     asked: bool,
 }
 
 impl App {
     pub fn new(engine: Engine, file: PathBuf, status: String, shot: Option<PathBuf>) -> Self {
-        Self { engine, file, status, query: String::new(), new_title: String::new(), shot, frames: 0, asked: false }
+        // A check may ask for another frame count: the layout must look the same at frame 360 as at 120.
+        let shot_frames = std::env::var("CV_SHOT_FRAMES").ok().and_then(|v| v.trim().parse().ok()).unwrap_or(120);
+        Self { engine, file, status, query: String::new(), new_title: String::new(), shot, shot_frames, frames: 0, asked: false }
     }
 
     fn save(&mut self) {
@@ -40,7 +44,7 @@ impl App {
         let Some(path) = self.shot.clone() else { return };
         self.frames += 1;
         ctx.request_repaint(); // keep drawing while unfocused, or the picture never comes
-        if self.frames >= 120 && !self.asked {
+        if self.frames >= self.shot_frames && !self.asked {
             self.asked = true;
             let closer = ctx.clone();
             ctx.request_screenshot(move |image: Arc<egui::ColorImage>| {

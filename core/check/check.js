@@ -14,8 +14,9 @@ import process from "node:process";
 import { spawn, spawnSync } from "node:child_process";
 import { exists, git, isWindows, readJson, readText, slash, writeJson } from "../lib/util.js";
 import { decodePng } from "./png.js";
-import { closestReference, isBlank } from "./image.js";
+import { closestReference, diffShare, isBlank } from "./image.js";
 import { programFor } from "./program.js";
+import { importedDlls, strayDlls } from "./pe.js";
 import { launchTarget } from "../lib/process.js";
 import { SCREENSHOT_CONTRACT, SELF_TEST_CONTRACT, verdict } from "./selftest.js";
 
@@ -85,7 +86,8 @@ export const lastRound = (cfg) => { const r = rounds(cfg).filter((n) => n > 0); 
 
 async function screenshotCheck(cfg, prog, dir, deps) {
     const shot = path.join(dir, "screenshot.png");
-    const r = await (deps.runProgram || runProgram)(prog.program, [...prog.args, "--screenshot", shot], { cwd: cfg.root, seconds: (cfg.check && cfg.check.runSeconds) || RUN_SECONDS });
+    const run = deps.runProgram || runProgram, seconds = (cfg.check && cfg.check.runSeconds) || RUN_SECONDS;
+    const r = await run(prog.program, [...prog.args, "--screenshot", shot], { cwd: cfg.root, seconds });
     const rel = slash(path.relative(cfg.root, shot));
     if (!exists(shot)) return result("screenshot", false, `The program did not save a picture with --screenshot (exit ${r.code}${r.timedOut ? ", time limit" : ""}). ${SCREENSHOT_CONTRACT}`);
     let img;
@@ -107,7 +109,25 @@ async function screenshotCheck(cfg, prog, dir, deps) {
             if (!ok) passed = false;
         }
     }
-    return result("screenshot", passed, note, { artifacts: [rel], claims, similarity });
+    // Two more pictures of the same app, steered by the environment (SCREENSHOT_CONTRACT): a layout that
+    // grows every frame looks fine in one picture and fails the second, and the app must draw narrow too.
+    // An app that ignores the variables writes the same picture twice and passes.
+    const artifacts = [rel];
+    const read = (file) => { try { return decodePng(fs.readFileSync(file)); } catch (_) { return null; } };
+    const late = path.join(dir, "screenshot-late.png");
+    await run(prog.program, [...prog.args, "--screenshot", late], { cwd: cfg.root, seconds, env: { ...process.env, CV_SHOT_FRAMES: "360" } });
+    artifacts.push(slash(path.relative(cfg.root, late)));
+    const lateImg = read(late);
+    const share = lateImg ? diffShare(img, lateImg) : 1, still = !!lateImg && share <= 0.03;
+    claims.push(claim("Layout holds still (frame 120 vs 360)", still, lateImg ? `${Math.round(share * 100)}% of pixels moved` : "no readable picture with CV_SHOT_FRAMES=360"));
+    if (!still) passed = false;
+    const narrow = path.join(dir, "screenshot-narrow.png");
+    await run(prog.program, [...prog.args, "--screenshot", narrow], { cwd: cfg.root, seconds, env: { ...process.env, CV_SHOT_SIZE: "800x560" } });
+    artifacts.push(slash(path.relative(cfg.root, narrow)));
+    const narrowImg = read(narrow), fits = !!narrowImg && !isBlank(narrowImg);
+    claims.push(claim("Draws in a narrow window", fits, narrowImg ? "blank picture" : "no readable picture with CV_SHOT_SIZE=800x560"));
+    if (!fits) passed = false;
+    return result("screenshot", passed, note, { artifacts, claims, similarity });
 }
 
 async function selfTestCheck(cfg, prog, dir, deps) {
@@ -132,6 +152,21 @@ async function runsCheck(cfg, prog, deps) {
         if (!a.timedOut && norm(a.text) !== norm(b.text)) claims.push(claim(`${name} prints the same twice`, false, "two runs printed different text"));
     }
     return result("runs", passed, passed ? "The console program answers --help and --version." : "The console program does not answer every case.", { claims });
+}
+
+// "One .exe, no install": the import table may not need a DLL Windows does not ship. A stray DLL lying next
+// to the .exe still starts but is not one file; one that is missing means the build needs the static C runtime.
+function singleExeCheck(prog) {
+    let names = null;
+    try { names = importedDlls(fs.readFileSync(prog.program)); } catch (_) { /* unreadable: noted below */ }
+    if (!names) return result("single-exe", true, "The .exe's import table could not be read, so its DLLs are unknown.");
+    const stray = strayDlls(names);
+    const dir = path.dirname(prog.program);
+    const here = stray.filter((d) => exists(path.join(dir, d)));
+    const missing = stray.filter((d) => !here.includes(d));
+    if (!stray.length) return result("single-exe", true, `One .exe: it imports only DLLs Windows ships (${names.length} names read).`);
+    if (!missing.length) return result("single-exe", true, `Not one file, but it starts: ${stray.join(", ")} sit next to the .exe and must be installed with it.`);
+    return result("single-exe", false, `The .exe needs ${missing.join(", ")}, which Windows does not ship, so a bare copy will not start on another machine. Build with the static C runtime (for example \`-C target-feature=+crt-static\`) so the .exe needs nothing beside it.`);
 }
 
 // Layer boundary (clean-architecture skill): Engine -> Tools/Storage -> thin UI. Engine files may not use a
@@ -201,6 +236,7 @@ export async function runChecks(cfg, { self = false, deps = {}, now = new Date()
             if (kind === "console") results.push(await runsCheck(cfg, prog, deps));
             else results.push(await screenshotCheck(cfg, prog, dir, deps));
             if (kind !== "console" && (c.selfTest && (c.selfTest.steps || []).length || c.selfTest === true)) results.push(await selfTestCheck(cfg, prog, dir, deps));
+            if (/\.exe$/i.test(prog.program)) results.push(singleExeCheck(prog));
         }
     }
     // At most MAX_CLAIMS claims in all: a capped list says so (a cut list must never look complete).

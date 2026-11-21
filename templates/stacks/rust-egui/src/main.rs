@@ -17,6 +17,13 @@ fn arg_after(args: &[String], flag: &str) -> Option<PathBuf> {
     args.iter().position(|a| a == flag).and_then(|i| args.get(i + 1)).map(PathBuf::from)
 }
 
+/// "800x560" (env CV_SHOT_SIZE) -> the window's inner size; anything else is ignored.
+fn shot_size(text: &str) -> Option<[f32; 2]> {
+    let (w, h) = text.split_once('x')?;
+    let (w, h) = (w.trim().parse::<f32>().ok()?, h.trim().parse::<f32>().ok()?);
+    if w >= 1.0 && h >= 1.0 { Some([w, h]) } else { None }
+}
+
 /// A start that never reached a window leaves this mark (a graphics driver that crashes takes the
 /// whole process); the next start then draws with the software renderer (WARP) instead of the GPU.
 /// craft-anything apps/craft-anything/src/start_guard.rs idea (MIT OR Apache-2.0).
@@ -58,6 +65,10 @@ fn main() -> eframe::Result {
         viewport = viewport.with_active(false);
         if cfg!(windows) {
             viewport = viewport.with_window_level(egui::WindowLevel::AlwaysOnBottom);
+        }
+        // CV_SHOT_SIZE like 800x560: the app must draw in a narrow window too, not only the usual one.
+        if let Some(size) = std::env::var("CV_SHOT_SIZE").ok().and_then(|v| shot_size(&v)) {
+            viewport = viewport.with_inner_size(size);
         }
     }
     let mut options = eframe::NativeOptions { viewport, ..Default::default() };
