@@ -29,3 +29,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-14 · antigravity-uyumu (v1.0.24) · Antigravity platform oz-farkindaligi (/goal, /schedule, schedule araci, [quota] ve dogrudan basla destegi) · ölçüler eşit · kabul
 - 2026-11-21 · m1-temel-hatalar (v1.0.25) · "M1: · test 92 → 101; kötü: codeLines %7 arttı (7824 → 8362) · kabul
 - 2026-11-21 · m2-token-ve-yedek (v1.0.26) · "M2: · test 101 → 108; kötü: codeLines %7 arttı (8362 → 8908) · kabul
+- 2026-11-21 · m3-masaustu-denetim (v1.0.27) · "M3: · test 108 → 114; kötü: codeLines %7 arttı (8908 → 9554) · kabul
