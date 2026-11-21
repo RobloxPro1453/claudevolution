@@ -14,12 +14,13 @@ const stripComments = (text) => String(text).replace(/<!--[\s\S]*?-->/g, "");
 export function lessons(cfg) {
     return lines(stripComments(readText(memFile(cfg, "DERSLER"), ""))).filter((l) => /^\s*-\s+\S/.test(l)).map((l) => l.trim());
 }
-export function journalTail(cfg) {
+// n: how many lines (cycle.js asks for 6 in the short view); default from evolution.journalTailLines.
+export function journalTail(cfg, n = cfg.evolution.journalTailLines) {
     // Entries start at the first "## " heading; the file's own instructions above it are not journal.
     const text = stripComments(readText(memFile(cfg, "GUNLUK"), ""));
     const at = text.search(/^##\s/m);
     if (at < 0) return "";
-    return tail(lines(text.slice(at)).filter((l) => l.trim()).join("\n"), cfg.evolution.journalTailLines);
+    return tail(lines(text.slice(at)).filter((l) => l.trim()).join("\n"), n);
 }
 export function appendJournal(cfg, heading, bodyLines) {
     appendText(memFile(cfg, "GUNLUK"), `\n## ${heading}\n${bodyLines.filter(Boolean).join("\n")}\n`);
@@ -73,7 +74,7 @@ function readTaskSpec(cfg, task) {
     if (!task || typeof task !== "string") return "";
     const trimmed = task.trim();
     const candidates = [
-        path.join(cfg.root, (cfg.tasks && cfg.tasks.dir) || "tarifler", trimmed.endsWith(".md") ? trimmed : `${trimmed}.md`),
+        path.join(cfg.root, (cfg.tasks && cfg.tasks.dir) || "docs/tasks", trimmed.endsWith(".md") ? trimmed : `${trimmed}.md`),
         path.resolve(cfg.root, trimmed)
     ];
     for (const p of candidates) {

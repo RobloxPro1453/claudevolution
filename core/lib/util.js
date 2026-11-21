@@ -1,5 +1,6 @@
 // Shared helpers. Node standard library only (runs on Node >= 18 and on Deno 2 through its node: layer).
 import fs from "node:fs";
+import { Buffer } from "node:buffer";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -25,22 +26,37 @@ export const slash = (p) => String(p).replace(/\\/g, "/");
 
 export function exists(p) { try { fs.statSync(p); return true; } catch (_) { return false; } }
 export function readText(p, fallback = null) { try { return fs.readFileSync(p, "utf8"); } catch (e) { if (fallback !== null) return fallback; throw e; } }
+// The one atomic writer (adapted from craft-anything platform/fs.rs, craft-libs craft-atomic and OMK
+// atomic-session-file.ts; MIT/Apache-2.0, see THIRD_PARTY_NOTICES.md). A reader sees the whole old or the
+// whole new file, never a cut one: a unique temp file beside the target (exclusive create, so two writers
+// never share one; the old name used pid+millisecond and could collide), flushed to disk, then renamed.
+// On Windows an antivirus scan or the search indexer holds a fresh file for a moment: the rename is retried
+// with a short backoff instead of the old fallback that wrote the target in place (a crash then cut it).
+let tmpCounter = 0;
+const RENAME_RETRY = new Set(["EPERM", "EACCES", "EBUSY"]);
+export function sleepSync(ms) { try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch (_) { /* no wait */ } }
+export function renameRetrying(from, to, tries = 12) {
+    for (let i = 0; ; i++) {
+        try { fs.renameSync(from, to); return; } catch (e) {
+            if (!isWindows || !RENAME_RETRY.has(e.code) || i >= tries) throw e;
+            sleepSync(Math.min(200, 10 * 2 ** i));
+        }
+    }
+}
 export function writeText(p, text) {
     fs.mkdirSync(path.dirname(p), { recursive: true });
-    const tmp = `${p}.tmp.${process.pid}.${Date.now()}`;
+    const tmp = path.join(path.dirname(p), `.${path.basename(p)}.${process.pid}.${++tmpCounter}.${Math.random().toString(36).slice(2, 8)}.tmp`);
+    let fd = null;
     try {
-        fs.writeFileSync(tmp, text);
-        try {
-            fs.renameSync(tmp, p);
-        } catch (e) {
-            if (isWindows && (e.code === "EPERM" || e.code === "EACCES" || e.code === "EBUSY")) {
-                try { fs.unlinkSync(tmp); } catch (_) { /* best effort */ }
-                fs.writeFileSync(p, text);
-                return;
-            }
-            throw e;
-        }
+        fd = fs.openSync(tmp, "wx");
+        const buf = ArrayBuffer.isView(text) ? Buffer.from(text.buffer, text.byteOffset, text.byteLength) : Buffer.from(String(text), "utf8");
+        for (let off = 0; off < buf.length;) off += fs.writeSync(fd, buf, off, buf.length - off);
+        try { fs.fsyncSync(fd); } catch (_) { /* some filesystems refuse fsync; the rename still protects */ }
+        fs.closeSync(fd);
+        fd = null;
+        renameRetrying(tmp, p);
     } catch (e) {
+        if (fd !== null) { try { fs.closeSync(fd); } catch (_) { /* closing */ } }
         try { fs.unlinkSync(tmp); } catch (_) { /* best effort */ }
         throw e;
     }
@@ -51,7 +67,8 @@ export function readJson(p, fallback) {
     try { raw = fs.readFileSync(p, "utf8"); } catch (_) { return fallback; }
     try { return JSON.parse(raw); } catch (_) {
         if (raw.trim().length > 0) {
-            try { fs.copyFileSync(p, `${p}.corrupt`); } catch (_) { /* best effort */ }
+            // Keep every byte under a name nothing else has (an older .corrupt copy is never overwritten).
+            try { fs.copyFileSync(p, exists(`${p}.corrupt`) ? `${p}.corrupt.${Date.now()}` : `${p}.corrupt`); } catch (_) { /* best effort */ }
         }
         return fallback;
     }
@@ -138,7 +155,11 @@ export function run(cmd, args = [], { cwd, timeoutMs = 120000, env } = {}) {
     const code = r.status === null || r.status === undefined ? (timedOut ? 124 : 127) : r.status;
     return { code, ok: code === 0, timedOut, missing, text: (r.stdout || "") + (r.stderr || ""), out: (r.stdout || "").trim() };
 }
-export const git = (args, cwd, timeoutMs = 60000) => run("git", args, { cwd, timeoutMs });
+// git never waits for a person (LoopTroop server/git/runCommand.ts, MIT): no credential prompt, no pager,
+// no ssh passphrase question. An unattended night run once sat on a pager that nobody would close.
+export const GIT_ENV = Object.freeze({ GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: "never", GIT_PAGER: "cat", PAGER: "cat", ...(process.env.GIT_SSH_COMMAND || process.env.GIT_SSH ? {} : { GIT_SSH_COMMAND: "ssh -o BatchMode=yes" }) });
+export const gitEnv = () => ({ ...process.env, ...GIT_ENV });
+export const git = (args, cwd, timeoutMs = 60000) => run("git", args, { cwd, timeoutMs, env: gitEnv() });
 
 // --flag value / --flag (true) / positionals in _.
 export function parseArgs(argv) {

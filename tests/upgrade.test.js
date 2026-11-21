@@ -374,7 +374,7 @@ test("upgrade: agent.js durgunluk kesici, üstel yedekleme/failover, güvenli ev
 
     // Stagnation circuit breaker + safeStage + receipt + <prior_work> in runTask
     const cfg = makeGitProject("agent-upg", {
-        testCmd: [process.execPath, "eval", "console.log('FAIL_ALWAYS'); process.exit(1)"]
+        testCmd: [process.execPath, process.versions.deno ? "eval" : "-e", "console.log('FAIL_ALWAYS'); process.exit(1)"]
     });
     writeText(path.join(cfg.root, "docs/tasks/T-001.md"), "# T-001\n\nSteps: 10\nBudget: $1.00\n\n## Goal\nEdit src/app.js.\n");
     git(["add", "docs/tasks/T-001.md"], cfg.root);
@@ -448,7 +448,7 @@ test("upgrade: agent.js durgunluk kesici, üstel yedekleme/failover, güvenli ev
 
 // ---------------------------------------------------------------- 7. verify.js & cv delegate verify
 test("upgrade: verifyTask kapsam, gizli sızıntı, test kalitesi, treeSha tazelik ve CLI", async () => {
-    const passCmd = [process.execPath, "eval", "process.exit(0)"];
+    const passCmd = [process.execPath, process.versions.deno ? "eval" : "-e", "process.exit(0)"];
     const cfg = makeGitProject("verify-proj", { build: passCmd, testCmd: passCmd });
     writeText(path.join(cfg.root, "docs/tasks/T-001.md"), "# T-001\n\nScope: src/feature.js, tests/feature.test.js\n\n## Goal\nImplement feature.\n");
     git(["add", "docs/tasks/T-001.md"], cfg.root);

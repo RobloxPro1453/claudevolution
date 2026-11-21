@@ -193,25 +193,36 @@ export function init(root, { name, lang = "tr", adoptMode = false, skipExisting 
     writeShims(root);
     const added = ignoreLines(root);
     if (added.length) report.notes.push(".gitignore'a eklendi: " + added.join(", "));
-    if (!git(["rev-parse", "--git-dir"], root).ok) report.notes.push("burası henüz git deposu değil: `git init` çalıştırın (otonomi ve şeritler git ister)");
+    if (!isOwnRepoRoot(root)) report.notes.push("burası henüz kendi git deposu değil: `git init` çalıştırın (otonomi ve şeritler git ister)");
     // 5. Universal lessons of both layers (package + this machine), merged for this project.
     const u = writeProject(root);
     report.notes.push(`evrensel dersler: paketten ${u.pkg}, bu makineden ${u.machine} (.evrim/evrensel.md)`);
     return report;
 }
 
+// True only when root is the top folder of its own git repository.
+export function isOwnRepoRoot(root) {
+    if (!exists(root)) return false;
+    const top = git(["rev-parse", "--show-toplevel"], root);
+    if (!top.ok || !top.out) return false;
+    const canon = (p) => { let r; try { r = fs.realpathSync.native(p); } catch (_) { r = path.resolve(p); } r = path.resolve(r); return isWindows ? r.toLowerCase() : r; };
+    return canon(top.out) === canon(root);
+}
+
 export async function run(args) {
     const root = path.resolve(typeof args.dir === "string" ? args.dir : process.cwd());
     const lang = args.lang === "en" ? "en" : "tr";
-    // A new folder becomes a git repository (autonomy, lanes and evolution need one).
-    const fresh = !git(["rev-parse", "--git-dir"], root).ok;
+    // A new folder becomes a git repository (autonomy, lanes and evolution need one). A folder that only sits
+    // inside another repository (a project folder on a Desktop that is itself a repo) is new too: rev-parse
+    // walks upwards and answered "yes", so the first commit landed in that other, outer repository.
+    const fresh = !isOwnRepoRoot(root);
     if (fresh) { fs.mkdirSync(root, { recursive: true }); git(["init", "-q"], root); }
     const r = init(root, { name: typeof args.name === "string" ? args.name : undefined, lang });
     console.log(`claudevolution ${VERSION} → ${root}`);
     console.log(`  yeni dosya: ${r.created.length}   aynı kalan: ${r.same.length}   dokunulmayan (sizinki farklı): ${r.kept.length}`);
     for (const f of r.newFiles) console.log(`  yanına bırakıldı: ${f}`);
     if (r.kept.length && !r.newFiles.length) console.log("  (farklı dosyaların .new kopyaları zaten duruyor)");
-    for (const n of r.notes.filter((n) => !(fresh && /henüz git deposu değil/.test(n)))) console.log("  not: " + n);
+    for (const n of r.notes.filter((n) => !(fresh && /henüz kendi git deposu değil/.test(n)))) console.log("  not: " + n);
     // First commit of exactly the files this command wrote (never the owner's other files).
     if (r.created.length) {
         const paths = [...new Set([...r.created, ...r.newFiles, ".gitignore"])].filter((p) => exists(path.join(root, p)));

@@ -14,7 +14,7 @@ const COMMANDS = {
     doctor: "gözetimsiz çalışma önkoşullarını denetle (hiçbir şeyi değiştirmez)",
     status: "tur, kota, şeritler, hafıza özeti",
     distill: "damıtma için yeni dersler, adaylar, ölçüler (--mark: damıtıldı işaretle)",
-    update: "paket sürümüyle projedeki farkı göster (--apply ile uygula)",
+    update: "paket sürümüyle projedeki farkı göster (--apply yedekleyip uygular, --rollback geri alır)",
     gate: "kota kapısı: --five N --week N [--five-resets ISO] [--week-resets ISO]",
     lock: "çevrim kilidi: status | acquire --session ID | release [--session ID]",
     cycle: "otonom çevrim: begin | end | sleep | prime",

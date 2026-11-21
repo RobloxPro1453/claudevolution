@@ -51,7 +51,7 @@ Bir projeye uygulamak için proje klasöründe:
 <paket>/bin/cv.cmd adopt  # var olan proje (`cv adopt`); --yes ile varsayılan ayarlarla hızlı geçiş
 ```
 
-- Varsayılan yerleşimde çekirdek kopyası `<proje>/claudevolution/` altında tutulabilir (`.gitignore` ayarlı) ya da makinedeki merkezi `~/.claudevrim/paket` kullanılır; mevcut projeye paket güncellemesi **`cv update --apply`** ile uygulanır.
+- Varsayılan yerleşimde çekirdek kopyası `<proje>/claudevolution/` altında tutulabilir (`.gitignore` ayarlı) ya da makinedeki merkezi `~/.claudevrim/paket` kullanılır; mevcut projeye paket güncellemesi **`cv update --apply`** ile uygulanır (önce yedek alır, dersler/günlük/ayarlarınız silinmez; geri almak: `cv update --rollback`).
 - Kurulum sonrası ajana `"kurulum"` / `merhaba` dendiğinde `cv-init` becerisi proje profilini tamamlar.
 
 ---
@@ -97,7 +97,7 @@ Ders genelleştirilmiş olmalı: proje adı, yol, kişisel bilgi, anahtar geçer
 ```
 claudevrim [kur] | init | guncelle | gelistirici <klon> | surum | <cv komutu>   indirilen başlatıcı (exe)
 cv setup                      makineye bir kez: Claude, Codex ve Antigravity için kullanıcı becerisi
-cv init | adopt | update      kurulum, göç, paket sürümünü projeye uygulama
+cv init | adopt | update      kurulum, göç, paket sürümünü projeye uygulama (--rollback geri alır)
 cv doctor | status            önkoşul denetimi; tur, kota, şerit, blok ve hafıza özeti
 cv council --topic "<konu>"   plan/kota duyarlı uyarlanabilir mimari meclis
 cv cycle begin|end|sleep|prime  otonom çevrim (TEMPO, BITTI, compaction prime); cv gate [--auto]
