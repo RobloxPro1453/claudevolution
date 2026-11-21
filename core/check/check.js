@@ -16,6 +16,7 @@ import { exists, git, isWindows, readJson, readText, slash, writeJson } from "..
 import { decodePng } from "./png.js";
 import { closestReference, isBlank } from "./image.js";
 import { programFor } from "./program.js";
+import { launchTarget } from "../lib/process.js";
 import { SCREENSHOT_CONTRACT, SELF_TEST_CONTRACT, verdict } from "./selftest.js";
 
 export const MAX_CLAIMS = 20;
@@ -29,7 +30,9 @@ export function runProgram(program, args, { cwd, seconds = RUN_SECONDS, env } = 
     return new Promise((resolve) => {
         let text = "", done = false, child;
         const finish = (code, timedOut = false) => { if (!done) { done = true; clearTimeout(timer); resolve({ code, text: text.slice(-20000), timedOut }); } };
-        try { child = spawn(program, args, { cwd, windowsHide: true, env: env || process.env }); } catch (e) { return resolve({ code: 127, text: String(e.message), timedOut: false }); }
+        // An npm .cmd shim starts through its interpreter (no cmd.exe quoting limits; core/lib/process.js).
+        const [prog, ...argv] = isWindows ? launchTarget(program, args) : [program, ...args];
+        try { child = spawn(prog, argv, { cwd, windowsHide: true, env: env || process.env }); } catch (e) { return resolve({ code: 127, text: String(e.message), timedOut: false }); }
         const kill = () => {
             if (isWindows && child.pid) { try { spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true }); return; } catch (_) { /* fall back */ } }
             try { child.kill("SIGKILL"); } catch (_) { /* gone */ }
@@ -62,7 +65,8 @@ export function fingerprint(cfg, program) {
     h.update(git(["rev-parse", "HEAD"], cfg.root).out + "\0");
     const st = git(["status", "--porcelain", "-uall"], cfg.root);
     h.update(st.out + "\0");
-    for (const line of st.out.split(/\r?\n/).filter(Boolean)) {
+    // .text, not .out: .out is trimmed and loses the first line's leading status column (path cut by one).
+    for (const line of st.text.split(/\r?\n/).filter(Boolean)) {
         const rel = line.slice(3).replace(/^"(.*)"$/, "$1").split(" -> ").pop();
         if (rel.startsWith(".evrim/")) continue;
         try { const p = path.join(cfg.root, rel); if (fs.statSync(p).isFile()) h.update(rel + ":" + crypto.createHash("sha1").update(fs.readFileSync(p)).digest("hex") + "\n"); } catch (_) { h.update(rel + ":gone\n"); }

@@ -13,8 +13,9 @@ import { isSensitiveFile } from "../evolve/privacy.js";
 import { slotCount, withSlot } from "./slots.js";
 import { applyEdit } from "./edit-diff.js";
 import { compact, headTail, headTailLines } from "./context.js";
-import { needsScout, parseAcceptance } from "./spec.js";
+import { checkDigest, needsScout, parseAcceptance } from "./spec.js";
 import { repoMap } from "./repomap.js";
+import { launchTarget } from "../lib/process.js";
 
 // The code map for read-only passes (repomap.js); empty when the project has none or it cannot be built.
 const mapBlock = (cfg, deps = {}) => {
@@ -51,7 +52,9 @@ export function sh(cmd, args, cwd, timeoutMs = 600000) {
         let text = "", done = false;
         const finish = (code) => { if (!done) { done = true; clearTimeout(timer); resolve({ code, text }); } };
         let child;
-        try { child = spawn(cmd, args, { cwd, windowsHide: true, ...(cmd === "git" ? { env: gitEnv() } : {}) }); } catch (e) { return resolve({ code: 127, text: String(e.message) }); }
+        // Windows: "npm"/"npx" are .cmd shims that spawn without a shell cannot find (ENOENT); resolved here.
+        const [prog, ...argv] = process.platform === "win32" ? launchTarget(cmd, args) : [cmd, ...args];
+        try { child = spawn(prog, argv, { cwd, windowsHide: true, ...(cmd === "git" ? { env: gitEnv() } : {}) }); } catch (e) { return resolve({ code: 127, text: String(e.message) }); }
         // On Windows kill the whole tree: killing only the shell left the app it started running, which then
         // locked the build output for every later build in that lane (Fotosop, 2026-11-14: 5 jobs blocked).
         const kill = () => {
@@ -597,6 +600,9 @@ export async function loop(ctx, messages, key, names, maxSteps, budget, finishNa
     while (!finish && steps < maxSteps) {
         if (cost >= budget) { stopReason = "budget"; finish = { status: "blocked", report: `Stopped: the budget of $${budget.toFixed(2)} was used up after ${steps} steps.` }; break; }
         ctx.track.step = ++steps;
+        // The owner's note left while the run goes (cv delegate note): handed over at the next step, once.
+        const note = takeOwnerNotes(ctx.cfg, ctx.task);
+        if (note) messages.push({ role: "user", content: `The owner added a note while you work (follow it unless it breaks the task rules):\n<owner_note>\n${note}\n</owner_note>` });
         let reply;
         // An epoch of context trimming only when the conversation passes its budget (context.js).
         const ep = compact(messages, { budgetTokens: num(ctx.cfg.delegate.contextBudget, 64000) });
@@ -812,6 +818,7 @@ export async function runTask(ctx, task, feedbackFile = null, deps = {}) {
     ctx.readRoot = ctx.wt;
     Object.assign(ctx.track, { step: 0, clock: 0, lastWrite: 0, lastBuildOk: 0, lastTestOk: 0, lastTestTail: "", seen: new Map() });
     ctx.locked = parseAcceptance(spec).files;
+    ctx.task = task;
 
     let user = `Task ${task}. The spec:\n\n<spec path="${cfg.tasks.dir}/${task}.md">\n${spec}\n</spec>`;
     const scoutFile = path.join(stateDir(cfg), task + ".scout.md");
@@ -862,6 +869,7 @@ export async function runTask(ctx, task, feedbackFile = null, deps = {}) {
     const timestamp = new Date().toISOString();
     writeJson(path.join(cfg.root, ".evrim", "receipts", `${task}.json`), {
         taskId: task,
+        checkDigest: checkDigest(cfg, spec),
         branch: branchOf(cfg, task),
         headSha: head,
         treeSha,
@@ -880,6 +888,29 @@ export async function runTask(ctx, task, feedbackFile = null, deps = {}) {
     if (finish.status !== "done") writeFailureLog(cfg, task, { kind: feedbackFile ? "fix" : "first", stopReason: r.stopReason, apiKind: r.apiKind, steps: r.steps, cost: r.cost, tests, files, report: finish.report, at: timestamp });
     ctx.log(`${task}: ${finish.status.toUpperCase()} (${r.stopReason}), tests (${testsBy || "-"}): ${tests.split("\n")[0]}, cost $${r.cost.toFixed(3)} (task total $${state.cost.toFixed(3)})\nchanged: ${files.join(", ") || "(nothing)"}`);
     return { status: finish.status, stopReason: r.stopReason, apiKind: r.apiKind, tests, treeSha, buildOk, testOk };
+}
+
+// Owner notes for running work (craft-anything rebuild/notes.rs + engine/inbox.rs idea): the owner writes
+// `cv delegate note <task|all> "<text>"`; the next step of that task (or of any task, for "all") gets it and
+// the file is kept as `.read-<time>` so a note is given once and never lost.
+export const inboxDir = (cfg) => path.join(stateDir(cfg), "inbox");
+export function addOwnerNote(cfg, target, text) {
+    const file = path.join(inboxDir(cfg), `${String(target).replace(/[^\w.-]/g, "_")}.md`);
+    appendText(file, `- ${new Date().toISOString().slice(0, 16)} ${String(text).trim()}\n`);
+    return file;
+}
+export function takeOwnerNotes(cfg, task) {
+    const out = [];
+    for (const name of [task ? `${task}.md` : null, "all.md"].filter(Boolean)) {
+        const file = path.join(inboxDir(cfg), name);
+        if (!exists(file)) continue;
+        try {
+            const text = readText(file, "").trim();
+            fs.renameSync(file, file.replace(/\.md$/, `.read-${Date.now()}.md`));
+            if (text) out.push(text);
+        } catch (_) { /* taken by another lane at the same moment */ }
+    }
+    return out.join("\n");
 }
 
 // Reasoning effort per kind of call (delegate.effort, e.g. { "scout": "low", "ask": "low", "run": "high" }).

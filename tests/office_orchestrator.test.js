@@ -247,7 +247,7 @@ test("office: setupAll, init ve adopt tüm platformları (Claude, Codex, Antigra
     const [maj, min, pat] = curVer.split(".").map((n) => parseInt(n, 10) || 0);
     const upgradedVer = `${maj}.${min}.${pat + 1}`;
     writeJson(path.join(seedWork, "package.json"), { ...currentPkg, version: upgradedVer });
-    for (const rel of ["bin/cv.js", "core/lib/config.js", "core/lib/util.js", "core/cli/setup.js", "templates/user/claudevolution/SKILL.md", "templates/project/.evrim/config.json"]) {
+    for (const rel of ["bin/cv.js", "core/lib/config.js", "core/lib/util.js", "core/lib/process.js", "core/lib/secrets.js", "core/cli/setup.js", "templates/user/claudevolution/SKILL.md", "templates/project/.evrim/config.json"]) {
         writeText(path.join(seedWork, rel), readText(path.join(PKG_ROOT, rel)));
     }
     git(["add", "-A"], seedWork);

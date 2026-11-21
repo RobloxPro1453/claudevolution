@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 import { appendText, git, isWindows, nowIso, pidAlive, readJson, readText, run, writeJson } from "../lib/util.js";
 import { auto, branchOf, laneDir, newCtx, peakUntil, provider, spentToday, stateDir } from "./agent.js";
 import { parseDeclaredScope } from "./verify.js";
+import { withFileLock } from "../lib/filelock.js";
+import { redact } from "../lib/process.js";
 import { readHandoff, recordHandoff } from "./choose.js";
 
 const CV = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "bin", "cv.js");
@@ -179,11 +181,15 @@ export function saveBlackboard(cfg, bb) {
     writeJson(file, { ...bb, updatedAt: nowIso() });
 }
 
+// Several lane processes update the blackboard: read-modify-write under one cross-process lock (H49),
+// or the second writer undoes the first (an atomic rename alone does not prevent that).
 export function recordBlackboard(cfg, task, entry) {
-    const bb = loadBlackboard(cfg);
-    bb.tasks[task] = { ...(bb.tasks[task] || {}), ...entry, task, updatedAt: nowIso() };
-    saveBlackboard(cfg, bb);
-    return bb;
+    return withFileLock(blackboardFile(cfg), () => {
+        const bb = loadBlackboard(cfg);
+        bb.tasks[task] = { ...(bb.tasks[task] || {}), ...entry, task, updatedAt: nowIso() };
+        saveBlackboard(cfg, bb);
+        return bb;
+    });
 }
 
 export function formatPriorWork(bb, task, taskDeps = []) {
@@ -404,7 +410,7 @@ export async function runDag(cfg, tasks, deps = {}) {
 
 // The body of one lane process: tasks in topological wave order; failed tasks isolate dependents without stopping independent ones.
 export async function runLane(cfg, n, tasks, deps = {}) {
-    const log = (line) => appendText(laneLog(cfg, n), line + "\n");
+    const log = (line) => appendText(laneLog(cfg, n), redact(line) + "\n"); // a key never reaches a log
     const record = (patch) => writeJson(laneFile(cfg, n), { ...readJson(laneFile(cfg, n), { lane: n, tasks, done: [] }), pid: process.pid, ...patch });
     record({ state: "running" });
     const dag = buildDagWaves(cfg.root, tasks, { tasksDir: cfg.tasks?.dir, specs: deps.specs });

@@ -103,7 +103,8 @@ cv intent "<istek>" | stack   alt-metin motoru (niyet kartı, söylenmeyen bekle
 cv check                      masaüstü uygulama denetimi: derle, pencere çiziyor mu, --self-test adımları (0 token)
 cv council --topic "<konu>"   plan/kota duyarlı uyarlanabilir mimari meclis
 cv cycle begin|end|sleep|prime  otonom çevrim (TEMPO, BITTI, compaction prime); cv gate [--auto]
-cv delegate which|brief|batch|status|stop|fix|verify  iş dağıtımı, paralel şeritler ve doğrulama
+cv delegate which|brief|batch|status|stop|fix|verify|train|note  iş dağıtımı, şeritler, doğrulama, birleştirme treni, çalışan işe not
+cv watch | telegram           canlı STATUS.md (neden bekliyor); bitince tek haber + yetkili uzaktan kumanda
 cv round start|end|show       tur ölçümü (.evrim/metrics.jsonl)
 cv lesson "<ders>" [--evrensel] [--hata]        ders yaz (evrensel: hemen pakete)
 cv distill [--mark]           damıtma girdisi;  cv evolve evrim/<ad>  pakete ölçülü değişiklik

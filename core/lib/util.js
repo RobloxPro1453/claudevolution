@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
+import { launchTarget } from "./process.js";
 
 export const isWindows = process.platform === "win32";
 export const home = () => process.env.USERPROFILE || process.env.HOME || os.homedir();
@@ -149,6 +150,8 @@ export const tail = (text, n) => lines(String(text).replace(/\s+$/, "")).slice(-
 // Every external command has a time limit; a hung command is killed and reported, never waited on forever.
 // The exit code decides success: error text is never treated as data (universal lesson 2).
 export function run(cmd, args = [], { cwd, timeoutMs = 120000, env } = {}) {
+    // Windows: a bare "npm" is npm.cmd, which spawn without a shell cannot find (core/lib/process.js).
+    if (isWindows) [cmd, ...args] = launchTarget(cmd, args, env || process.env);
     const r = spawnSync(cmd, args, { cwd, timeout: timeoutMs, encoding: "utf8", env: env || process.env, windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
     const timedOut = !!(r.error && /ETIMEDOUT|timed? ?out/i.test(String(r.error.code || r.error.message))) || r.signal === "SIGTERM";
     const missing = !!(r.error && r.error.code === "ENOENT");

@@ -146,15 +146,9 @@ export function realInside(root, targetPath, allowedLinkDirs = []) {
     return isSameOrUnder(linkReal, realTarget);
 }
 
-export const SECRET_RES = [
-    /\bsk-[A-Za-z0-9_-]{20,}/,
-    /\bgh[pousr]_[A-Za-z0-9]{20,}/,
-    /\bgithub_pat_[A-Za-z0-9_]{20,}/,
-    /\bAKIA[0-9A-Z]{16}\b/,
-    /\bxox[baprs]-[A-Za-z0-9-]{10,}/,
-    /\bAIza[0-9A-Za-z_-]{35}\b/,
-    /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----/,
-];
+// The key patterns live in secrets.js (no imports), so the process helpers can use them without a cycle.
+export { SECRET_RES } from "./secrets.js";
+import { SECRET_RES } from "./secrets.js";
 const isCmd = (v) => v === null || (Array.isArray(v) && v.length > 0 && v.every((s) => typeof s === "string" && s));
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 

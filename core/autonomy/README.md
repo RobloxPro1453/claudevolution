@@ -42,3 +42,8 @@ Her durumun kurtarma yolu:
 | İki proje aynı anda | Makine kilidi biri bitene kadar öbürünü bekletir; sıra ağırlığa göre döner |
 
 Durum dosyaları: `.evrim/state/cycle.json` (sayaçlar), `.evrim/state/quota.json` (son bilinen kota). İkisi de git'e girmez.
+
+## Gece (M5)
+
+- `livestatus.js` → `.evrim/STATUS.md` (`cv watch`): bitti mi, şeritler, **neden bekliyor** (yoğun saat bu bilgisayarın saatiyle, günlük bütçe, API devri), bugünkü harcama, son `cv check` turu. Her sayı kayıttan.
+- `telegram.js` (`cv telegram`): yalnız BITTI'de bir haber (teslim başına bir kez); yanıtlar yalnız `.evrim/telegram.json` > `chatId` sohbetinden: `durum`, `yeni: <iş>` (NOTLAR'a ÖNCE:), `kapat` → tek kullanımlık kod → 2 dk sonra kapanış. Belirteç `CV_TELEGRAM_TOKEN` ya da git dışı dosyada.
