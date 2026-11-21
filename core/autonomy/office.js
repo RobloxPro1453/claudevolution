@@ -3,12 +3,21 @@
 //   2. Self-tuning decrees (.evrim/otonom/KARARNAMELER.md + bounded .evrim/config.json adjustments)
 //   3. Methodology & strategy-pivot critic (OFIS_MUHAKEMESI + ACIK_CERCEVE)
 //   4. Final form completion gate (BITTI)
+import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { appendText, exists, lines, nowIso, readJson, readText, run, stamp, writeJson, writeText } from "../lib/util.js";
 import { CONFIG_REL, autonomyDir } from "../lib/config.js";
 import { paceReview, sameWindow } from "./gates.js";
 import { find } from "./recover.js";
+
+// The last counted `cv check` round (core/check/check.js layout), read without loading the checker.
+function defaultLastRound(cfg) {
+    const dir = path.join(cfg.root, ".evrim", "state", "checks");
+    let rounds = [];
+    try { rounds = fs.readdirSync(dir).filter((n) => /^round-\d+$/.test(n)).map((n) => Number(n.slice(6))).filter((n) => n > 0).sort((a, b) => a - b); } catch (_) { return null; }
+    return rounds.length ? readJson(path.join(dir, `round-${rounds[rounds.length - 1]}`, "check.json"), null) : null;
+}
 
 const MAX_WINDOW_HISTORY = 120;
 const MAX_TUNED_WINDOWS = 30;
@@ -325,6 +334,13 @@ export function checkFinalForm(cfg, _state = null, opts = {}) {
         if (!exists(deliverablePath)) {
             return { ...base, openCount: 0, doneCount: road.doneCount, deliverable, deliverablePath, verifyOk: false, criteria, reason: `nihai çıktı bulunamadı: ${deliverable}` };
         }
+    }
+
+    // A desktop app with self-test steps is done only when its last `cv check` round passed (M4 done contract).
+    const ck = cfg.check || {};
+    if (ck.enabled !== false && ck.selfTest && Array.isArray(ck.selfTest.steps) && ck.selfTest.steps.length && !opts.skipCheck) {
+        const last = (opts.lastRound || defaultLastRound)(cfg);
+        if (!last || !last.passed) return { ...base, openCount: 0, doneCount: road.doneCount, deliverable, deliverablePath, verifyOk: false, criteria, reason: last ? `son cv check turu (${last.round}) geçmedi` : "cv check henüz koşmadı (pencere + --self-test)" };
     }
 
     let verifyOk = null;

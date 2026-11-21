@@ -4,7 +4,8 @@ import path from "node:path";
 import process from "node:process";
 import { spawn } from "node:child_process";
 import { readText, stamp, writeText } from "../lib/util.js";
-import { autonomyDir } from "../lib/config.js";
+import { PKG_ROOT, autonomyDir } from "../lib/config.js";
+import { settings } from "./telegram.js";
 
 function ozetPath(cfg) {
     if (!cfg || !cfg.root) return null;
@@ -112,5 +113,17 @@ export function notifyOwner(cfg, info = {}) {
         }
     }
 
-    return { ok: true, ozetUpdated, ozetPath: ozet, notified, method, deliverablePath, title, message };
+    // Telegram (decision #18): only here, at BITTI. A detached `cv telegram done` sends it, so a slow network
+    // never holds the cycle's exit; it sends once per deliverable and nothing when Telegram is not set up.
+    let telegram = false;
+    if (!silent && cfg && cfg.root && settings(cfg).ready) {
+        try {
+            const isDeno = !!process.versions.deno;
+            const child = (typeof info.spawn === "function" ? info.spawn : spawn)(process.execPath, [...(isDeno ? ["run", "-A", "--quiet"] : []), path.join(PKG_ROOT, "bin", "cv.js"), "telegram", "done", "--dir", cfg.root], { detached: true, stdio: "ignore", windowsHide: true });
+            if (child && typeof child.unref === "function") child.unref();
+            telegram = true;
+        } catch { /* a notification must never break the cycle */ }
+    }
+
+    return { ok: true, ozetUpdated, ozetPath: ozet, notified, method, deliverablePath, title, message, telegram };
 }

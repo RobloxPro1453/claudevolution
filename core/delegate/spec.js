@@ -1,4 +1,5 @@
-// Reading a task spec's header lines (shared by the agent, the lanes and the verifier; no imports, so no cycle).
+// Reading a task spec's header lines (shared by the agent, the lanes and the verifier; no project imports).
+import crypto from "node:crypto";
 
 const headerValues = (text, names) => {
     const re = new RegExp(`^\\s*(?:[-*]\\s*)?(?:\\*\\*)?(?:${names})(?:\\*\\*)?\\s*:\\s*(.+)$`, "gim");
@@ -41,4 +42,10 @@ export function needsScout(specText) {
     if (!scope.length || scope.length > 3 || scope.some((p) => /[*?]|\/$/.test(p))) return true;
     const facts = (s.match(/##\s*Known facts\s*\n([\s\S]*?)(?:\n##\s|$)/i) || [])[1] || "";
     return !/[\w./-]+\.\w+:\d+/.test(facts);
+}
+
+// What a receipt's "passed" was measured with: the build, the test and the acceptance commands. A receipt
+// made with other commands is not evidence for these (OMK spec 099: a pass from a withdrawn check).
+export function checkDigest(cfg, specText = "") {
+    return crypto.createHash("sha256").update(JSON.stringify({ build: cfg.build || null, test: cfg.test || null, acceptance: parseAcceptance(specText).cmd })).digest("hex").slice(0, 16);
 }

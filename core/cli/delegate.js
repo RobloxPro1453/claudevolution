@@ -4,13 +4,24 @@
 // cv delegate ask "<question>"
 // cv delegate which | brief <TASK>   who does the work (API key or fallback) and the fallback brief
 // cv delegate api-ok                  clear the API hand-off after a top-up (balance gone / key refused, K25)
+// cv delegate note <TASK|all> "<text>" | train [<TASK>...]   owner note to running work | merge train (bisect)
 // cv delegate verify <TASK> [--base <branch>] [--skip-run] [--review]   independent adversarial verifier + receipt
-import { num } from "../lib/util.js";
+import fs from "node:fs";
+import path from "node:path";
+import { git, num, readJson } from "../lib/util.js";
 import { project } from "./_project.js";
 import * as agent from "../delegate/agent.js";
 import * as lanes from "../delegate/lanes.js";
 import * as choose from "../delegate/choose.js";
 import * as verify from "../delegate/verify.js";
+
+// Tasks whose verifier receipt says PASS for the branch's current tree, in task order.
+function listApproved(cfg) {
+    const dir = path.join(cfg.root, ".evrim", "receipts");
+    let files = [];
+    try { files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort(); } catch (_) { return []; }
+    return files.map((f) => readJson(path.join(dir, f), null)).filter((r) => r && r.verdict === "PASS" && r.treeSha && git(["rev-parse", `${r.branch}^{tree}`], cfg.root).out === r.treeSha).map((r) => r.taskId);
+}
 
 export async function run(args) {
     const cfg = project(args);
@@ -20,6 +31,18 @@ export async function run(args) {
     // The owner topped up the balance or fixed the key: the API path opens again (K25 hand-off).
     if (sub === "api-ok") { const had = choose.readHandoff(cfg); choose.clearHandoff(cfg); console.log(had ? `API devri kaldırıldı (${had.kind}); şeritler yeniden API ile çalışır.` : "Açık API devri yok."); return 0; }
     if (sub === "brief" && rest[0]) { console.log(choose.brief(cfg, rest[0])); return 0; }
+    // A note to running work: the task's next step receives it ("all" = every running task's next step).
+    if (sub === "note" && rest[0] && rest[1]) { agent.addOwnerNote(cfg, rest[0], rest.slice(1).join(" ")); console.log(`Not bırakıldı: ${rest[0]} (bir sonraki adımda ajana verilir).`); return 0; }
+    // The merge train: approved branches into the base together, only if the whole set builds and passes.
+    if (sub === "train") {
+        const { train } = await import("../delegate/train.js");
+        const tasks = rest.length ? rest : listApproved(cfg);
+        if (!tasks.length) { console.log("Trene binecek onaylı dal yok (cv delegate verify ile PASS almış iş)."); return 0; }
+        const r = await train(cfg, tasks);
+        console.log(`Tren: ${tasks.length} dal → birleşti ${r.merged.length}${r.moved ? ` (${cfg.baseBranch} ilerledi)` : r.merged.length ? ` (${cfg.baseBranch} elle ilerletilmeli: git merge --ff-only ${r.sha})` : ""}`);
+        for (const d of r.dropped) console.log(`  geri gönderildi ${d.task}: ${d.reason.split("\n")[0]} (not: ${cfg.delegate.stateDir}/${d.task}.train-fix.md; sıradaki auto bu notla başlar)`);
+        return r.dropped.length ? 1 : 0;
+    }
     // The code map the scout gets (files under codePaths + top-level symbols); handy when writing specs.
     if (sub === "map") { const { repoMap } = await import("../delegate/repomap.js"); console.log(repoMap(cfg, { maxChars: num(args.chars, 6000) }) || "(codePaths altında git'in izlediği dosya yok)"); return 0; }
     if (sub === "verify") {

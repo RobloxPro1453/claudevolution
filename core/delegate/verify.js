@@ -7,7 +7,7 @@ import { exists, extractJson, git, readJson, readText, run as defaultRun, slash,
 import * as configLib from "../lib/config.js";
 import { allowFakeKey, isSensitiveFile } from "../evolve/privacy.js";
 import { chat, provider } from "./agent.js";
-import { parseAcceptance } from "./spec.js";
+import { checkDigest, parseAcceptance } from "./spec.js";
 
 const TEST_FILE_RE = /(^|\/)(?:tests?|__tests__|specs?)\//i;
 const TEST_NAME_RE = /(?:^|\/)(?:test|spec)[._-][^/]*$|\.(?:test|spec)\.[a-z0-9]+$|_test\.[a-z0-9]+$/i;
@@ -606,7 +606,9 @@ export async function verifyTask(root, taskId, opts = {}) {
     const receiptPath = path.join(root, ".evrim", "receipts", `${taskId}.json`);
     const prevReceipt = readJson(receiptPath, null);
     checks.receipt.present = !!prevReceipt;
-    checks.receipt.fresh = !!(prevReceipt && treeSha && prevReceipt.treeSha === treeSha);
+    // Fresh = same tree and, when the receipt says, measured with the same commands (H54).
+    const digest = checkDigest(cfg, specText);
+    checks.receipt.fresh = !!(prevReceipt && treeSha && prevReceipt.treeSha === treeSha && (!prevReceipt.checkDigest || prevReceipt.checkDigest === digest));
     checks.receipt.treeSha = prevReceipt ? prevReceipt.treeSha || null : null;
 
     let buildOk = cfg.build ? null : true;
@@ -622,6 +624,15 @@ export async function verifyTask(root, taskId, opts = {}) {
                 protects: "Evidence must match current branch treeSha",
                 evidence: `receipt treeSha=${prevReceipt.treeSha}, branch treeSha=${treeSha}`,
                 description: `Stale receipt for ${taskId}: branch tree changed since last verification`
+            });
+        } else if (prevReceipt && prevReceipt.checkDigest && prevReceipt.checkDigest !== digest) {
+            findings.push({
+                category: "stale_receipt",
+                severity: "major",
+                blocker: true,
+                protects: "Evidence must come from the current build/test/acceptance commands",
+                evidence: `receipt checkDigest=${prevReceipt.checkDigest}, current=${digest}`,
+                description: `The receipt for ${taskId} was measured with other commands; run verify without --skip-run`
             });
         } else if (prevReceipt && (prevReceipt.buildOk === false || prevReceipt.testOk === false)) {
             findings.push({
@@ -754,6 +765,7 @@ export async function verifyTask(root, taskId, opts = {}) {
         taskId,
         branch,
         base,
+        checkDigest: digest,
         treeSha,
         buildOk,
         testOk,

@@ -11,6 +11,8 @@ claudevolution bazı parçaları izin verici lisanslı açık kaynak projelerden
 | LoopTroop | MIT | `core/lib/util.js` etkileşimsiz git ortamı (`server/git/runCommand.ts`) |
 | LoopTroop | MIT | `core/intent/` görüşme ilkeleri (1-3'lük partiler, örtük cevaplananı sormama, kapsam denetimi; `server/prompts/index.ts` PROM4/PROM5) |
 | Craft Anything (storytold), M4 | MIT OR Apache-2.0 | `templates/stacks/rust-egui/` (konsolsuz exe, `+crt-static`, DX12/WARP ve açılış izi `apps/craft-anything/src/{main,start_guard}.rs`; sözleşmeler), `skills/*/{desktop-design,clean-architecture,rust-desktop}` (`docs/design-system.md`, `docs/pitfalls.md`) |
+| Craft Anything (storytold), M5 | MIT OR Apache-2.0 | `core/lib/process.js` (npm `.cmd` kısayolu çözümü, gizli bayrak maskeleme: `platform/src/{which,process}.rs`), sahip notu (`rebuild/notes.rs`, `engine/src/inbox.rs`) |
+| OMK + LoopTroop, M5 | MIT | `core/lib/filelock.js` (`durable-file-lock-*.ts`), makbuz–komut bağı (`specs/099`), trende test dosya etkisi denetimi (LoopTroop `finalTest/fileEffectsAudit.ts`) |
 | metaswarm | MIT | teslim kapsamı ilkesi (`guides/delivery-scope.md`) `cv-init` §2b; `cv update` önizleme dili ("hiçbir şey kaybolmaz", geri alınabilir) (`skills/migrate`) |
 | consilium, zeroshot, mco, bottleneck, ccusage | MIT | önceki sürümlerdeki fikirler (bkz. `docs/DECISIONS.md` K29–K32) |
 

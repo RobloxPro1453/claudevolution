@@ -17,6 +17,8 @@ const COMMANDS = {
     intent: "alt-metin motoru: \"<istek>\" → niyet kartı (söylenmeyen beklentiler, az soru, self-test adımları); coverage | kinds",
     stack: "masaüstü yığını: suggest \"<istek>\" | new <yığın> [--name A] [--dir K] | list",
     check: "masaüstü uygulama denetimi: derle, --screenshot (boş mu), --self-test adımları; tur check.json'a yazılır",
+    telegram: "bitince tek haber + yetkili uzaktan kumanda: setup --chat <id> | test | poll [--every sn] | done",
+    watch: "şeritleri ve son denetimi izle; STATUS.md yazar (--every sn, --once)",
     update: "paket sürümüyle projedeki farkı göster (--apply yedekleyip uygular, --rollback geri alır)",
     gate: "kota kapısı: --five N --week N [--five-resets ISO] [--week-resets ISO]",
     lock: "çevrim kilidi: status | acquire --session ID | release [--session ID]",
