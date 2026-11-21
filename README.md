@@ -98,15 +98,17 @@ Ders genelleştirilmiş olmalı: proje adı, yol, kişisel bilgi, anahtar geçer
 claudevrim [kur] | init | guncelle | gelistirici <klon> | surum | <cv komutu>   indirilen başlatıcı (exe)
 cv setup                      makineye bir kez: Claude, Codex ve Antigravity için kullanıcı becerisi
 cv init | adopt | update      kurulum, göç, paket sürümünü projeye uygulama (--rollback geri alır)
-cv doctor | status            önkoşul denetimi; tur, kota, şerit, blok ve hafıza özeti
+cv doctor | status            önkoşul denetimi (--install-deps: eksik araç, tek onay); tur, kota, şerit, blok ve hafıza özeti
+cv intent "<istek>" | stack   alt-metin motoru (niyet kartı, söylenmeyen beklentiler); masaüstü yığını + çalışan Rust iskeleti
+cv check                      masaüstü uygulama denetimi: derle, pencere çiziyor mu, --self-test adımları (0 token)
 cv council --topic "<konu>"   plan/kota duyarlı uyarlanabilir mimari meclis
 cv cycle begin|end|sleep|prime  otonom çevrim (TEMPO, BITTI, compaction prime); cv gate [--auto]
 cv delegate which|brief|batch|status|stop|fix|verify  iş dağıtımı, paralel şeritler ve doğrulama
 cv round start|end|show       tur ölçümü (.evrim/metrics.jsonl)
 cv lesson "<ders>" [--evrensel] [--hata]        ders yaz (evrensel: hemen pakete)
 cv distill [--mark]           damıtma girdisi;  cv evolve evrim/<ad>  pakete ölçülü değişiklik
-cv bench [--live]             paketi ölç (A testler + B kaos; C ücretli)
-cv probe | ref                çalışan uygulamayı yokla; referansla karşılaştır
+cv bench [--live] | compare   paketi ölç (A testler + B kaos; C ücretli); iki sürümü 0 tokenla kıyasla
+cv probe | ref                çalışan uygulamayı yokla; referansla karşılaştır, referans lisansı (uyarla / clean-room)
 ```
 
 `cv help` tam listeyi verir. Paket testleri: `node tests/run.js` ya da `deno run -A tests/run.js`.

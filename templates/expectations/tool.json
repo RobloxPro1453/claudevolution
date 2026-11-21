@@ -1,0 +1,81 @@
+{
+  "id": "tool",
+  "title": "Küçük araç / yardımcı program",
+  "keywords": [
+    "araç",
+    "dönüştür",
+    "çevir",
+    "hesapla",
+    "sayaç",
+    "zamanlayıcı",
+    "yardımcı",
+    "tool",
+    "utility",
+    "converter",
+    "timer",
+    "calculator"
+  ],
+  "feel": "hızlı, pratik",
+  "expectations": [
+    {
+      "id": "main-action",
+      "text": "Asıl iş tek ekranda, en çok iki tıkla yapılır",
+      "step": "act"
+    },
+    {
+      "id": "remember",
+      "text": "Son ayarları hatırlar",
+      "step": "reopen"
+    },
+    {
+      "id": "drop-in",
+      "text": "Dosya sürükle-bırak ile girdi alır (dosya işliyorsa)"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "undo",
+      "text": "Yapılan her değişiklik geri alınabilir (Ctrl+Z / Ctrl+Y)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "tray",
+      "text": "Arka planda (saat yanında) beklesin mi?",
+      "options": [
+        "Hayır, açıp kapatırım (önerilen)",
+        "Evet, sistem tepsisinde"
+      ],
+      "default": 0,
+      "why": "Arka plan süreci ve otomatik başlatma demektir"
+    }
+  ]
+}

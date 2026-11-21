@@ -1,0 +1,84 @@
+{
+  "id": "chat",
+  "title": "Sohbet / yapay zekâ istemcisi",
+  "keywords": [
+    "sohbet",
+    "chat",
+    "mesaj",
+    "yapay zeka",
+    "yapay zekâ",
+    "asistan",
+    "llm",
+    "gpt",
+    "claude",
+    "deepseek",
+    "bot"
+  ],
+  "feel": "hızlı, sade",
+  "expectations": [
+    {
+      "id": "send",
+      "text": "Mesaj gönder, cevap akarak gelir; gönderim iptal edilebilir",
+      "step": "send"
+    },
+    {
+      "id": "history",
+      "text": "Konuşmalar saklanır ve aranır",
+      "step": "search"
+    },
+    {
+      "id": "key-safe",
+      "text": "API anahtarı işletim sistemi anahtarlığında durur, dosyaya/loga yazılmaz"
+    },
+    {
+      "id": "offline-clear",
+      "text": "İnternet/anahtar yokken sade mesaj; uygulama çökmez"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "undo",
+      "text": "Yapılan her değişiklik geri alınabilir (Ctrl+Z / Ctrl+Y)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "provider",
+      "text": "Hangi yapay zekâ?",
+      "options": [
+        "Sahibin seçtiği tek sağlayıcı (önerilen)",
+        "Birden çok, seçilebilir"
+      ],
+      "default": 0,
+      "why": "Sağlayıcı katmanı işi değiştirir"
+    }
+  ]
+}

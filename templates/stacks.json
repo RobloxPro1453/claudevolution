@@ -1,0 +1,47 @@
+{
+  "_comment": "Masaüstü yığın kataloğu (cv stack). template: templates/stacks/<id>/ iskeleti var mı. signals: bu yığını seçtiren sözcükler (küçük harf). craftLibs: ihtiyaç -> craft-libs crate'i (MIT OR Apache-2.0, storytold/craft-libs); sürüm SABİTLENİR, main izlenmez (E17).",
+  "stacks": [
+    {
+      "id": "rust-egui",
+      "template": true,
+      "title": "Saf Rust + egui/eframe",
+      "when": "Varsayılan. Araçlar, not/ajanda, dosya ve medya yardımcıları, çok panelli editörler (egui panelleri; gerekirse craft-ui docking). Gerçek tek .exe, kurulumsuz, hızlı açılış.",
+      "build": ["cargo", "build", "--release"],
+      "test": ["cargo", "test"],
+      "deliverable": "target/release/{{crate}}.exe",
+      "checks": { "kind": "window", "selfTest": ["create", "save", "reopen", "search"] }
+    },
+    {
+      "id": "rust-tauri",
+      "template": false,
+      "title": "Rust + Tauri (WebView2)",
+      "when": "Uygulamanın içinde gerçek web içeriği gerekiyorsa: HTML/CSS düzenleme, web sayfası gösterme, zengin metin/belge görünümü web teknolojisiyle. Windows 10/11'in WebView2'sini kullanır; yoksa ilk açılışta tek onayla kurulur.",
+      "signals": ["web sayfa", "html", "css", "tarayıcı içinde", "web görünüm", "webview", "zengin metin editörü", "wysiwyg", "markdown önizleme web"],
+      "build": ["cargo", "tauri", "build"],
+      "deliverable": "src-tauri/target/release/{{crate}}.exe",
+      "checks": { "kind": "window", "selfTest": [] }
+    }
+  ],
+  "craftLibs": {
+    "_comment": "Sürüm: deneme projesinde doğrulanmadan şablona girmez. v0.1.0 = egui 0.36 (ui, settings, quit, atomic, print); diğerleri main'de, tam rev ile sabitlenir.",
+    "git": "https://github.com/storytold/craft-libs",
+    "tag": "v0.1.0",
+    "needs": {
+      "panel düzeni / sekmeler / sürükle-bırak (Obsidian sınıfı)": "craft-ui (docking, panes)",
+      "çökmede bozulmayan kayıt": "craft-atomic",
+      "yorumları koruyan ayar dosyası, taşınabilir yol, bozuk dosya kurtarma": "craft-settings",
+      "kaydedilmemişken kapanış sorusu": "craft-quit",
+      "menü ve kullanıcı kısayolları": "craft-menu + craft-keymap",
+      "yerel dosya aç/kaydet pencereleri": "craft-dialogs (rfd)",
+      "kendini güncelleme": "craft-update",
+      "markdown": "craft-markdown",
+      "docx / xlsx / csv / pdf / epub / rtf / html / ical / vcard": "craft-docx, craft-xlsx, craft-csv, craft-pdf, craft-epub, craft-rtf, craft-html, craft-ical, craft-vcard",
+      "görsel / ses / video": "craft-image-codecs, craft-jpeg, craft-webp, craft-gif, craft-svg, craft-audio, craft-video",
+      "yazdırma": "craft-print",
+      "yazım denetimi": "craft-proof",
+      "zip": "craft-zip",
+      "çalışan uygulamayı dışarıdan sürme (test)": "craft-control (main rev)",
+      "uygulamaya MCP sunucusu": "craft-mcp-server (main rev)"
+    }
+  }
+}

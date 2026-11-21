@@ -32,6 +32,17 @@ Sahibinin sözünü düşük seviyeli bir görev listesi değil, **ulaşılacak 
   - `api-yoksa-subagent`: Ucuz API yoksa daha küçük alt model (`delegate.subagentModel`) veya uygun yerel CLI yazar.
 - **Gözetimsiz çalışma:** Sahibi yokken (gece/arka planda) çalışacaksa limitin otomatik gözetildiğini kısaca söyle ve `cv doctor` çalıştır; her `✗` için bilgisayar ayarını/anahtar ekleme yolunu adım adım sade anlat (ayarı kendin değiştirme; anahtarı asla sohbete yapıştırmasın).
 
+## 2b. Masaüstü program istendiyse: alt-metin, maket, bitti sözleşmesi
+
+Sahibi fikrini kısa söyler; söylemediği amaç, his ve beklenti revizyonun kaynağıdır. Onları sen çıkar, sormadan önce:
+
+1. **Niyet kartı:** `cv intent "<sahibin cümlesi>"` → tür, söylenmeyen beklentiler (`[E:...]`), yığın önerisi, sorulmaya değer birkaç soru. Kartın «...» satırlarını (kim, ne zaman, neden, istenen his, "mükemmel" ne demek, neye sinirlenir, "X gibi" ile kastedilen yan) sohbetten **kendin** doldur; `--apply` ile `docs/INTENT.md` yazılır, `check.selfTest.steps` ve `finalForm.criteria` dolar.
+2. **Az ama akıllı soru:** yalnız sahibin seçimi olan ve yanlış tahmini pahalı olanlar; seçenekli, 1-3'lük partiler, toplam en çok 7. İstekte zaten söylenmişse sorma (kartta "istekte söylendi" yazar). Sahibin kelimesi her varsayılandan üstündür.
+3. **Boş maket (1-2 dk):** `cv stack new <yığın> --name "<ad>"` → ekranları içi boş ama düzeni gerçek; `cv check --self` ile görüntüsünü al, önce kendin bak (`desktop-design` becerisi).
+4. **"Anladığım şu":** kartın 5-8 satırlık özetini ve maket görüntüsünü **birlikte** göster; sahibi tek seferde düzeltsin. Revizyonun en ucuz anı budur.
+5. **Bitti sözleşmesi:** `finalForm` = tek `.exe` (`deliverable`), `cv check` geçer (pencere çizer, `--self-test` adımlarının hepsi geçer), kartın kabul ölçütleri. Sonsuz ekleme yok: yeni istek bir sonraki sürüme yazılır. İncelemeler yalnız gerçek kullanım hatasında teslimi durdurur; zevk ve küçük cila notları durdurmaz (metaswarm teslim kapsamı ilkesi).
+6. **Kapsam:** yol haritasını yaz, her maddeye karşıladığı `[E:...]` kimliğini ekle; `cv intent coverage` "KAPSAM TAMAM" demeden planı onaya sunma.
+
 ## 3. Dogma yok — çerçeveyi sen kur
 
 Bu belgedeki ya da şablonlardaki örnekler, klasör yapıları ve kalıplar **yalnızca örnektir, duvar değildir.** Başmimar olarak bu proje için en doğru mühendislik çerçevesini, doğrulama yöntemini ve iş akışını **kendin belirlersin.** Proje özel doğrulama betiği, özel inceleme kuralı veya çalışma disiplini gerektiriyorsa baştan kur ve kalıcı kuralları `.evrim/otonom/KARARNAMELER.md` dosyasına yaz.

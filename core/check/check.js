@@ -130,10 +130,43 @@ async function runsCheck(cfg, prog, deps) {
     return result("runs", passed, passed ? "The console program answers --help and --version." : "The console program does not answer every case.", { claims });
 }
 
+// Layer boundary (clean-architecture skill): Engine -> Tools/Storage -> thin UI. Engine files may not use a
+// window library or the disk; UI files may not touch the disk. Read from the Rust source only (comments and
+// strings are skipped roughly: lines starting with //). Applies when src/engine.rs or src/engine/ exists.
+export function layersCheck(root) {
+    const src = path.join(root, "src");
+    const files = (dir, rel) => { const out = []; let es = []; try { es = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { return out; } for (const e of es) { const r = `${rel}/${e.name}`; if (e.isDirectory()) out.push(...files(path.join(dir, e.name), r)); else if (e.name.endsWith(".rs")) out.push(r); } return out; };
+    const all = files(src, "src");
+    const engine = all.filter((f) => /^src\/engine(\.rs|\/)/.test(f)), ui = all.filter((f) => /^src\/ui(\.rs|\/)/.test(f));
+    if (!engine.length) return null;
+    const claims = [];
+    const scan = (list, re, what) => {
+        for (const f of list) {
+            const lines = readText(path.join(root, f), "").split(/\r?\n/);
+            const at = lines.findIndex((l) => !l.trim().startsWith("//") && re.test(l));
+            claims.push(claim(`${f}: ${what}`, at < 0, at < 0 ? "" : `line ${at + 1}: ${lines[at].trim().slice(0, 100)}`));
+        }
+    };
+    scan(engine, /\b(?:eframe|egui|tauri|winit)::|\buse\s+(?:eframe|egui|tauri|winit)\b|\bstd::fs\b|\bFile::(?:open|create)\b/, "no window library, no disk");
+    scan(ui, /\bstd::fs\b|\bFile::(?:open|create)\b/, "no disk in the UI");
+    const bad = claims.filter((c) => !c.passed);
+    return result("layers", !bad.length, bad.length ? `Layer boundary broken in ${bad.length} file(s): rules and disk belong to engine/storage, drawing to the UI.` : `Engine -> Storage -> UI boundary holds (${engine.length + ui.length} files).`, { claims });
+}
+
+// WCAG 2.x contrast ratio of two "#rrggbb" colours (desktop-design: text >= 4.5, edges >= 3).
+export function contrastRatio(a, b) {
+    const lum = (hex) => {
+        const n = parseInt(String(hex).replace("#", ""), 16), c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    };
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return Math.round(((x + 0.05) / (y + 0.05)) * 100) / 100;
+}
+
 // Runs one round. self = round 0 (the builder's own look, not counted). deps: injectable runner/build.
 export async function runChecks(cfg, { self = false, deps = {}, now = new Date() } = {}) {
     const c = cfg.check || {};
-    const prog = deps.program !== undefined ? deps.program : programFor(cfg);
+    let prog = deps.program !== undefined ? deps.program : programFor(cfg);
     const fp = fingerprint(cfg, prog);
     const last = lastRound(cfg);
     const n = self ? 0 : (rounds(cfg).filter((x) => x > 0).pop() || 0) + 1;
@@ -151,7 +184,12 @@ export async function runChecks(cfg, { self = false, deps = {}, now = new Date()
         const tail = b.text.trim().split(/\r?\n/).slice(-6).join(" | ");
         results.push(result("build", b.code === 0, b.code === 0 ? `\`${cfg.build.join(" ")}\` passed.` : `Build failed (exit ${b.code}): ${tail}`));
     }
+    const layers = layersCheck(cfg.root);
+    if (layers) results.push(layers);
     const built = !results.length || results[0].passed;
+    // The program is looked for again after the build: a fresh project has no .exe before its first build
+    // (found by the real template build test: "No program to start" right after "build passed").
+    if (built && deps.program === undefined) prog = programFor(cfg);
     if (built && c.enabled !== false) {
         if (!prog) results.push(result("program", false, "No program to start: set finalForm.deliverable or check.program, or build a Cargo project (its default-run / window package is used)."));
         else {

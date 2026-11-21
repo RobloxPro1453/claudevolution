@@ -1,0 +1,83 @@
+{
+  "id": "files",
+  "title": "Dosya yöneticisi / düzenleyici",
+  "keywords": [
+    "dosya",
+    "klasör",
+    "yeniden adlandır",
+    "toplu",
+    "dosya yöneticisi",
+    "explorer",
+    "file",
+    "files",
+    "rename",
+    "organize"
+  ],
+  "feel": "güvenilir, hızlı",
+  "expectations": [
+    {
+      "id": "preview-before-apply",
+      "text": "Toplu işlem önce önizlenir, onaydan sonra uygulanır",
+      "step": "preview"
+    },
+    {
+      "id": "undo-batch",
+      "text": "Toplu işlem tek adımda geri alınabilir (geri al kaydı)",
+      "step": "undo"
+    },
+    {
+      "id": "no-delete",
+      "text": "Silme yerine Geri Dönüşüm Kutusu; kalıcı silme yalnız açık onayla"
+    },
+    {
+      "id": "large-folders",
+      "text": "On binlerce dosyada donmaz (arka planda tarama, ilerleme gösterir)"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "undo",
+      "text": "Yapılan her değişiklik geri alınabilir (Ctrl+Z / Ctrl+Y)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "scope",
+      "text": "Hangi klasörlerde çalışsın?",
+      "options": [
+        "Kullanıcının seçtiği klasör (önerilen)",
+        "Tüm diskler"
+      ],
+      "default": 0,
+      "why": "Yanlış yerde toplu işlem en pahalı hata"
+    }
+  ]
+}

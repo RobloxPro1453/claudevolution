@@ -9,7 +9,9 @@ claudevolution bazı parçaları izin verici lisanslı açık kaynak projelerden
 | craft-libs (storytold) | MIT OR Apache-2.0 | `core/lib/util.js` Windows kilit geri çekilmesi (`crates/atomic`) |
 | OMK | MIT (Copyright (c) 2025 Mario Zechner, (c) 2026 ClassicMate) | `core/delegate/edit-diff.js` bulanık düzenleme (`tools/edit-diff.ts`, `edit-occurrences.ts`); `core/delegate/context.js` baş+son kesimi ve önbellek öneki testi (`deepseek-harness.ts`, `specs/051,066,113`); okumadan yazmama (`specs/115`); `core/lib/util.js` atomik yazıcı (`atomic-session-file.ts`), `core/delegate/agent.js` kota hatasında beklemeden devir (`specs/090-quota-no-retry`) ve `reasoning_content` kuralı (`openai-completions.ts`) |
 | LoopTroop | MIT | `core/lib/util.js` etkileşimsiz git ortamı (`server/git/runCommand.ts`) |
-| metaswarm | MIT | `cv update` önizleme dili ("hiçbir şey kaybolmaz", geri alınabilir) (`skills/migrate`) |
+| LoopTroop | MIT | `core/intent/` görüşme ilkeleri (1-3'lük partiler, örtük cevaplananı sormama, kapsam denetimi; `server/prompts/index.ts` PROM4/PROM5) |
+| Craft Anything (storytold), M4 | MIT OR Apache-2.0 | `templates/stacks/rust-egui/` (konsolsuz exe, `+crt-static`, DX12/WARP ve açılış izi `apps/craft-anything/src/{main,start_guard}.rs`; sözleşmeler), `skills/*/{desktop-design,clean-architecture,rust-desktop}` (`docs/design-system.md`, `docs/pitfalls.md`) |
+| metaswarm | MIT | teslim kapsamı ilkesi (`guides/delivery-scope.md`) `cv-init` §2b; `cv update` önizleme dili ("hiçbir şey kaybolmaz", geri alınabilir) (`skills/migrate`) |
 | consilium, zeroshot, mco, bottleneck, ccusage | MIT | önceki sürümlerdeki fikirler (bkz. `docs/DECISIONS.md` K29–K32) |
 
 MIT ve Apache-2.0 lisans metinleri: https://opensource.org/license/mit , https://www.apache.org/licenses/LICENSE-2.0
