@@ -34,3 +34,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-21 · m5-kapali-kutu-gece (v1.0.29) · "M5: · test 121 → 127; kötü: codeLines %6 arttı (9908 → 10496) · kabul
 - 2026-11-21 · m6-yasayan-evrim (v1.0.30) · "Her · test 127 → 149; kötü: codeLines %9 arttı (10496 → 11434); kötü: templateLines %31 arttı (1475 → 1939) · kabul
 - 2026-11-21 · promax-yayin (v1.0.31) · "ProMax · ölçüler eşit · kabul
+- 2026-11-21 · esnek-cekirdek (v1.0.32) · Somut istekte maket yerine calisan ilk dilim; tasarim kutuphanesi; cv check kayma/dar pencere/tek-exe; karsilama tablosu · test 149 → 163; kötü: skillLines %52 arttı (777 → 1184) · kabul
