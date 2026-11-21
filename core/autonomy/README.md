@@ -5,6 +5,7 @@ Gözetimsiz döngünün hesap ve durum kısmı. Karar ve sıra `otonom` becerisi
 | Dosya | Tek işi |
 |---|---|
 | `gates.js` | Kota kapıları: 5 saatlik %85 / %90, haftalık tavan `60 + 30·f`. Saf işlev; test edilir. |
+| `guard.js` | Kota bekçisi (`cv guard`, Claude Code kancası): her iş aracından önce/sonra seviye (tamam / tempo / küçük / dur). Gözetimsizken %90'da yeni işi engeller (commit ve `cv` açık); sahibi başındayken yalnız uyarır. Kapılar tavsiyeydi, bekçi modelin hafızasına bağlı değil. |
 | `lock.js` | Çevrim kilidi (`.evrim/otonom/lock`: oturum + zaman; 90 dk'dan eskiyse bayat). |
 | `share.js` | Aynı makinede birden çok proje: makine kilidi + ağırlıklı sıra. |
 | `memory.js` | Hafıza dosyalarını dar okur (DERSLER tamamı, GUNLUK kuyruğu, okunmamış NOTLAR, cevaplanmış SORULAR). |

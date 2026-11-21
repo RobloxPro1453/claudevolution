@@ -11,6 +11,7 @@ import { find } from "./recover.js";
 import { projectLessons } from "../evolve/merge.js";
 import { auditMethodology, checkFinalForm, evaluateWindowAndTune, recordWindowObservation } from "./office.js";
 import { notifyOwner } from "./notify.js";
+import * as calibrate from "../metrics/calibrate.js";
 
 const cycleState = (cfg) => path.join(stateDir(cfg), "cycle.json");
 const quotaFile = (cfg) => path.join(stateDir(cfg), "quota.json");
@@ -23,8 +24,11 @@ export function parseUsage(args) {
     if (five === null || week === null) return null;
     return { five, week, fiveResetsAt: typeof args["five-resets"] === "string" ? args["five-resets"] : null, weekResetsAt: typeof args["week-resets"] === "string" ? args["week-resets"] : null };
 }
-export function rememberQuota(cfg, usage, now = new Date()) {
-    if (usage) writeJson(quotaFile(cfg), { ...usage, at: nowIso(now) });
+// A real reading (not the local estimate) also calibrates the guard's local meter for this account (H73).
+export function rememberQuota(cfg, usage, now = new Date(), opts = {}) {
+    if (!usage) return;
+    writeJson(quotaFile(cfg), { ...usage, at: nowIso(now) });
+    if (usage.source !== "local-blocks" && opts.calibrate !== false) calibrate.observe(cfg, usage, now, opts);
 }
 
 // Is a distillation due? Every distillEveryCycles working cycles, or once a day, if there is anything new.

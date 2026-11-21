@@ -51,6 +51,8 @@ Order:
 
 Inside the cycle, **every 5-6 tool calls and after every commit**: in Claude Code run `get_usage` + `cv gate --five .. --week ..`; in Antigravity or Codex never search for `get_usage` — use `[quota]` if present, otherwise run `cv gate --auto` (falls back to local 5h session blocks). On `KUCUK`/`CIK`, commit what you have (`WIP:` is fine, in a building state) and go to §4. A cycle should not eat more than 8% of the 5-hour window; if it does, make the next cycle smaller.
 
+**Quota guard (always on):** in Claude Code the `cv guard` hook checks the quota itself before and after every work tool; it runs even if you forget. On `KOTA_TEMPO`, postpone heavy work, make steps smaller, close the cycle with a longer sleep. On `KOTA_FRENI (KUCUK)`, finish and commit what is in hand, start nothing new. On `KOTA_FRENI (DUR)` the guard blocks new work: do not argue or work around it; commit, `cv cycle end`, sleep. `cv guard --show` tells what it sees. Every real reading (`cv gate --five .. --week ..`, `cv cycle begin/end`) calibrates the guard to this account's plan, so give the real percent wherever you can read it.
+
 After context compaction, run `cv cycle prime` (with `--task <id>` if needed) to refresh the current phase, blockers, and task-relevant lessons.
 
 ## 3. Damage watch

@@ -119,6 +119,8 @@
       "paceBand": 8
     },
     "weeklyReset": { "weekdayUtc": 6, "hourUtc": 3 },
+    "_comment_guard": "Kota bekçisi (cv guard): Claude Code kancası olarak her araç çağrısında kotaya bakar. Tempo ve %85'te modele uyarı verir; %90'da (ya da haftalık tavanda) gözetimsiz çalışmada yeni işi engeller, yalnız commit ve uyku açık kalır. Sahibi başındayken yalnız uyarır. everySeconds: kotanın en sık hesaplanma aralığı; warnEveryMinutes: aynı uyarının tekrar aralığı. Kapatmak yalnız sahibinin sözüyle.",
+    "guard": { "enabled": true, "everySeconds": 60, "warnEveryMinutes": 10, "maxReadingAgeMinutes": 60 },
     "safetyWakeSeconds": 1800,
     "share": { "weight": 1 },
     "watchdog": {

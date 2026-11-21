@@ -23,6 +23,7 @@ const COMMANDS = {
     usage: "kullanım ve bütçe: Claude, Codex, Antigravity tokenları + ucuz model harcaması; günlük/proje freni",
     update: "paket sürümüyle projedeki farkı göster (--apply yedekleyip uygular, --rollback geri alır)",
     gate: "kota kapısı: --five N --week N [--five-resets ISO] [--week-resets ISO]",
+    guard: "kota bekçisi: her araç çağrısında çalışan kanca (--event pre|post); --show şu anki durum",
     lock: "çevrim kilidi: status | acquire --session ID | release [--session ID]",
     cycle: "otonom çevrim: begin | end | sleep | prime",
     recover: "takılma bulguları (--fix: güvenli olanları düzelt)",

@@ -10,6 +10,29 @@ const MINUTE_MS = 60 * 1000;
 const WEEK_MS = 7 * 24 * HOUR_MS;
 const SUBAGENT_PATH_RE = /[/\\]subagents[/\\][^/\\]+\.jsonl$/i;
 
+// Quota units (H72): plan limits follow cost, not raw token counts. A cache read is a small fraction of an
+// input token and an output token several times one, so a session full of cache reads looked "full" on raw
+// totals while the real meter was low (and the reverse). One meaning for "load" in the whole package: the
+// same weights as the round metric (config metrics.weights, round.js "Claude yükü"; craft-anything pitfall
+// "one field, two meanings"). An unknown model counts as the most expensive known one (the safe side). The
+// constant between these units and the plan meter is learned from real readings (calibrate.js).
+export const LOAD_WEIGHTS = { output: 20, cacheRead: 0.2, cacheWrite: 8, input: 4, modelFactor: { fable: 1.6, opus: 1, sonnet: 0.6, haiku: 0.2 } };
+export function modelTier(model, factors = LOAD_WEIGHTS.modelFactor) {
+    const m = String(model || "").toLowerCase();
+    for (const [k, v] of Object.entries(factors || {})) if (m.includes(k)) return v;
+    return Math.max(1, ...Object.values(factors || {}));
+}
+export function weightOf(e, weights = LOAD_WEIGHTS) {
+    if (!e) return 0;
+    const w = { ...LOAD_WEIGHTS, ...(weights || {}) };
+    const raw = ((e.input || 0) * w.input + (e.cacheCreation || 0) * w.cacheWrite + (e.cacheRead || 0) * w.cacheRead + (e.output || 0) * w.output) / 1e6;
+    const units = raw > 0 ? raw : (e.total || 0) * w.input / 1e6;
+    return Math.round(units * modelTier(e.model, w.modelFactor) * 1e6) / 1e6;
+}
+// A provider "limit reached" line in a transcript (H71; formats seen in consilium and zeroshot adapters):
+// the moment the plan meter hit 100%. Used to calibrate when no reading was ever taken.
+export const LIMIT_HIT_RE = /usage limit reached|hit your (usage )?limit|limit has been reached|reached your usage limit/i;
+
 export const DEFAULT_QUOTA = {
     fiveHourTokenLimit: 20_000_000,
     weeklyTokenLimit: 200_000_000,
@@ -117,11 +140,11 @@ function normalizeEntry(raw, meta = {}) {
     };
 }
 
-function buildBlock(startTime, blockEntries, nowMs, durationMs) {
+function buildBlock(startTime, blockEntries, nowMs, durationMs, weights = LOAD_WEIGHTS) {
     const endTime = startTime + durationMs;
     const actualEndTime = blockEntries[blockEntries.length - 1].tsMs;
     const isActive = Number.isFinite(nowMs) && nowMs >= startTime && nowMs < endTime && (nowMs - actualEndTime) < durationMs;
-    const tokens = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 };
+    const tokens = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0, weighted: 0 };
     const models = [];
     const seenModels = new Set();
     const subagentKeys = new Set();
@@ -134,6 +157,7 @@ function buildBlock(startTime, blockEntries, nowMs, durationMs) {
         tokens.cacheCreation += e.cacheCreation;
         tokens.cacheRead += e.cacheRead;
         tokens.total += e.total;
+        tokens.weighted += weightOf(e, weights);
         if (e.model && !seenModels.has(e.model)) { seenModels.add(e.model); models.push(e.model); }
         if (e.isSubagent) {
             subagentTokens += e.total;
@@ -166,7 +190,7 @@ function buildGapBlock(lastTime, nextTime, durationMs) {
         actualEndTime: null,
         isActive: false,
         isGap: true,
-        tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
+        tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0, weighted: 0 },
         models: [],
         entriesCount: 0,
         subagentCount: 0,
@@ -175,7 +199,7 @@ function buildGapBlock(lastTime, nextTime, durationMs) {
 }
 
 // Group entries into 5-hour session blocks (with gap markers for inactive stretches > 5h).
-export function identifySessionBlocks(entries, sessionDurationHours = 5, nowMs = Date.now()) {
+export function identifySessionBlocks(entries, sessionDurationHours = 5, nowMs = Date.now(), weights = LOAD_WEIGHTS) {
     if (typeof sessionDurationHours === "object" && sessionDurationHours !== null) {
         nowMs = sessionDurationHours.nowMs ?? Date.now();
         sessionDurationHours = sessionDurationHours.sessionDurationHours ?? 5;
@@ -203,7 +227,7 @@ export function identifySessionBlocks(entries, sessionDurationHours = 5, nowMs =
         const sinceStart = entry.tsMs - currentStart;
         const sinceLast = entry.tsMs - lastTime;
         if (sinceStart > durationMs || sinceLast > durationMs) {
-            blocks.push(buildBlock(currentStart, currentEntries, now, durationMs));
+            blocks.push(buildBlock(currentStart, currentEntries, now, durationMs, weights));
             if (sinceLast > durationMs) blocks.push(buildGapBlock(lastTime, entry.tsMs, durationMs));
             currentStart = floorToHour(entry.tsMs);
             currentEntries = [entry];
@@ -212,7 +236,7 @@ export function identifySessionBlocks(entries, sessionDurationHours = 5, nowMs =
         }
     }
     if (currentStart !== null && currentEntries.length) {
-        blocks.push(buildBlock(currentStart, currentEntries, now, durationMs));
+        blocks.push(buildBlock(currentStart, currentEntries, now, durationMs, weights));
     }
     return blocks;
 }
@@ -260,7 +284,7 @@ function walkJsonl(dir, minMtimeMs, out = []) {
     return out;
 }
 
-function loadEntriesFromDirs(dirs, minMtimeMs) {
+function loadEntriesFromDirs(dirs, minMtimeMs, hits = null) {
     const byId = new Map();
     const anonymous = [];
     for (const dir of dirs) {
@@ -269,6 +293,9 @@ function loadEntriesFromDirs(dirs, minMtimeMs) {
             try { text = fs.readFileSync(file, "utf8"); } catch (_) { continue; }
             const isSubagent = SUBAGENT_PATH_RE.test(file);
             for (const line of text.split(/\r?\n/)) {
+                if (hits && line.includes('"assistant"') && LIMIT_HIT_RE.test(line)) {
+                    try { const t = toMs(JSON.parse(line).timestamp); if (Number.isFinite(t)) hits.push(t); } catch (_) { /* not a record */ }
+                }
                 if (!line.includes('"usage"')) continue;
                 let raw;
                 try { raw = JSON.parse(line); } catch (_) { continue; }
@@ -309,6 +336,7 @@ export function estimateQuota(root, cfg = {}, nowMs = Date.now(), opts = {}) {
     const sessionHours = Number(qCfg.sessionDurationHours ?? DEFAULT_QUOTA.sessionDurationHours) || 5;
 
     let entries = [];
+    const limitHits = [];
     const mockEntries = Array.isArray(opts.entries) ? opts.entries : (Array.isArray(config.entries) ? config.entries : null);
     if (mockEntries) {
         for (const raw of mockEntries) {
@@ -329,17 +357,28 @@ export function estimateQuota(root, cfg = {}, nowMs = Date.now(), opts = {}) {
             dirs = collectClaudeDirs();
         }
         const minMtimeMs = opts.skipMtimePrune ? 0 : Math.max(0, Math.min(now, Date.now()) - 8 * 24 * HOUR_MS);
-        entries = loadEntriesFromDirs(dirs, minMtimeMs);
+        entries = loadEntriesFromDirs(dirs, minMtimeMs, limitHits);
     }
+    if (Array.isArray(opts.limitHits)) for (const t of opts.limitHits) { const ms = toMs(t); if (Number.isFinite(ms)) limitHits.push(ms); }
 
-    const blocks = identifySessionBlocks(entries, sessionHours, now);
+    const weights = (config.metrics && config.metrics.weights) || LOAD_WEIGHTS;
+    const blocks = identifySessionBlocks(entries, sessionHours, now, weights);
     const activeBlock = blocks.find((b) => b.isActive && !b.isGap) || null;
     const weekStart = weekWindowStartMs(now, config.autonomy && config.autonomy.weeklyReset);
-    let weekTokens = 0;
+    let weekTokens = 0, weekWeighted = 0;
     for (const e of entries) {
-        if (e.tsMs >= weekStart && e.tsMs <= now) weekTokens += e.total;
+        if (e.tsMs >= weekStart && e.tsMs <= now) { weekTokens += e.total; weekWeighted += weightOf(e, weights); }
     }
-    const weekPct = weekTokens > 0 ? Math.min(100, Math.round((weekTokens / weekLimit) * 1000) / 10) : (activeBlock ? 0 : null);
+    weekWeighted = Math.round(weekWeighted * 1e6) / 1e6;
+    // Calibrated limits (weighted units, learned from real readings) win over the raw-token defaults.
+    const cal = opts.calibrated && typeof opts.calibrated === "object" ? opts.calibrated : null;
+    const fiveUnits = cal && Number(cal.fiveUnits) > 0 ? Number(cal.fiveUnits) : null;
+    const weekUnits = cal && Number(cal.weekUnits) > 0 ? Number(cal.weekUnits) : null;
+    const pct = (v, lim) => Math.min(100, Math.round((v / lim) * 1000) / 10);
+    const weekPct = weekUnits
+        ? (weekWeighted > 0 ? pct(weekWeighted, weekUnits) : (activeBlock ? 0 : null))
+        : (weekTokens > 0 ? pct(weekTokens, weekLimit) : (activeBlock ? 0 : null));
+    const common = { weekTokens, weekWeighted, limitHits, blocks, calibration: fiveUnits ? (cal.source || "calibrated") : "default", quotaSource: "local-blocks" };
 
     if (!activeBlock) {
         return {
@@ -351,15 +390,20 @@ export function estimateQuota(root, cfg = {}, nowMs = Date.now(), opts = {}) {
             projectedTokens: 0,
             subagentCount: 0,
             subagentTokens: 0,
-            quotaSource: "local-blocks"
+            ...common
         };
     }
 
     const burnRate = computeBurnRate(activeBlock, now);
     const proj = projectBlockUsage(activeBlock, burnRate, now);
     const projectedTokens = proj ? proj.projectedTokens : activeBlock.tokens.total;
-    const fivePct = Math.min(100, Math.round((activeBlock.tokens.total / fiveLimit) * 1000) / 10);
-    const approachingCap = projectedTokens >= fiveLimit * warnShare;
+    const fiveWeighted = Math.round((activeBlock.tokens.weighted || 0) * 1e6) / 1e6;
+    // In weighted units the projection scales with the same ratio as raw tokens over the block.
+    const ratio = activeBlock.tokens.total > 0 ? fiveWeighted / activeBlock.tokens.total : 0;
+    const projectedWeighted = projectedTokens * ratio;
+    const fivePct = fiveUnits ? pct(fiveWeighted, fiveUnits) : pct(activeBlock.tokens.total, fiveLimit);
+    const projectedPct = fiveUnits ? Math.round((projectedWeighted / fiveUnits) * 1000) / 10 : Math.round((projectedTokens / fiveLimit) * 1000) / 10;
+    const approachingCap = projectedPct >= warnShare * 100;
 
     return {
         available: true,
@@ -368,11 +412,15 @@ export function estimateQuota(root, cfg = {}, nowMs = Date.now(), opts = {}) {
         activeBlock,
         burnRate,
         projectedTokens,
+        projectedPct,
+        fiveTokens: activeBlock.tokens.total,
+        fiveWeighted,
+        minutesLeft: proj ? proj.remainingMinutes : 0,
         subagentCount: activeBlock.subagentCount || 0,
         subagentTokens: activeBlock.subagentTokens || 0,
         fiveResetsAt: new Date(activeBlock.endTime).toISOString(),
         approachingCap,
-        tokenLimit: fiveLimit,
-        quotaSource: "local-blocks"
+        tokenLimit: fiveUnits || fiveLimit,
+        ...common
     };
 }

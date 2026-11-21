@@ -7,6 +7,7 @@ import process from "node:process";
 import { exists, git, isWindows, readJson, readText, slash, today, writeJson, writeText } from "../lib/util.js";
 import { CONFIG_REL, PKG_ROOT, TEMPLATE_DIR, VERSION, defaults, detect } from "../lib/config.js";
 import { writeProject } from "../evolve/merge.js";
+import { planSettings } from "../lib/hooks.js";
 
 function walk(dir, rel = "") {
     const out = [];
@@ -191,6 +192,14 @@ export function init(root, { name, lang = "tr", adoptMode = false, skipExisting 
     const versionFile = path.join(root, ".evrim", "version");
     if (!exists(versionFile)) { writeText(versionFile, VERSION + "\n"); report.created.push(".evrim/version"); }
     writeShims(root);
+    // Quota guard hooks (Claude Code): merged into the project's settings, never replacing the owner's.
+    const hk = planSettings(root);
+    if (hk.error) report.notes.push(hk.error);
+    else if (hk.changed) {
+        writeText(path.join(root, hk.rel), hk.text);
+        if (hk.old === null) report.created.push(hk.rel);
+        else report.notes.push(`${hk.rel}: kota bekçisi kancası eklendi (sizin ayarlarınız korundu)`);
+    }
     const added = ignoreLines(root);
     if (added.length) report.notes.push(".gitignore'a eklendi: " + added.join(", "));
     if (!isOwnRepoRoot(root)) report.notes.push("burası henüz kendi git deposu değil: `git init` çalıştırın (otonomi ve şeritler git ister)");

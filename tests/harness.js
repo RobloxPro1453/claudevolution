@@ -7,6 +7,10 @@ import process from "node:process";
 // Shared machine state (machine lock, project registry) must never touch the real home folder in tests.
 export const SANDBOX = fs.mkdtempSync(path.join(os.tmpdir(), "cv-test-"));
 process.env.CV_STATE_HOME = path.join(SANDBOX, "state-home");
+// The local quota estimate must not read the real ~/.claude transcripts in tests (slow, and the result would
+// depend on the machine): point it at an empty folder. Tests that need entries pass them in.
+process.env.CLAUDE_CONFIG_DIR = path.join(SANDBOX, "claude-empty");
+fs.mkdirSync(path.join(SANDBOX, "claude-empty", "projects"), { recursive: true });
 
 const tests = [];
 export const test = (name, fn) => tests.push({ name, fn });
