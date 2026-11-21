@@ -51,8 +51,24 @@ export const ALWAYS_FORBIDDEN = [
     "(^|/)id_(rsa|ed25519)(\\.pub)?$",
     "\\.(pem|key|p12|pfx)$",
 ];
+// Universal lesson 30: the script files the build and test commands run are never the cheap model's to change
+// (an agent once put "kill every app process" in a build script and cut the other lanes' tests). Derived from
+// the commands themselves, so it holds for every project without a project-specific list.
+const SCRIPT_EXT = /\.(?:ps1|psm1|sh|bash|bat|cmd|js|mjs|cjs|ts|py|rb|pl)$/i;
+export function runnerScripts(cfg) {
+    const out = [];
+    for (const c of [cfg && cfg.build, cfg && cfg.test]) {
+        if (!Array.isArray(c)) continue;
+        for (const a of c) {
+            const s = String(a).replace(/\\/g, "/").replace(/^\.\//, "");
+            if (!SCRIPT_EXT.test(s) || /^[A-Za-z]:|^\//.test(s) || s.split("/").includes("..")) continue;
+            out.push("^" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$");
+        }
+    }
+    return out;
+}
 export function forbiddenRegexes(cfg) {
-    const list = [...ALWAYS_FORBIDDEN, ...((cfg && cfg.forbiddenWrite) || [])];
+    const list = [...ALWAYS_FORBIDDEN, ...runnerScripts(cfg), ...((cfg && cfg.forbiddenWrite) || [])];
     return [...new Set(list)].map((s) => new RegExp(s, "i"));
 }
 // A path given by a model: relative, inside the project, no drive letter, no "..".

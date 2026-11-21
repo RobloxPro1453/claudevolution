@@ -12,8 +12,11 @@ const TEST_FILE_RE = /(^|\/)(?:tests?|__tests__|specs?)\//i;
 const TEST_NAME_RE = /(?:^|\/)(?:test|spec)[._-][^/]*$|\.(?:test|spec)\.[a-z0-9]+$|_test\.[a-z0-9]+$/i;
 const isTestFile = (f) => TEST_FILE_RE.test(f) || TEST_NAME_RE.test(f);
 
-const ASSERTION_RE = /(?:\bexpect\s*\(|\bassert(?:Equal|Equals|NotEqual|True|False|Throws|Rejects|Match|_eq!|_ne!|_ok)?\s*(?:\.|\()|\b(?:eq|ok|throws)\s*\(|\b(?:test|it)\s*\(|#\[test\]|\bdef\s+test_\w+)/;
+// A real check, not a test declaration: "test(" / "it(" / "#[test]" / "def test_" only name a test, and
+// counting them let a test with no assertion at all pass the quality check.
+const ASSERTION_RE = /(?:\bexpect\s*\(|\bassert(?:Equal|Equals|NotEqual|True|False|Throws|Rejects|Match|_eq!|_ne!|_ok|!)?\s*(?:\.|\()|\bself\.assert\w*\s*\(|^\s*assert\s+\S|\b(?:eq|ok|throws|rejects)\s*\(|\bt\.(?:Error|Errorf|Fatal|Fatalf)\s*\()/;
 const TRIVIAL_ASSERT_RE = /\b(?:ok|assert|assertTrue)\s*\(\s*true\s*\)|\bassert\.ok\s*\(\s*true\s*\)|\beq\s*\(\s*(?:true\s*,\s*true|false\s*,\s*false|1\s*,\s*1|0\s*,\s*0|(['"])([^'"]*)\1\s*,\s*\1\2\1)\s*\)|\bexpect\s*\(\s*(?:true|false|1|0)\s*\)\s*\.\s*(?:toBe|toEqual|toStrictEqual)\s*\(\s*(?:true|false|1|0)\s*\)|\bassert_eq!\s*\(\s*(?:true\s*,\s*true|1\s*,\s*1)\s*\)/;
+const TEST_DECL_RE = /\b(?:test|it)\s*\(\s*[`'"]|#\[test\]|^\s*def\s+test_\w+|\bfunc\s+Test\w+\s*\(/;
 const SKIP_TEST_RE = /\b(?:test|it|describe)\.skip\s*\(|\b(?:xit|xtest|xdescribe)\s*\(|#\[ignore\]|@pytest\.mark\.skip\b|\bt\.Skip\s*\(/;
 const EMPTY_TEST_LINE_RE = /\b(?:test|it)\s*\([^,]+,\s*(?:async\s*)?\([^)]*\)\s*=>\s*\{\s*\}\s*\)|^\s*def\s+test_\w+\s*\([^)]*\)\s*:\s*(?:pass|\.\.\.)\s*$/;
 const PRESENCE_ONLY_RE = /\.\s*(?:toBeDefined|toBeTruthy)\s*\(\s*\)/;
@@ -148,7 +151,7 @@ export function inspectTestQuality(diffText, deletedFiles = []) {
     let file = "", lineNum = 0;
     const perFile = new Map();
     const ensureFile = (f) => {
-        if (!perFile.has(f)) perFile.set(f, { added: 0, removed: 0, presenceOnly: 0, addedLines: [] });
+        if (!perFile.has(f)) perFile.set(f, { added: 0, removed: 0, presenceOnly: 0, decls: 0, addedLines: [] });
         return perFile.get(f);
     };
     const deletedSet = new Set(deletedFiles.map((d) => slash(d).replace(/^\.\//, "")));
@@ -165,6 +168,7 @@ export function inspectTestQuality(diffText, deletedFiles = []) {
             const body = line.slice(1);
             const rec = ensureFile(file);
             rec.addedLines.push({ line: lineNum, body });
+            if (TEST_DECL_RE.test(body)) rec.decls++;
             if (SKIP_TEST_RE.test(body)) {
                 findings.push({
                     category: "test_quality",
@@ -228,6 +232,18 @@ export function inspectTestQuality(diffText, deletedFiles = []) {
                     description: `Empty test block added in ${f}:${cur.line}`
                 });
             }
+        }
+        // New tests that check nothing: declarations were counted as assertions before, so this passed.
+        if (rec.decls > 0 && rec.added === 0 && rec.presenceOnly === 0) {
+            findings.push({
+                category: "test_quality",
+                severity: "major",
+                blocker: true,
+                file: f,
+                protects: "Tests must contain real assertions",
+                evidence: `${f}: ${rec.decls} test(s) added, no assertion`,
+                description: `Tests added in ${f} assert nothing`
+            });
         }
         if (rec.presenceOnly > 0 && rec.added === 0) {
             findings.push({
@@ -610,9 +626,21 @@ export async function verifyTask(root, taskId, opts = {}) {
                 description: `Missing verification receipt for ${taskId}`
             });
         }
-        if (prevReceipt && checks.receipt.fresh) {
+        // Never self-grade: a receipt whose build/test result came only from the coding agent's own run
+        // (testsBy "agent") is not proof. Its result is not adopted; the build and test stay unverified.
+        const selfGraded = prevReceipt && prevReceipt.testsBy === "agent";
+        if (prevReceipt && checks.receipt.fresh && !selfGraded) {
             if (typeof prevReceipt.buildOk === "boolean") buildOk = prevReceipt.buildOk;
             if (typeof prevReceipt.testOk === "boolean") testOk = prevReceipt.testOk;
+        } else if (selfGraded && checks.receipt.fresh && prevReceipt.buildOk !== false && prevReceipt.testOk !== false) {
+            findings.push({
+                category: "self_graded_receipt",
+                severity: "minor",
+                blocker: false,
+                protects: "Independent verification (never self-grade)",
+                evidence: `receipt testsBy=agent, treeSha=${prevReceipt.treeSha}`,
+                description: `Build/test of ${taskId} were run only by the coding agent; run verify without --skip-run for proof`
+            });
         }
     } else if (cfg.build || cfg.test) {
         const wt = prepareExecWorktree(root, branch, cfg, opts);
@@ -698,6 +726,8 @@ export async function verifyTask(root, taskId, opts = {}) {
         verdict,
         ok,
         skippedRun: !!opts.skipRun,
+        // Who produced buildOk/testOk: this verifier, or (skip-run) whoever wrote the receipt it reused.
+        testsBy: opts.skipRun ? (buildOk === null && testOk === null ? null : (prevReceipt && prevReceipt.testsBy) || "verifier") : "verifier",
         findingsCount: findings.length,
         timestamp
     });

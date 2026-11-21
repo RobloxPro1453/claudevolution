@@ -22,14 +22,15 @@
   "buildMinutes": 10,
   "testMinutes": 15,
 
-  "_comment_paths": "codePaths: ölçümde 'kod' sayılan klasörler. forbiddenWrite: ucuz modelin yazamayacağı yollar (düzenli ifade, / ile). Bu liste yalnız sahibinin sözüyle daraltılır; evrensel güncelleme buraya dokunamaz. skipDirs: ajanın listelemediği/aramadığı klasörler.",
+  "_comment_paths": "codePaths: ölçümde 'kod' sayılan klasörler. forbiddenWrite: ucuz modelin yazamayacağı yollar (düzenli ifade, / ile). Bu liste yalnız sahibinin sözüyle daraltılır; evrensel güncelleme buraya dokunamaz. skipDirs: ajanın listelemediği/aramadığı klasörler. Derleme/test komutlarının çalıştırdığı betik dosyaları (ör. build.ps1, tests/run.js) kodda ayrıca hep yasaktır (evrensel ders 30); scripts/ projenizin asıl koduysa listeden çıkarın.",
   "codePaths": ["src/", "tests/"],
   "forbiddenWrite": [
     "^\\.git(/|$)", "^\\.gitignore$", "^\\.gitattributes$",
     "^\\.evrim/", "^\\.claude/", "^\\.codex/", "^\\.agent/",
     "^AGENTS\\.md$", "^docs/VISION\\.md$", "^docs/WORKER\\.md$",
     "^docs/tasks/(?!.*\\.report\\.md$)",
-    "^(build|dist|node_modules|vendor)/"
+    "^(build|dist|node_modules|vendor)/",
+    "^scripts/"
   ],
   "skipDirs": "^(\\.git|node_modules|build|dist|target|vendor|\\.evrim/state)(/|$)",
 

@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { spawn, spawnSync } from "node:child_process";
-import { appendText, exists, expand, extractJson, num, readJson, readText, slash, writeJson, writeText } from "../lib/util.js";
+import { appendText, exists, expand, extractJson, gitEnv, num, readJson, readText, slash, writeJson, writeText } from "../lib/util.js";
 import * as configLib from "../lib/config.js";
 import { isSensitiveFile } from "../evolve/privacy.js";
 import { slotCount, withSlot } from "./slots.js";
@@ -37,7 +37,7 @@ export function sh(cmd, args, cwd, timeoutMs = 600000) {
         let text = "", done = false;
         const finish = (code) => { if (!done) { done = true; clearTimeout(timer); resolve({ code, text }); } };
         let child;
-        try { child = spawn(cmd, args, { cwd, windowsHide: true }); } catch (e) { return resolve({ code: 127, text: String(e.message) }); }
+        try { child = spawn(cmd, args, { cwd, windowsHide: true, ...(cmd === "git" ? { env: gitEnv() } : {}) }); } catch (e) { return resolve({ code: 127, text: String(e.message) }); }
         // On Windows kill the whole tree: killing only the shell left the app it started running, which then
         // locked the build output for every later build in that lane (Fotosop, 2026-11-14: 5 jobs blocked).
         const kill = () => {
@@ -253,26 +253,51 @@ export function makeTools(ctx) {
 }
 const schema = (tools, names) => names.map((name) => ({ type: "function", function: { name, description: tools[name].description, parameters: tools[name].parameters } }));
 
-// Loop detection: the same tool with the same arguments failing with the same error.
+// Run output without the noise that changes on every run (timings, dates, process ids, temp paths, addresses):
+// two runs of one unchanged failing test must look the same, or the guards below never see the repeat.
+export function normalizeOutput(text) {
+    return String(text || "")
+        .replace(/\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?/g, "<time>")
+        .replace(/\b\d{1,2}:\d{2}:\d{2}(?:\.\d+)?\b/g, "<time>")
+        .replace(/\b\d+(?:[.,]\d+)?\s*(?:ms|µs|us|ns|s|sec|secs|seconds?|sn|saniye|dk|min|minutes?)\b/gi, "<dur>")
+        .replace(/\b(pid|process|thread)(\s*[:=#]?\s*)\d+/gi, "$1$2<n>")
+        .replace(/\b0x[0-9a-f]{6,}\b/gi, "<addr>")
+        .replace(/(?:[A-Za-z]:)?[\\/][^\s:'"]*?[\\/](?:temp|tmp)[\\/][^\s:'")]+/gi, "<tmp>")
+        .replace(/[ \t]+$/gm, "");
+}
+const READ_TOOLS = new Set(["read_file", "list_files", "search"]);
+const isFailure = (name, result) => { const s = String(result); return s.startsWith("ERROR") || (name === "run" && /^exit [1-9]\d*/.test(s)); };
+
+// Loop detection. Counts (1) the same tool with the same arguments failing the same way, including a build
+// or test that exits non-zero (it never started with "ERROR", so it was never counted), and (2) the same
+// read repeated while no file changed in between (the answer cannot be different). Returns the count and
+// its kind ("fail" | "read"); a write resets the read counts.
 export function loopGuard() {
     const seen = new Map();
-    return (name, args, result) => {
-        if (!String(result).startsWith("ERROR")) return 0;
-        const key = name + "\u0000" + JSON.stringify(args) + "\u0000" + String(result).slice(0, 300);
+    let clock = null;
+    return (name, args, result, writeClock = 0) => {
+        if (writeClock !== clock) {
+            for (const k of [...seen.keys()]) if (k.startsWith("R\u0000")) seen.delete(k);
+            clock = writeClock;
+        }
+        let key, kind;
+        if (isFailure(name, result)) { kind = "fail"; key = "F\u0000" + name + "\u0000" + JSON.stringify(args) + "\u0000" + normalizeOutput(result).slice(0, 400); }
+        else if (READ_TOOLS.has(name)) { kind = "read"; key = "R\u0000" + name + "\u0000" + JSON.stringify(args); }
+        else return { n: 0, kind: null };
         const n = (seen.get(key) || 0) + 1;
         seen.set(key, n);
-        return n;
+        return { n, kind };
     };
 }
 
-// Stagnation circuit breaker (consilium/stagnation.rs): SHA-1 of (command + git diff + run output).
+// Stagnation circuit breaker (consilium/stagnation.rs): SHA-1 of (command + git diff + normalized run output).
 export function stagnationFingerprint(diff, output, command) {
     return crypto.createHash("sha1")
         .update(String(command || ""))
         .update("\u0000")
         .update(String(diff || ""))
         .update("\u0000")
-        .update(String(output || ""))
+        .update(normalizeOutput(output))
         .digest("hex");
 }
 
@@ -374,6 +399,65 @@ function apiKey(cfg) {
 
 const isUnavailableMsg = (status, text) => status === 404 || /model.*not[ _-]?found|does not exist|unavailable|not available/i.test(String(text || ""));
 
+// Why a call failed, from the status and the provider's error code, never from display words alone
+// (craft-anything ai/src/failure.rs + OMK specs/090-quota-no-retry, MIT/Apache-2.0):
+//   billing  402 / insufficient balance or quota: waiting cannot help -> next rung at once, no wait
+//   auth     401 / 403 / invalid key: this key will not work -> next rung at once
+//   rate     429: wait (Retry-After if given, at most 60 s) and retry
+//   transient 408 / 5xx / network: wait with backoff and retry
+//   unavailable model or service -> next rung at once;  config  other 4xx: the request itself is wrong
+export function classifyFailure(status, text = "") {
+    const t = String(text || "");
+    if (status === 402 || /insufficient[ _-]?(?:balance|quota|funds|credit)|billing|quota[ _-]?exceeded|payment required/i.test(t)) return "billing";
+    if (status === 401 || status === 403 || /invalid[ _-]?api[ _-]?key|authentication|unauthori[sz]ed|permission[ _-]?denied/i.test(t)) return "auth";
+    if (isUnavailableMsg(status, t)) return "unavailable";
+    if (status === 429) return "rate";
+    if (status === 408 || status >= 500 || !status) return "transient";
+    return "config";
+}
+// A provider's wait hint (Retry-After header or "retry after N s" in the text), bounded to 60 s.
+export function retryAfterMs(headerValue, text = "") {
+    let s = null;
+    const h = String(headerValue ?? "").trim();
+    if (/^\d+(\.\d+)?$/.test(h)) s = Number(h);
+    else if (h) { const at = Date.parse(h); if (Number.isFinite(at)) s = (at - Date.now()) / 1000; }
+    if (s === null) {
+        const m = String(text || "").match(/(?:retry[- ]after(?:-ms)?|try again in)\s*:?\s*(\d+(?:\.\d+)?)\s*(ms|milliseconds?|s|sec|seconds?|m|min|minutes?)?/i);
+        if (m) s = Number(m[1]) * (/^ms|^milli/i.test(m[2] || "") || /retry-after-ms/i.test(m[0]) ? 0.001 : /^m/i.test(m[2] || "") ? 60 : 1);
+    }
+    if (s === null || !Number.isFinite(s) || s < 0) return null;
+    return Math.min(60000, Math.round(s * 1000));
+}
+
+// The request that goes out must be one the API accepts, whatever the stored history holds
+// (DeepSeek thinking mode, ERRATA E15; OMK openai-completions.ts requiresReasoningContentOnAssistantMessages;
+// craft-anything pitfall "A stopped tool call broke the next request"):
+// - with thinking on, every kept assistant message carries reasoning_content ("" when it had none; a missing
+//   field is a 400 once an earlier rung ran without thinking). Kept fields are never removed (E2).
+// - an assistant message with no text and no tool calls is dropped (nothing to replay).
+// - every kept tool call has a matching tool result: one cut off is answered "not run".
+// Deterministic for the same input, so the cached prompt prefix stays the same from call to call.
+export function prepareMessages(messages, { thinking = false } = {}) {
+    const out = [];
+    for (let i = 0; i < messages.length; i++) {
+        const m = messages[i];
+        if (!m || m.role !== "assistant") { out.push(m); continue; }
+        const calls = Array.isArray(m.tool_calls) && m.tool_calls.length ? m.tool_calls : null;
+        if (!calls && !String(m.content || "").trim()) continue;
+        const said = { ...m };
+        if (!calls) delete said.tool_calls;
+        if (thinking && typeof said.reasoning_content !== "string") said.reasoning_content = "";
+        out.push(said);
+        if (!calls) continue;
+        const answered = new Set();
+        let j = i + 1;
+        for (; j < messages.length && messages[j] && messages[j].role === "tool"; j++) { answered.add(messages[j].tool_call_id); out.push(messages[j]); }
+        for (const c of calls) if (!answered.has(c.id)) out.push({ role: "tool", tool_call_id: c.id, content: "not run: the runner stopped before this call was executed" });
+        i = j - 1;
+    }
+    return out;
+}
+
 export async function chat(cfg, messages, key, toolList, fetchImplOrOpts = fetch, extraOpts = {}) {
     const opts = typeof fetchImplOrOpts === "function" ? { ...extraOpts, fetch: fetchImplOrOpts } : { ...(fetchImplOrOpts || {}), ...extraOpts };
     const fetchImpl = opts.fetch || fetch;
@@ -384,15 +468,18 @@ export async function chat(cfg, messages, key, toolList, fetchImplOrOpts = fetch
     const ladder = buildLadder(cfg, key, opts);
     const maxRetries = opts.maxRetries ?? (cfg.delegate && cfg.delegate.maxRetries) ?? (ladder.length > 1 ? 2 : 4);
     const dead = opts.health && opts.health.dead instanceof Set ? opts.health.dead : null;
-    const reasons = [];
+    const reasons = [], kinds = [];
 
     for (const rung of ladder) {
         const rungId = `${rung.provider}/${rung.model}`;
         if (dead && dead.has(rungId)) { reasons.push(`${rungId} (dead)`); continue; }
-        let lastErr = null;
+        let lastErr = null, lastKind = null;
+        const sent = prepareMessages(messages, { thinking: !!rung.thinking });
 
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            const body = { model: rung.model, messages, tools: toolList, temperature: 0.2, max_tokens: 16384 };
+            // An empty tool list is not sent: "tools: []" is refused by some providers and means nothing.
+            const body = { model: rung.model, messages: sent, temperature: 0.2, max_tokens: 16384 };
+            if (Array.isArray(toolList) && toolList.length) body.tools = toolList;
             if (rung.thinking !== undefined) body.thinking = { type: rung.thinking ? "enabled" : "disabled" };
             const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 300000);
             let res;
@@ -406,30 +493,33 @@ export async function chat(cfg, messages, key, toolList, fetchImplOrOpts = fetch
             } catch (e) {
                 clearTimeout(timer);
                 lastErr = String(e.message || e);
+                lastKind = "transient";
                 if (attempt < maxRetries) { await sleepFn(backoffDelay(attempt, baseMs, maxMs, rand)); continue; }
                 break;
             }
             clearTimeout(timer);
 
-            if (res.status === 429 || res.status >= 500) {
-                let errBody = "";
-                try { errBody = (await res.text()).slice(0, 200); } catch (_) { /* ignore */ }
-                lastErr = `HTTP ${res.status}${errBody ? ": " + errBody : ""}`;
-                if (res.status >= 500 && isUnavailableMsg(res.status, errBody)) {
-                    if (dead) dead.add(rungId);
-                    break; // unavailable model/service -> fail over immediately to next rung
-                }
-                if (attempt < maxRetries) { await sleepFn(backoffDelay(attempt, baseMs, maxMs, rand)); continue; }
-                break;
-            }
             if (!res.ok) {
-                const errText = (await res.text()).slice(0, 300);
-                if (isUnavailableMsg(res.status, errText)) {
-                    lastErr = `HTTP ${res.status}: ${errText}`;
+                let errText = "";
+                try { errText = (await res.text()).slice(0, 300); } catch (_) { /* ignore */ }
+                const kind = classifyFailure(res.status, errText);
+                lastErr = `HTTP ${res.status}${errText ? ": " + errText : ""}`;
+                lastKind = kind;
+                if (kind === "billing" || kind === "auth" || kind === "unavailable") {
                     if (dead) dead.add(rungId);
-                    break; // demote immediately to next rung
+                    break; // waiting cannot help this rung: fail over at once, with no wait (OMK spec 090)
                 }
-                throw new Error("API " + res.status + ": " + errText);
+                if (kind === "rate" || kind === "transient") {
+                    if (attempt < maxRetries) {
+                        const hint = kind === "rate" ? retryAfterMs(res.headers && typeof res.headers.get === "function" ? res.headers.get("retry-after") : null, errText) : null;
+                        await sleepFn(hint ?? backoffDelay(attempt, baseMs, maxMs, rand));
+                        continue;
+                    }
+                    break;
+                }
+                const err = new Error("API " + res.status + ": " + errText);
+                err.kind = kind;
+                throw err;
             }
 
             const data = await res.json(), u = data.usage || {};
@@ -442,14 +532,19 @@ export async function chat(cfg, messages, key, toolList, fetchImplOrOpts = fetch
             return { message: data.choices[0].message, cost, tokens, model: rung.model, provider: rung.provider };
         }
         reasons.push(`${rungId} (${lastErr || "failed"})`);
+        if (lastKind) kinds.push(lastKind);
     }
-    throw new Error("API kept failing" + (reasons.length ? ": " + reasons.join("; ") : ""));
+    const err = new Error("API kept failing" + (reasons.length ? ": " + reasons.join("; ") : ""));
+    // The caller decides what comes next by kind: "billing"/"auth" on every rung means the API path is
+    // closed for now (hand the work to the main model, K25); "rate"/"transient" may work later.
+    err.kind = kinds.length && kinds.every((k) => k === "billing" || k === "auth") ? (kinds.includes("billing") ? "billing" : "auth") : (kinds[kinds.length - 1] || "transient");
+    throw err;
 }
 
 // The step loop shared by run/fix, scout and ask. Returns { finish, cost, steps, tokens, stopReason }.
 export async function loop(ctx, messages, key, names, maxSteps, budget, finishName, chatImpl = chat) {
     const { tools } = ctx.kit;
-    let cost = 0, steps = 0, finish = null, stopReason = null, edited = false;
+    let cost = 0, steps = 0, finish = null, stopReason = null, edited = false, apiKind = null;
     const tokens = { hit: 0, miss: 0, out: 0 }, guard = loopGuard(), stagnant = stagnationGuard();
     // A run that has changed no file is nudged at 40% and 75% of its steps instead of being stopped early.
     const nudgeAt = [Math.floor(maxSteps * 0.4), Math.floor(maxSteps * 0.75)];
@@ -458,7 +553,7 @@ export async function loop(ctx, messages, key, names, maxSteps, budget, finishNa
         ctx.track.step = ++steps;
         let reply;
         try { reply = await chatImpl(ctx.cfg, messages, key, schema(tools, names)); }
-        catch (error) { stopReason = "api"; finish = { status: "blocked", report: `Stopped by the runner: the model API failed (${String(error.message).slice(0, 200)}). The work so far is committed; continue with the fix command.` }; break; }
+        catch (error) { stopReason = "api"; apiKind = error.kind || null; finish = { status: "blocked", report: `Stopped by the runner: the model API failed${apiKind ? ` (${apiKind})` : ""} (${String(error.message).slice(0, 200)}). The work so far is committed; continue with the fix command.` }; break; }
         cost += reply.cost; tokens.hit += reply.tokens.hit; tokens.miss += reply.tokens.miss; tokens.out += reply.tokens.out;
         const m = reply.message, said = { role: "assistant", content: m.content || "", tool_calls: m.tool_calls };
         if (m.reasoning_content) said.reasoning_content = m.reasoning_content; // thinking mode wants it back during tool calls
@@ -496,15 +591,18 @@ export async function loop(ctx, messages, key, names, maxSteps, budget, finishNa
                     break;
                 }
             }
-            const n = guard(name, args, result);
-            if (n >= LOOP_STOP && !finish) { stopReason = "loop"; finish = { status: "blocked", report: `Stopped by the runner: ${name} failed ${n} times with the same arguments and the same error:\n${String(result).slice(0, 300)}` }; break; }
-            else if (n === LOOP_WARN) warn = `${name} has now failed ${n} times with the same arguments and the same error. Do not try it again. Call ${finishName} now${finishName === "finish" ? ' with status "blocked"' : ""} and explain what you tried and what you found.`;
+            const { n, kind } = guard(name, args, result, ctx.track.lastWrite);
+            const what = kind === "read" ? `${name} was called ${n} times with the same arguments while no file changed` : `${name} failed ${n} times with the same arguments and the same error`;
+            if (n >= LOOP_STOP && !finish) { stopReason = "loop"; finish = { status: "blocked", report: `Stopped by the runner: ${what}:\n${String(result).slice(0, 300)}` }; break; }
+            else if (n === LOOP_WARN) warn = kind === "read"
+                ? `${what}: the answer cannot be different. Use what you already read; write the change now, or call ${finishName}${finishName === "finish" ? ' with status "blocked"' : ""} with the exact open question.`
+                : `${what}. Do not try it again. Call ${finishName} now${finishName === "finish" ? ' with status "blocked"' : ""} and explain what you tried and what you found.`;
         }
         if (!warn && !finish && finishName === "finish" && !edited && nudgeAt.includes(steps)) warn = `You have used ${steps} of ${maxSteps} steps and changed no file. Stop exploring: write a first version now with what you know, build, and check it with the tests; refine after. If it truly cannot be done, call finish with status "blocked" and report what you found and the exact open question.`;
         if (warn && !finish) messages.push({ role: "user", content: warn });
     }
     if (!finish) { stopReason = "steps"; finish = { status: "blocked", report: `Stopped after ${maxSteps} steps without finishing.` }; }
-    return { finish, cost, steps, tokens, stopReason: stopReason || "finish" };
+    return { finish, cost, steps, tokens, stopReason: stopReason || "finish", apiKind };
 }
 
 // ------------------------------------------------------------------------------------------- state, git
@@ -551,21 +649,37 @@ export async function ensureLane(ctx) {
 
 // A new task gets a fresh branch cut from the base branch. A branch left with work on it (stopped from
 // outside, e.g. the balance ran out) is resumed, never reset. Returns true when resuming.
-export async function syncForTask(ctx, task) {
+// after: tasks this one depends on (Depends-On:). Their finished branches are merged in, so the task starts
+// from its prerequisites' code and not from a base branch that does not have it yet.
+export async function syncForTask(ctx, task, { after = [] } = {}) {
     const { cfg } = ctx, branch = branchOf(cfg, task);
     const dirty = (await ctx.git(["status", "--porcelain"])).text.trim();
     if (dirty) throw new Error("the lane worktree has uncommitted changes; clean it first:\n" + dirty);
+    const mergeIn = async (ref) => {
+        const m = await ctx.git(["merge", "--no-edit", ref]);
+        if (m.code) { await ctx.git(["merge", "--abort"]); return false; } // conflicts: go on without it; the reviewer merges
+        return true;
+    };
+    const mergeDeps = async () => {
+        for (const dep of after) {
+            const depBranch = branchOf(cfg, dep);
+            const ahead = await ctx.git(["log", "--oneline", `${cfg.baseBranch}..${depBranch}`]);
+            if (ahead.code || !ahead.text.trim()) continue; // missing or already in the base
+            if (!(await mergeIn(depBranch)) && ctx.log) ctx.log(`${task}: could not merge prerequisite ${depBranch} (conflict); starting without it`);
+        }
+    };
     // A missing branch makes git log fail; its error text must not count as commits ahead (lesson 2).
     const lg = await ctx.git(["log", "--oneline", `${cfg.baseBranch}..${branch}`]);
     if (!lg.code && lg.text.trim()) {
         const c = await ctx.git(["checkout", branch]);
         if (c.code) throw new Error(`could not resume ${branch} (checked out in another worktree? detach it):\n` + c.text);
-        const m = await ctx.git(["merge", "--no-edit", cfg.baseBranch]);
-        if (m.code) await ctx.git(["merge", "--abort"]); // conflicts: resume on the old base; the reviewer merges
+        await mergeIn(cfg.baseBranch); // conflicts: resume on the old base
+        await mergeDeps();
         return true;
     }
     const r = await ctx.git(["checkout", "-B", branch, cfg.baseBranch]);
     if (r.code) throw new Error("could not create " + branch + ":\n" + r.text);
+    await mergeDeps();
     return false;
 }
 
@@ -705,7 +819,7 @@ export async function runTask(ctx, task, feedbackFile = null, deps = {}) {
     state.runs.push({ startedAt, at: timestamp, kind: feedbackFile ? "fix" : "first", before, after: head, treeSha, cost: r.cost, steps: r.steps, tokens: r.tokens, status: finish.status, stopReason: r.stopReason, testsBy, offpeak: offpeak(p, new Date(startedAt)) });
     saveState(cfg, state);
     ctx.log(`${task}: ${finish.status.toUpperCase()} (${r.stopReason}), tests (${testsBy || "-"}): ${tests.split("\n")[0]}, cost $${r.cost.toFixed(3)} (task total $${state.cost.toFixed(3)})\nchanged: ${files.join(", ") || "(nothing)"}`);
-    return { status: finish.status, stopReason: r.stopReason, tests, treeSha, buildOk, testOk };
+    return { status: finish.status, stopReason: r.stopReason, apiKind: r.apiKind, tests, treeSha, buildOk, testOk };
 }
 
 // Scout: a read-only pass that finds the exact place in the code before the coder starts.
@@ -730,11 +844,19 @@ export async function scout(ctx, task, deps = {}) {
 export async function auto(ctx, task, deps = {}) {
     const { cfg } = ctx;
     await ensureLane(ctx);
-    const resumed = await syncForTask(ctx, task);
+    const resumed = await syncForTask(ctx, task, { after: Array.isArray(deps.dependsOn) ? deps.dependsOn : [] });
     const notes = path.join(stateDir(cfg), task + ".auto-review.md");
     if (!exists(path.join(stateDir(cfg), task + ".scout.md"))) { try { await scout(ctx, task, deps); } catch (e) { ctx.log(`${task}: scout failed: ${e.message}`); } }
     let first;
-    if (resumed) {
+    // The merge train leaves "<task>.train-fix.md" when this branch broke the combined build/test; that note
+    // (failing checks, the fix to make) is the reason the task is back, so the run starts from it. Restored:
+    // commit 64f174d was lost in merge a2f29cb. syncForTask has already merged the base branch in.
+    const trainFix = path.join(stateDir(cfg), task + ".train-fix.md");
+    if (exists(trainFix)) {
+        writeText(notes, `The merge train (not a person) sent this task back: merged with ${cfg.baseBranch} and the other approved branches, the build or the full test failed. The runner has merged ${cfg.baseBranch} into your branch. Fix this:\n\n` + readText(trainFix));
+        fs.renameSync(trainFix, trainFix.replace(/\.md$/, ".used.md"));
+        first = await runTask(ctx, task, notes, deps);
+    } else if (resumed) {
         writeText(notes, "The runner (not a person) resumes this task: your previous pass was stopped from outside. Your previous commit is in place; continue from the current files, finish the spec, build and test until they pass.\n");
         first = await runTask(ctx, task, notes, deps);
     } else first = await runTask(ctx, task, null, deps);

@@ -3,11 +3,18 @@
 Status: ready
 Budget: $1.00
 Steps: 200
+Scope: -
+Depends-On: none
 
 <!-- 15-40 lines. Goal, test and limits; the agent's scout pass explores the code itself.
      Known facts only when already known (never research just to fill this in).
      One spec = one thing the user will notice, or one whole group of similar small things.
-     Do not write the spec if it would be longer than half the code it asks for: do that job yourself. -->
+     Do not write the spec if it would be longer than half the code it asks for: do that job yourself.
+     Scope: the files or folders this task may change, comma-separated (src/notes.rs, tests/notes/). The
+       verifier fails changes outside it, and two tasks whose scopes touch the same file never run at once.
+       "-" = not declared.
+     Depends-On: tasks that must be finished first (T-003, T-004). The task then runs in the same lane after
+       them and starts from their code. "none" = independent. -->
 
 ## Goal
 

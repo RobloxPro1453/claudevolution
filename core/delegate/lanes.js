@@ -8,6 +8,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { appendText, git, isWindows, nowIso, pidAlive, readJson, readText, run, writeJson } from "../lib/util.js";
 import { auto, branchOf, laneDir, newCtx, peakUntil, provider, spentToday, stateDir } from "./agent.js";
+import { parseDeclaredScope } from "./verify.js";
 
 const CV = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "bin", "cv.js");
 const lanesDir = (cfg) => path.join(stateDir(cfg), "lanes");
@@ -18,10 +19,45 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PASS_STATUSES = new Set(["done", "ready", "ok", "passed", "success"]);
 const FAIL_STATUSES = new Set(["error", "failed", "blocked", "stopped", "red", "timeout", "budget"]);
 
-// Round-robin split: lane i gets tasks i, i+lanes, ...
+// Round-robin split: lane i gets tasks i, i+lanes, ... (kept for callers; batch uses planLanes below).
 export function split(tasks, lanes) {
     const n = Math.max(1, Math.min(lanes, tasks.length));
     return Array.from({ length: n }, (_, i) => tasks.filter((_, k) => k % n === i));
+}
+
+// Two declared scopes (files, folders, globs) may touch the same file: compared by their fixed prefix, so a
+// folder and a file under it overlap, and a pattern with no fixed part overlaps everything (careful side).
+const scopeStem = (s) => String(s).replace(/\\/g, "/").replace(/^\.\//, "").split(/[*?[{]/)[0];
+export function scopesOverlap(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || !a.length || !b.length) return false;
+    for (const x of a) for (const y of b) {
+        const p = scopeStem(x), q = scopeStem(y);
+        if (!p || !q || p === q || p.startsWith(q.endsWith("/") ? q : q + "/") || q.startsWith(p.endsWith("/") ? p : p + "/")) return true;
+    }
+    return false;
+}
+
+// Which lane runs which tasks. A task and everything it depends on (Depends-On:) share a lane, so a
+// prerequisite is always finished, in the same lane, before its dependent starts (round-robin put them in
+// different lanes, where the dependent waited up to 10 minutes and then gave up, or started from a base
+// without the prerequisite's code). Tasks whose declared Scope: may touch the same file also share a lane
+// (ERRATA E9): two lanes editing one file never run at once. Groups are spread over the lanes, largest first;
+// each lane keeps the topological order.
+export function planLanes(order, lanes, { deps = {}, scopes = {} } = {}) {
+    const parent = new Map(order.map((t) => [t, t]));
+    const find = (t) => { while (parent.get(t) !== t) { parent.set(t, parent.get(parent.get(t))); t = parent.get(t); } return t; };
+    const union = (a, b) => { const x = find(a), y = find(b); if (x !== y) parent.set(y, x); };
+    for (const t of order) for (const d of deps[t] || []) if (parent.has(d)) union(t, d);
+    for (let i = 0; i < order.length; i++) for (let j = i + 1; j < order.length; j++) if (scopesOverlap(scopes[order[i]], scopes[order[j]])) union(order[i], order[j]);
+    const groups = new Map();
+    for (const t of order) { const r = find(t); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(t); }
+    const n = Math.max(1, Math.min(lanes, groups.size));
+    const bins = Array.from({ length: n }, () => []);
+    for (const g of [...groups.values()].sort((a, b) => b.length - a.length || order.indexOf(a[0]) - order.indexOf(b[0]))) {
+        const i = bins.reduce((best, bin, k) => (bin.length < bins[best].length ? k : best), 0);
+        bins[i].push(...g);
+    }
+    return bins.filter((b) => b.length).map((b) => b.sort((x, y) => order.indexOf(x) - order.indexOf(y)));
 }
 
 // Parse `Depends-On:` / `Bağımlılık:` declarations from a task markdown spec.
@@ -272,7 +308,7 @@ async function executeTaskStep(cfg, ctx, task, dag, log, deps, pendingInBatch) {
     const priorWork = deps.priorWork ?? formatPriorWork(bb, task, taskDeps);
     const autoFn = deps.auto || auto;
     try {
-        const r = await autoFn(ctx, task, priorWork ? { ...deps, priorWork } : deps);
+        const r = await autoFn(ctx, task, { ...deps, ...(priorWork ? { priorWork } : {}), dependsOn: taskDeps });
         const rawStatus = r?.status || (r?.ok === false ? "error" : "done");
         const { summary, files } = taskSummaryFromState(cfg, task, r);
         recordBlackboard(cfg, task, { status: rawStatus, branch: r?.branch || branchOf(cfg, task), summary, files });
@@ -300,7 +336,8 @@ export function batch(cfg, tasks, { lanes = cfg.delegate.lanes, from = 1 } = {})
     const dup = dag.order.filter((t) => busy.has(t));
     if (dup.length) throw new Error(`zaten bir şeritte: ${dup.map((t) => `${t} (şerit ${busy.get(t)})`).join(", ")}`);
     // Check every target lane before starting any, so a refusal never leaves half of a batch running.
-    const groups = split(dag.order, lanes);
+    const scopes = Object.fromEntries(dag.order.map((t) => [t, parseDeclaredScope(readText(path.join(cfg.root, cfg.tasks.dir, t + ".md"), ""))]));
+    const groups = planLanes(dag.order, lanes, { deps: dag.deps, scopes });
     groups.forEach((_, i) => {
         const n = from + i, old = readJson(laneFile(cfg, n), null);
         if (old && old.state === "running" && pidAlive(old.pid)) throw new Error(`şerit ${n} zaten çalışıyor (${old.tasks.join(", ")}); --from ile başka numara verin`);

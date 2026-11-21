@@ -58,8 +58,10 @@ API işi başlatılmadı. ${picked.mode === "bekle" ? "Kod işi yapılmaz (deleg
         if (until && !process.env.CV_PEAK_OK) { console.log(`Yoğun saat (pahalı) ${until.toISOString().slice(11, 16)} UTC'ye kadar; başlatılmadı. Geçersiz kılmak için CV_PEAK_OK=1.`); return 2; }
         await agent.ensureLane(ctx);
         if (sub === "auto") { await agent.auto(ctx, rest[0]); return 0; }
-        if (sub === "scout") { await agent.scout(ctx, rest[0]); return 0; }
-        if (sub === "fix") { if (!rest[1]) throw new Error("kullanım: cv delegate fix <iş> <notlar dosyası>"); await agent.runTask(ctx, rest[0], rest[1]); return 0; }
+        // fix and scout work on the task's own branch too: the lane worktree may still sit on another task's
+        // branch from its last run, and a fix committed there landed on the wrong branch.
+        if (sub === "scout") { await agent.syncForTask(ctx, rest[0]); await agent.scout(ctx, rest[0]); return 0; }
+        if (sub === "fix") { if (!rest[1]) throw new Error("kullanım: cv delegate fix <iş> <notlar dosyası>"); await agent.syncForTask(ctx, rest[0]); await agent.runTask(ctx, rest[0], rest[1]); return 0; }
         await agent.syncForTask(ctx, rest[0]);
         await agent.runTask(ctx, rest[0], null);
         return 0;

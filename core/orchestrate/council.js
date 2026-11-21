@@ -12,7 +12,7 @@ import { estimateQuota } from "../metrics/blocks.js";
 export const PERMISSIVE_LICENSES = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"];
 
 export const KNOWN_API_PROVIDERS = {
-    deepseek: { apiBase: "https://api.deepseek.com", model: "deepseek-chat", keyEnv: "DEEPSEEK_API_KEY", tier: "economy" },
+    deepseek: { apiBase: "https://api.deepseek.com", model: "deepseek-flash", keyEnv: "DEEPSEEK_API_KEY", tier: "economy" },
     openai: { apiBase: "https://api.openai.com/v1", model: "gpt-4o-mini", keyEnv: "OPENAI_API_KEY", tier: "standard" },
     anthropic: { apiBase: "https://api.anthropic.com/v1", model: "claude-3-5-sonnet-latest", keyEnv: "ANTHROPIC_API_KEY", tier: "standard" },
     gemini: { apiBase: "https://generativelanguage.googleapis.com/v1beta/openai", model: "gemini-2.5-flash", keyEnv: "GEMINI_API_KEY", tier: "economy" }
