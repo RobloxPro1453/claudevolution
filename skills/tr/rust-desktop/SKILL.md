@@ -16,6 +16,7 @@ Kaynak: Craft Anything `pitfalls.md` "Building and running" + `packaging/windows
 - Taşınabilir mod: exe'nin yanında `portable.txt` varsa veri yanındaki `data/` klasöründe.
 
 ## Derleme ve deneme
+- API'yi tahmin etme: kullandığın sürümün kaynağını oku (`~/.cargo/registry/src/*/egui-<sürüm>/`); sürüm değişikliklerinde yöntem adları kayar.
 - Çalışan exe yeniden derlenemez ("Access is denied"): denerken programı kapat ya da ayrı `CARGO_TARGET_DIR`.
 - Başlatılacak program `Cargo.toml` `default-run` ile bildirilir; `target/` içindeki en yeni dosya uygulama değildir.
 - Her turda `cargo test` (motor, depolama) + `cv check` (pencere çiziyor mu, `--self-test` adımları). `cv check` geçmeden "bitti" denmez.
@@ -23,5 +24,6 @@ Kaynak: Craft Anything `pitfalls.md` "Building and running" + `packaging/windows
 
 ## Teslim (sahibe)
 - `cargo build --release` → `target/release/<ad>.exe` (bu yol `finalForm.deliverable`).
+- "Tek exe" sözü denetlenir: `cv check` `single-exe` adımı exe'nin istediği DLL'leri okur; Windows'la gelmeyen bir DLL (ör. MinGW araç zincirinde `libunwind.dll`) varsa kalır. Çözüm statik C çalışma zamanı (`.cargo/config.toml` içinde `-C target-feature=+crt-static`).
 - İmzasız exe'de Windows SmartScreen uyarır: teslim notunda sade dille "Ek bilgi → Yine de çalıştır" yazılır; kod imzalama isteğe bağlıdır.
 - Teslim notu: ne yapıldı, nasıl açılır, verinin nerede durduğu, taşınabilir mod; teknik terim yok.

@@ -37,6 +37,11 @@ export function place(dest, content, report, rel, { noNew = false } = {}) {
 export const stampSkill = (text) => text.replace(/\s*$/, "") + `\n\n<!-- claudevolution ${VERSION} -->\n`;
 export function skillSources(lang) {
     const out = {};
+    // Built-in design library (skills/library): single-language skills from permissive sources, installed in
+    // every project so UI work starts from real design guidance (benchmark 2026-11-21: the model's own taste
+    // alone gave a poor first screen). Language skills below win on a name clash.
+    const lib = path.join(PKG_ROOT, "skills", "library");
+    if (exists(lib)) for (const name of fs.readdirSync(lib)) { const f = path.join(lib, name, "SKILL.md"); if (exists(f)) out[name] = f; }
     for (const l of ["tr", lang]) { // tr is the complete set; the chosen language overrides where it exists
         const dir = path.join(PKG_ROOT, "skills", l);
         if (!exists(dir)) continue;

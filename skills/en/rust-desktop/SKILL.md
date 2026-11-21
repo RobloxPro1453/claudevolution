@@ -16,6 +16,7 @@ Source: Craft Anything `pitfalls.md` "Building and running" + `packaging/windows
 - Portable mode: with `portable.txt` beside the exe, data lives in the `data/` folder next to it.
 
 ## Building and trying
+- Never guess the API: read the source of the version you use (`~/.cargo/registry/src/*/egui-<version>/`); method names shift between versions.
 - A running exe cannot be rebuilt ("Access is denied"): close the program while trying, or a separate `CARGO_TARGET_DIR`.
 - The program to start is declared by `Cargo.toml` `default-run`; the newest file in `target/` is not the app.
 - Every round: `cargo test` (engine, storage) + `cv check` (does the window draw, `--self-test` steps). Not "done" before `cv check` passes.
@@ -23,5 +24,6 @@ Source: Craft Anything `pitfalls.md` "Building and running" + `packaging/windows
 
 ## Delivery (to the owner)
 - `cargo build --release` → `target/release/<name>.exe` (this path is `finalForm.deliverable`).
+- The "one exe" promise is checked: the `cv check` `single-exe` step reads the DLLs the exe needs; a DLL Windows does not ship (e.g. `libunwind.dll` from a MinGW toolchain) fails it. The fix is the static C runtime (`-C target-feature=+crt-static` in `.cargo/config.toml`).
 - Windows SmartScreen warns on an unsigned exe: the delivery note says in plain words "More info → Run anyway"; code signing is optional.
 - Delivery note: what was built, how to open it, where the data lives, portable mode; no technical terms.

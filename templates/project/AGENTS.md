@@ -4,7 +4,7 @@
 
 ## Oturumun ilk işi
 
-- `.evrim/config.json` > `kurulum` `"bekliyor"` ise sahibinin ilk mesajı ne olursa olsun ("merhaba" bile) `cv-init` becerisini uygula: sessiz tarama, başmimar sohbeti, `finalForm` sözleşmesi, sonunda kendi platformunun gerçek başlatma yolunu söyle (**Antigravity**'de `"başla"`, `/goal` veya `/schedule` — `/loop` yoktur; **Claude Code**'da `/loop başla`; **Codex**'te `"başla"`).
+- `.evrim/config.json` > `kurulum` `"bekliyor"` ise `cv-init` becerisini uygula; önce isteği oku (§0b): **somut işse hemen yap** (çalışan ilk dilim, maket yok), belirsizse ya da selamsa sessiz tarama, başmimar sohbeti, `finalForm` sözleşmesi, sonunda kendi platformunun gerçek başlatma yolunu söyle (**Antigravity**'de `"başla"`, `/goal` veya `/schedule` — `/loop` yoktur; **Claude Code**'da `/loop başla`; **Codex**'te `"başla"`).
 - Kurulum tamamsa: selama `durum` becerisiyle kısa durum ve bulunulan platforma uygun otonom başlatma yolu. `"başla"`, `"otonom başla"`, Antigravity'de `/goal` / `/schedule` / `.agent/workflows/loop.md` veya Claude Code'da `/loop başla` = `otonom` becerisiyle çevrim; `finalForm` tamamlanınca `KARAR: BITTI` döngüyü durdurur.
 
 ## claudevolution
