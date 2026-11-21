@@ -17,6 +17,18 @@ Sahip yalnızca ne istediğini söyler (`HEDEF`); ajan projeyi analiz eder, yakl
 | **İzole İş Dağıtımı & Doğrulama** | `cv delegate` paralel çalışma şeritleri ve harici API/alt ajan delegasyonu kurar; üretilen çıktılar `cv delegate verify` ile bağımsız doğrulanır. |
 | **Ölçülü Öz-Evrim** | Yeni beceri veya çekirdek değişiklikleri `bench/` altındaki deterministik test + kaos senaryolarından (Kat A + Kat B) ve gizlilik taramasından geçmeden `main` dalına alınmaz. |
 
+### ProMax'te yeni (`v1.0.25` → `v1.0.30`)
+
+- **Veri kaybetmeyen güncelleme:** `cv update --apply` önce yedekler, ayarlarını korur, `--rollback` ile tek komutta geri alır.
+- **Ucuz model motoru:** önbellek dostu bağlam, bulanık düzenleme, kilitli kabul testi; API yoksa ya da bakiye biterse ana modele kendiliğinden devir.
+- **Masaüstü denetimi:** `cv check` derler, pencereyi açar, boş ekranı yakalar, uygulamanın kendi `--self-test` adımlarını koşar; referans koda lisansına göre yaklaşır.
+- **Premium müşteri akışı:** kısa istekten söylenmeyen beklentileri çıkaran `cv intent`, çalışan Rust masaüstü iskeleti (`cv stack`), tek `.exe`, eksik araçlar için tek onaylı kurulum.
+- **Gece fabrikası:** süreçler arası kilit, bozan dalı bulan birleştirme treni, dürüst `STATUS.md`, iş bitince tek Telegram haberi.
+- **Kota bekçisi:** kotayı her adımda izler, planına göre kendini ayarlar, gözetimsiz döngüyü %100'e dayanmadan durdurur.
+- **Yaşayan evrim:** kalıcı bilgi deposu, ölçülü öz-ayar (işe yaramayanı geri alır, ders yazar), Codex/Antigravity kullanım ölçümü, tam İngilizce proje belgeleri.
+
+Deneyip görüşünü yazarsan sistem ondan da öğrenir: GitHub'daki **Issues** sekmesine bir satır yeter (ne yaptın, ne bekledin, ne oldu).
+
 ---
 
 ## 1. Hızlı Başlangıç (Son Kullanıcı — 30 Saniye)
