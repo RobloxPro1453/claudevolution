@@ -10,6 +10,7 @@
 // and the loop stays dead until the owner returns.
 
 import { estimateQuota } from "../metrics/blocks.js";
+import { limits as calibrationLimits } from "../metrics/calibrate.js";
 
 const DEFAULT_AUTONOMY = {
     gates: {
@@ -69,7 +70,10 @@ export function gate(usage, autonomy, now = new Date(), opts = {}) {
     if (!hasNumbers) {
         const allowFallback = (opts?.autoFallback === true || usage?.autoFallback === true) && !opts?.noLocalFallback;
         if (allowFallback) {
-            const q = estimateQuota(opts.root || (opts.cfg && opts.cfg.root) || ".", opts.cfg || {}, nowDate.getTime(), opts.quotaOpts || {});
+            // Calibrated limits for this account (calibrate.js), unless a test feeds its own entries.
+            const qo = opts.quotaOpts || {};
+            const lim = "calibrated" in qo || qo.entries ? null : calibrationLimits();
+            const q = estimateQuota(opts.root || (opts.cfg && opts.cfg.root) || ".", opts.cfg || {}, nowDate.getTime(), { ...(lim ? { calibrated: lim } : {}), ...qo });
             if (q.available) {
                 if (state && typeof state === "object") state.unknownStreak = 0;
                 const resolved = {

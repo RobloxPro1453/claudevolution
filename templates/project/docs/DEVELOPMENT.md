@@ -32,4 +32,5 @@ Komutlar `.evrim/config.json` içindedir (`build`, `test`); beceriler ve ucuz mo
 |---|---|
 | `.evrim/cv status` | tur, kota, şeritler, hafıza özeti |
 | `.evrim/cv doctor` | gözetimsiz çalışma önkoşulları |
+| `.evrim/cv guard --show` | kota bekçisi şu an ne görüyor |
 | `.evrim/cv delegate ...` | ucuz model ajanı ve şeritler (`calis` becerisi kullanır) |

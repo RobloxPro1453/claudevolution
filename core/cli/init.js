@@ -7,6 +7,7 @@ import process from "node:process";
 import { exists, git, isWindows, readJson, readText, slash, today, writeJson, writeText } from "../lib/util.js";
 import { CONFIG_REL, PKG_ROOT, TEMPLATE_DIR, VERSION, defaults, detect } from "../lib/config.js";
 import { writeProject } from "../evolve/merge.js";
+import { planSettings } from "../lib/hooks.js";
 
 function walk(dir, rel = "") {
     const out = [];
@@ -45,6 +46,15 @@ export function skillSources(lang) {
         }
     }
     return out;
+}
+
+// Project documents in the chosen language (Q12-B): templates/project is the complete Turkish set; the
+// English overlay templates/project-en replaces a file where it has one. File names stay the same (code and
+// skills read them by name), only the text changes.
+export const TEMPLATE_EN_DIR = path.join(PKG_ROOT, "templates", "project-en");
+export function templateFile(rel, lang = "tr") {
+    const en = path.join(TEMPLATE_EN_DIR, rel);
+    return lang === "en" && exists(en) ? en : path.join(TEMPLATE_DIR, rel);
 }
 
 export function loopWorkflowText(lang = "tr") {
@@ -172,7 +182,7 @@ export function init(root, { name, lang = "tr", adoptMode = false, skipExisting 
     // 2. Documents and memory files.
     for (const rel of walk(TEMPLATE_DIR)) {
         if (rel === CONFIG_REL || rel === "gitignore.add") continue;
-        place(path.join(root, rel), fill(readText(path.join(TEMPLATE_DIR, rel))), report, rel, { noNew: shouldSkipNew(rel) });
+        place(path.join(root, rel), fill(readText(templateFile(rel, cfg.lang || lang))), report, rel, { noNew: shouldSkipNew(rel) });
     }
 
     // 3. Skills: version-stamped copies across Claude Code, Codex, and Antigravity (docs/DECISIONS.md K3).
@@ -191,6 +201,14 @@ export function init(root, { name, lang = "tr", adoptMode = false, skipExisting 
     const versionFile = path.join(root, ".evrim", "version");
     if (!exists(versionFile)) { writeText(versionFile, VERSION + "\n"); report.created.push(".evrim/version"); }
     writeShims(root);
+    // Quota guard hooks (Claude Code): merged into the project's settings, never replacing the owner's.
+    const hk = planSettings(root);
+    if (hk.error) report.notes.push(hk.error);
+    else if (hk.changed) {
+        writeText(path.join(root, hk.rel), hk.text);
+        if (hk.old === null) report.created.push(hk.rel);
+        else report.notes.push(`${hk.rel}: kota bekçisi kancası eklendi (sizin ayarlarınız korundu)`);
+    }
     const added = ignoreLines(root);
     if (added.length) report.notes.push(".gitignore'a eklendi: " + added.join(", "));
     if (!isOwnRepoRoot(root)) report.notes.push("burası henüz kendi git deposu değil: `git init` çalıştırın (otonomi ve şeritler git ister)");

@@ -27,7 +27,8 @@ Hata, zaman aşımı, kilitli dosya normaldir: teşhis et, başka yol dene. Ayn�
 - Sahibinin açtığı pencereleri ve senin başlatmadığın süreçleri kapatma. Gerçek kullanıcı verisine dokunma.
 - Uzak depo ekleme, push yapma, program kurma, sistem ayarı değiştirme. (Paketin push'unu yalnız `cv lesson --evrensel` / `cv evolve` yapar.)
 - `docs/VISION.md` sahibinindir.
+- Kota bekçisine uy (`KOTA_TEMPO`, `KOTA_FRENI`): her iş aracında kotayı senin yerine izler.
 
 ## Durma
 
-Dur ve son PROGRESS kaydına nedenini yaz: kota kapısı kapandıysa (`.evrim/cv gate`), sahibinin kararı olmadan ilerleyemeyecek tek iş kaldıysa, sahibi "dur" dediyse.
+Dur ve son PROGRESS kaydına nedenini yaz: kota kapısı kapandıysa (`.evrim/cv gate` ya da bekçi), sahibinin kararı olmadan ilerleyemeyecek tek iş kaldıysa, sahibi "dur" dediyse.

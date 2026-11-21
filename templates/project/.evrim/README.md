@@ -12,16 +12,18 @@ Bu klasör projenin **claudevolution** katmanıdır. Sahibi için sade anlatım 
 | `otonom/OZET.md` | Sahibi için sade durum özeti | evet |
 | `otonom/SORULAR.md` | Ajanın sahibine bıraktığı, cevap beklemeyen sorular | evet |
 | `otonom/NOTLAR.md` | **Sahibinin ajana notları** (her çevrim okunur) | evet |
+| `knowledge.jsonl` | Kalıcı bilgi deposu (dersler, tuzaklar, tutulan ve reddedilen hipotezler) | evet |
 | `otonom/lock` | "Şu an bir çevrim çalışıyor" işareti | hayır |
 | `metrics.jsonl` | Tur ölçümleri | evet |
-| `state/` | Geçici durum: şerit günlükleri, son bilinen kota, sayaçlar | hayır |
+| `state/` | Geçici durum: şerit günlükleri, son bilinen kota, kota bekçisi önbelleği, sayaçlar | hayır |
 | `cv`, `cv.cmd`, `local.json` | Bu makinedeki paketin yerini bilen kısayollar (`cv init` yeniden üretir) | hayır |
 
 ## Sık kullanılan komutlar
 
 ```
 .evrim/cv status      şu an ne durumda
-.evrim/cv doctor      gözetimsiz çalışmaya hazır mı
+.evrim/cv doctor      gözetimsiz çalışmaya hazır mı (kota bekçisi kancasını da denetler)
+.evrim/cv guard --show kota bekçisi şu an ne görüyor
 .evrim/cv lock status döngü çalışıyor mu, uyuyor mu
 .evrim/cv lesson "<ders>" [--evrensel]   ders yaz (evrensel: hemen pakete; paketin README'si § 4)
 .evrim/cv update      paketin yeni sürümünü göster (--apply ile al)
@@ -36,5 +38,6 @@ Windows'ta `.evrim\cv.cmd status` biçiminde yazılır.
 - `docs.*`: becerilerin okuduğu belge yolları.
 - `delegate.providers.<ad>`: OpenAI uyumlu uç nokta. Anahtar yalnız `keyEnv` ile adı verilen ortam değişkeninden okunur.
 - `autonomy.gates`: 5 saatlik pencerede %85'te yeni adım yok, %90'da çık; haftalık tavan `60 + 30·f`.
+- `autonomy.guard`: kota bekçisi kancası (tempo ve %85'te uyarır; gözetimsiz çalışmada %90'da yeni işi engeller).
 - `autonomy.share.weight`: aynı makinede birden çok proje varsa bu projenin kota payı ağırlığı.
 - `evolution.*`: ders sınırı, damıtma sıklığı ve payı, seçilim süresi.

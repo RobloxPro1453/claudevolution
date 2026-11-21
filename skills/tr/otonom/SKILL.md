@@ -51,6 +51,8 @@ Sıra:
 
 Çevrim içinde **her 5-6 araç çağrısında bir ve her commit'ten sonra**: Claude Code'da `get_usage` + `cv gate --five .. --week ..`; Antigravity veya Codex'te `get_usage` aramadan `[quota]` varsa onu, yoksa doğrudan `cv gate --auto` (yerel 5 saatlik oturum bloklarına düşer) çalıştır. `KUCUK`/`CIK` dönerse elindekini commit et (`WIP:` olabilir, derlenir hâlde) ve §4'e geç. Bir çevrim 5 saatlik pencerenin %8'inden fazlasını yememeli; yiyorsa bir sonraki çevrimi küçült.
 
+**Kota bekçisi (her zaman açık):** Claude Code'da `cv guard` kancası her iş aracından önce ve sonra kotaya kendisi bakar; sen unutsan da çalışır. `KOTA_TEMPO` gelirse ağır işi ertele, adımları küçült, çevrimi daha uzun uykuyla kapat. `KOTA_FRENI (KUCUK)` gelirse elindekini bitir ve commit et, yeni iş başlatma. `KOTA_FRENI (DUR)` gelirse bekçi yeni işi engeller: tartışma, atlatmaya çalışma; commit et, `cv cycle end`, uyku. Ne gördüğünü `cv guard --show` söyler. Her gerçek okuma (`cv gate --five .. --week ..`, `cv cycle begin/end`) bekçiyi bu hesabın planına göre ayarlar; bu yüzden okuyabildiğin her yerde gerçek yüzdeyi ver.
+
 Bağlam sıkışması (compaction) sonrası güncel aşamayı, engelleyicileri ve göreve dönük dersleri geri yüklemek için `cv cycle prime` (gerekirse `--task <id>`) çalıştır.
 
 ## 3. Zarar bekçisi

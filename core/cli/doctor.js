@@ -6,6 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import { exists, git, isWindows, readText, run as sh } from "../lib/util.js";
 import { CONFIG_REL, VERSION, findRoot, loadConfig, validate, autonomyDir } from "../lib/config.js";
+import { planSettings } from "../lib/hooks.js";
 
 // powercfg output is localized; only GUIDs and hex values are stable. In a setting's block the last two
 // hex values are the current AC and DC indexes.
@@ -51,6 +52,12 @@ export function check(root, { runCommands = false } = {}) {
         else ok(".evrim, belgeler ve beceriler tam");
         // A model outside the loop skills reads AGENTS.md first; without the section it never learns `cv lesson`.
         if (!/cv lesson/.test(readText(path.join(root, cfg.docs.agents), ""))) info(`${cfg.docs.agents} içinde claudevolution bölümü yok (ders kuralı: cv lesson)`, `Paketteki templates/project/AGENTS.md > "## claudevolution" bölümünü ${cfg.docs.agents} dosyasına ekleyin; döngü dışındaki oturum ders yazmayı ancak oradan öğrenir.`);
+        // The quota guard hook: without it the gates are advice the model may forget (the 100% failure).
+        const hk = planSettings(root);
+        if (hk.error) bad(hk.error, ".claude/settings.json dosyasını düzeltin, sonra `cv update --apply`.");
+        else if (hk.changed) bad("kota bekçisi kancası kurulu değil (gözetimsiz döngü kotayı %100'e kadar yakabilir)", "`cv update --apply` çalıştırın: kancayı ayarlarınızı koruyarak ekler.");
+        else if (cfg.autonomy.guard && cfg.autonomy.guard.enabled === false) info("kota bekçisi kapalı (autonomy.guard.enabled)", "Yalnız sahibinin sözüyle kapalı kalmalı.");
+        else ok("kota bekçisi kancası kurulu");
         const ver = readText(path.join(root, ".evrim", "version"), "").trim();
         if (!ver) bad(".evrim/version yok", "`cv init` yeniden çalıştırın.");
         else if (ver !== VERSION) info(`proje sürümü ${ver}, paket ${VERSION}`, "`cv update` ile farkı görün.");

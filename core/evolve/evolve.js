@@ -35,8 +35,20 @@ function reject(root, name, why, lines) {
     return { accepted: false, why, lines: [...lines, `RED: ${why}`] };
 }
 
-// opts: { root, branch, why, live, push, remote, bench } — bench(wt, {live}) is injectable for tests.
-export function evolve({ root, branch, why = "", live = false, push = true, remote = "origin", bench = childBench }) {
+// The bolts an automatic evolution (Karar #14, layer 2: no owner in the loop, --auto) may never loosen
+// (ERRATA E10): the judges cannot be edited by the one being judged. The measuring kit, the evolution gates
+// themselves, the privacy scan, the tests, the verifier and its receipts, the migration's backup/rollback,
+// and the quota brakes (K6 cap, the guard and its calibration). These change only on an owner-approved
+// evrim/ branch run without --auto.
+export const AUTO_LOCKED = [
+    /^bench\//, /^tests\//, /^core\/evolve\//, /^core\/delegate\/verify\.js$/, /^core\/cli\/migrate\.js$/,
+    /^core\/autonomy\/(gates|guard|lock|share)\.js$/, /^core\/metrics\/calibrate\.js$/, /^core\/lib\/(hooks|secrets|config)\.js$/,
+    /^AGENTS\.md$/, /^package\.json$/, /^\.github\//
+];
+export const lockedFor = (changed) => changed.filter((f) => AUTO_LOCKED.some((re) => re.test(f)));
+
+// opts: { root, branch, why, live, push, remote, bench, auto } — bench(wt, {live}) is injectable for tests.
+export function evolve({ root, branch, why = "", live = false, push = true, remote = "origin", bench = childBench, auto = false }) {
     const lines = [];
     const name = branch.replace(/^evrim\//, "");
     if (!/^evrim\/[a-z0-9][a-z0-9._-]*$/i.test(branch)) throw new Error(`aday dalı "evrim/<ad>" biçiminde olmalı: ${branch}`);
@@ -49,6 +61,11 @@ export function evolve({ root, branch, why = "", live = false, push = true, remo
     const changed = git(["diff", "--name-only", `${MAIN}...${branch}`], root).out.split(/\r?\n/).filter(Boolean);
     lines.push(`aday: ${branch} (${ahead} commit, ${changed.length} dosya)`);
     if (changed.some((f) => f.startsWith("bench/"))) return reject(root, name, "ölçüm takımına (bench/) dokunuyor; ölçüm değişikliği ayrı yapılır ve sahibine bildirilir", lines);
+    if (auto) {
+        const locked = lockedFor(changed);
+        if (locked.length) return reject(root, name, `kendiliğinden evrim kilitli dosyalara dokunuyor (${locked.slice(0, 4).join(", ")}${locked.length > 4 ? ", ..." : ""}); bunlar yalnız sahip onaylı evrimle değişir (E10)`, lines);
+        lines.push("kendiliğinden evrim: kilitli dosya yok (E10)");
+    }
 
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "cv-evolve-")), wt = path.join(tmp, "aday");
     const add = git(["worktree", "add", "--detach", wt, branch], root);

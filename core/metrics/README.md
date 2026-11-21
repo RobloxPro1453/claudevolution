@@ -46,3 +46,13 @@ Tur numarası küreseldir: `metrics.jsonl`'deki en büyük numara + 1; bir tur b
 | `bugs`, `waste`, `note` | metin | elle verilen gözlem |
 
 `cv distill` dört seçilim ölçüsünü bu satırlardan hesaplar (`quotaStart/End`, `delegate.endedDone`, `delegate.tasks`, `delegate.firstTryDone`).
+
+## Kota tahmini ve kalibrasyon (M6)
+
+| Dosya | Tek işi |
+|---|---|
+| `blocks.js` | Yerel 5 saatlik blok (ccusage algoritması), yakma hızı, pencere sonu tahmini. Yük birimi tur ölçümüyle aynıdır (`metrics.weights`); `limit reached` döküm izlerini de toplar. |
+| `calibrate.js` | Her gerçek okumayı (`get_usage`, `[quota]`, `cv gate --five ..`) o anki yerel yükle eşleyip "tam pencere kaç birim" örneği çıkarır; sınır son örneklerin medyanıdır. Dosya makine ve hesap başınadır: `<durum evi>/kota.json` (git'e girmez). Şimdiki yüzde: taze okuma + o andan beri yakılan → kalibre tahmin → varsayılan (düşük güven, böyle işaretlenir). |
+| `usage.js` | Codex ve Antigravity kullanımı (yalnız yerel kayıtlar), `cv usage`. |
+
+Neden: varsayılan token sınırı planı bilmiyordu; küçük planda gerçek sayaç %100'deyken tahmin düşük kalıyor, gözetimsiz döngü duvara çarpıyordu. Kalibrasyon bu boşluğu kapatır; kota bekçisi (`core/autonomy/guard.js`) bu yüzdeyle karar verir.
