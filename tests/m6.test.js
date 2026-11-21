@@ -272,3 +272,25 @@ test("kullanım: Codex token_count olayları (son tur ya da toplam farkı) güne
     const ev = codexEvents(text);
     eq(ev.map((e) => [e.day, e.input, e.output]), [["2026-11-20", 100, 10], ["2026-11-20", 150, 20], ["2026-11-21", 40, 5]]);
 });
+
+test("E10: sahipsiz öz-evrim (--auto) yargıçlara dokunamaz — test, verify, migrate, kota freni kilitli; sıradan beceri değişikliği geçer", async () => {
+    const { evolve, lockedFor } = await import("../core/evolve/evolve.js");
+    eq(lockedFor(["skills/tr/calis/SKILL.md", "core/delegate/lanes.js"]), [], "sıradan dosyalar serbest");
+    eq(lockedFor(["tests/m6.test.js", "core/delegate/verify.js", "core/cli/migrate.js", "core/autonomy/guard.js", "core/evolve/privacy.js", "core/metrics/calibrate.js"]).length, 6);
+    const dir = tmpDir("e10"), root = path.join(dir, "paket");
+    git(["init", "-q", "-b", "main", root], dir);
+    for (const [k, v] of [["user.email", "test@example.invalid"], ["user.name", "test"], ["commit.gpgsign", "false"]]) git(["config", k, v], root);
+    const BASE = { version: "1.0.0", A: { ok: true, passed: 10, total: 10 }, B: { passed: 20, total: 20, failed: [] }, sizes: { codeLines: 1000, skillLines: 100, templateLines: 100 } };
+    writeJson(path.join(root, "package.json"), { name: "p", version: "1.0.0" });
+    writeJson(path.join(root, "bench/baseline.json"), BASE);
+    writeText(path.join(root, "evolution/CHANGELOG.md"), "# Evrim günlüğü\n\n");
+    writeText(path.join(root, "core/delegate/verify.js"), "export const x = 1;\n");
+    git(["add", "-A"], root); git(["commit", "-qm", "ilk"], root);
+    git(["checkout", "-q", "-b", "evrim/gevset"], root);
+    writeText(path.join(root, "core/delegate/verify.js"), "export const x = 0; // kapı gevşedi\n");
+    git(["add", "-A"], root); git(["commit", "-qm", "gevset"], root);
+    git(["checkout", "-q", "main"], root);
+    const r = evolve({ root, branch: "evrim/gevset", auto: true, push: false, bench: () => structuredClone(BASE) });
+    ok(!r.accepted && /E10/.test(r.why), r.why);
+    eq(readJson(path.join(root, "package.json")).version, "1.0.0", "sürüm değişmedi");
+});
