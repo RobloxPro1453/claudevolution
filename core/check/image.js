@@ -35,6 +35,19 @@ export function isBlank(img) {
     return Math.sqrt(l.reduce((a, b) => a + (b - mean) ** 2, 0) / n) < 2;
 }
 
+// Share (0..1) of pixels whose red, green or blue differs by more than 24 between two pictures: 0 = the
+// same picture, 1 = every pixel moved (or the sizes differ: a layout that reflows the window is not still).
+export function diffShare(a, b) {
+    if (a.width !== b.width || a.height !== b.height || !a.width || !a.height) return 1;
+    const n = a.width * a.height;
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+        const o = i * 4;
+        if (Math.abs(a.rgba[o] - b.rgba[o]) > 24 || Math.abs(a.rgba[o + 1] - b.rgba[o + 1]) > 24 || Math.abs(a.rgba[o + 2] - b.rgba[o + 2]) > 24) moved++;
+    }
+    return moved / n;
+}
+
 // Mean SSIM over 8x8 windows of brightness, both pictures shrunk by the same factor to at most 512 on
 // the long side. 1 = the same, near 0 = unrelated. Pictures of different sizes score 0 (resize first).
 export function similarity(a, b) {
