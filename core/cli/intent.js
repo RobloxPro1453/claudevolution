@@ -1,4 +1,4 @@
-// cv intent "<istek>" [--kind <tür>] [--apply] [--json] | coverage | kinds
+// cv intent "<istek>" [--kind <tür>] [--apply] [--json] | coverage [--delivered] | kinds
 // The subtext engine (core/intent/README.md): the unsaid part of a short request, as a card.
 // --apply writes docs/INTENT.md (never over an existing one: .new beside it) and fills check.selfTest.steps
 // and finalForm.criteria in .evrim/config.json only where they are empty (the owner's values stay).
@@ -7,7 +7,8 @@ import process from "node:process";
 import { exists, readJson, writeJson, writeText } from "../lib/util.js";
 import { CONFIG_REL, findRoot } from "../lib/config.js";
 import { project } from "./_project.js";
-import { card, coverage, kinds, renderIntent } from "../intent/intent.js";
+import { card, coverage, delivered, kinds, renderDelivered, renderIntent } from "../intent/intent.js";
+import { lastRound } from "../check/check.js";
 import { suggest } from "../stack/stack.js";
 
 export async function run(args) {
@@ -15,6 +16,15 @@ export async function run(args) {
     if (sub === "kinds") { for (const k of kinds()) console.log(`${k.id.padEnd(8)} ${k.title} — ${k.expectations.length} beklenti, ${k.questions.length} soru`); return 0; }
     if (sub === "coverage") {
         const cfg = project(args);
+        // --delivered is a report, not a gate: exit 0 always.
+        if (args.delivered) {
+            const round = lastRound(cfg);
+            const d = delivered(cfg, round);
+            if (args.json) { console.log(JSON.stringify(d)); return 0; }
+            if (!round) console.log("Henüz denetim turu yok: cv check (aşağıdaki ölçütlerin hepsi denenmedi)");
+            console.log(renderDelivered(d));
+            return 0;
+        }
         const c = coverage(cfg);
         if (!c.hasIntent) { console.log("docs/INTENT.md yok: önce cv intent \"<istek>\" --apply"); return 1; }
         console.log(c.missing.length ? `KAPSAM EKSİK: ${c.missing.length}/${c.ids.length} madde planda yok → ${c.missing.map((m) => `[E:${m}]`).join(", ")}\nPlan (ROADMAP ya da tarifler) bu maddeleri anmadan onaylanmaz.` : `KAPSAM TAMAM: ${c.ids.length}/${c.ids.length} madde planda.`);
