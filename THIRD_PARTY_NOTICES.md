@@ -15,5 +15,8 @@ claudevolution bazı parçaları izin verici lisanslı açık kaynak projelerden
 | OMK + LoopTroop, M5 | MIT | `core/lib/filelock.js` (`durable-file-lock-*.ts`), makbuz–komut bağı (`specs/099`), trende test dosya etkisi denetimi (LoopTroop `finalTest/fileEffectsAudit.ts`) |
 | metaswarm | MIT | teslim kapsamı ilkesi (`guides/delivery-scope.md`) `cv-init` §2b; `cv update` önizleme dili ("hiçbir şey kaybolmaz", geri alınabilir) (`skills/migrate`) |
 | consilium, zeroshot, mco, bottleneck, ccusage | MIT | önceki sürümlerdeki fikirler (bkz. `docs/DECISIONS.md` K29–K32) |
+| ccusage, M6 | MIT | `core/metrics/blocks.js` blok algoritması, `--token-limit max` tabanı (`calibrate.js`); `core/metrics/usage.js` Codex ve Antigravity okuyucuları (`rust/adapters/{codex,antigravity}`) |
+| consilium + zeroshot, M6 | MIT | "limit reached" döküm izi biçimleri (`core/adapters/claude.rs` sınıflandırıcı, zeroshot bağdaştırıcı testleri) → `LIMIT_HIT_RE`; zeroshot `active_memory` kaynak bekçisi ve tek güçlü eşleşme (`source_guard.rs`, `retrieval.rs`), `auto_research` rolleri → `core/autonomy/{knowledge,autotune}.js` |
+| metaswarm, M6 | MIT | bilgi şeması (`knowledge/*.jsonl`) → `.evrim/knowledge.jsonl` |
 
 MIT ve Apache-2.0 lisans metinleri: https://opensource.org/license/mit , https://www.apache.org/licenses/LICENSE-2.0

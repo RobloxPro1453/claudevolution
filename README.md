@@ -74,6 +74,8 @@ Bir projeye uygulamak için proje klasöründe:
 
 **Kota kapıları** (`.evrim/config.json` > `autonomy.gates`, varsayılan): 5 saatlik pencere **%85**'te yeni adım yok (`KUCUK`), **%90**'da çık ve pencere yenilenince +2 dk uyan (`CIK`); haftalık tavan **60 + 30·f** (f = haftanın geçen kesri). Kota okunamazsa tek küçük adım (`local-blocks` yoksa), üç kez üst üste okunamazsa bekle. Kilit 90 dakikada bayatlar; `cv recover [--fix]` takılmayı toparlar.
 
+**Kota bekçisi** (`cv guard`, her projede Claude Code kancası olarak kurulur): kapılar modelin hatırlamasına bağlıydı; bir döngü uzun bir adımda unutup kotayı %100'e kadar yaktı. Bekçi her iş aracından önce ve sonra kendisi bakar: pencere bu hızla sıfırlanmadan dolacaksa `KOTA_TEMPO`, %85'te `KOTA_FRENI (KUCUK)`, %90'da gözetimsiz çalışmada yeni işi **engeller** (commit, `cv` ve uyku açık kalır); sahibi başındayken yalnız uyarır. Yüzdeyi her gerçek okumayla (`get_usage`, `[quota]`, `cv gate --five ..`) bu hesabın planına göre ayarlanan yerel sayaçtan alır; `cv guard --show` ne gördüğünü söyler, `cv doctor` kancanın kurulu olduğunu denetler.
+
 ## 4. Evrim kuralı (her oturumda, döngü içinde ya da dışında)
 
 Tekrar eden ya da pahalıya patlayan bir şey öğrendin mi, **o an** tek satır:
