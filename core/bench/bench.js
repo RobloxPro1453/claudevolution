@@ -86,3 +86,38 @@ export function save(result, root = PKG_ROOT) {
 }
 export const loadBaseline = (root = PKG_ROOT) => readJson(path.join(root, "bench", "baseline.json"), null);
 export const writeBaseline = (result, root = PKG_ROOT) => writeJson(path.join(root, "bench", "baseline.json"), result);
+
+// Zero-token comparison of two git refs of the package (e.g. v1.0.24 against promax-m2): each ref is checked
+// out in a temporary worktree and measured from its files only (code/skill/template lines, test and chaos
+// scenario counts, skill names). --run also runs each ref's own tier A test suite (still no model call).
+// The live, paid comparison stays an explicit owner decision (cv bench --live), never this command.
+const countMatches = (dir, fileRe, lineRe) => {
+    let n = 0;
+    if (!fs.existsSync(dir)) return 0;
+    for (const f of fs.readdirSync(dir)) if (fileRe.test(f)) n += (fs.readFileSync(path.join(dir, f), "utf8").match(lineRe) || []).length;
+    return n;
+};
+export function staticMeasure(root) {
+    const skillDir = path.join(root, "skills", "tr");
+    return {
+        ...sizes(root),
+        tests: countMatches(path.join(root, "tests"), /\.test\.js$/, /^test\(/gm),
+        chaos: fs.existsSync(path.join(root, "bench", "chaos")) ? fs.readdirSync(path.join(root, "bench", "chaos")).filter((f) => f.endsWith(".json")).length : 0,
+        skills: fs.existsSync(skillDir) ? fs.readdirSync(skillDir).sort() : [],
+        version: readJson(path.join(root, "package.json"), {}).version || "?"
+    };
+}
+export function compareRefs(refA, refB, { root = PKG_ROOT, runTests = false } = {}) {
+    const one = (ref) => {
+        const base = fs.mkdtempSync(path.join(fs.realpathSync(process.env.TEMP || process.env.TMPDIR || "/tmp"), "cv-cmp-"));
+        const wt = path.join(base, "wt");
+        const add = run("git", ["worktree", "add", "--detach", wt, ref], { cwd: root, timeoutMs: 120000 });
+        if (!add.ok) { fs.rmSync(base, { recursive: true, force: true }); throw new Error(`${ref}: açılamadı (${add.text.trim().split("\n").pop()})`); }
+        try { return { ref, ...staticMeasure(wt), A: runTests ? tierA(wt) : null }; }
+        finally { run("git", ["worktree", "remove", "--force", wt], { cwd: root }); fs.rmSync(base, { recursive: true, force: true }); }
+    };
+    const a = one(refA), b = one(refB);
+    const delta = {};
+    for (const k of ["codeLines", "skillLines", "templateLines", "tests", "chaos"]) delta[k] = b[k] - a[k];
+    return { a, b, delta, skillsAdded: b.skills.filter((s) => !a.skills.includes(s)), skillsRemoved: a.skills.filter((s) => !b.skills.includes(s)) };
+}

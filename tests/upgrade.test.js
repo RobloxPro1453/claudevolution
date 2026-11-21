@@ -421,6 +421,7 @@ test("upgrade: agent.js durgunluk kesici, üstel yedekleme/failover, güvenli ev
     let seenPriorWork = false;
     let stepIdx = 0;
     const script = [
+        ["read_file", { path: "src/app.js" }],
         ["write_file", { path: "src/app.js", content: "export const val = 2;\n" }],
         ["run", { command: "test" }],
         ["run", { command: "test" }],

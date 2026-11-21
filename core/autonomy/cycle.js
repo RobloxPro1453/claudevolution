@@ -139,7 +139,11 @@ export function begin(cfg, args = {}, now = new Date(), opts = {}) {
     if (notes.unread.length) out.push("", "SAHIBININ OKUNMAMIS NOTLARI:", ...notes.unread.map((l) => "  " + l));
     const q = memory.answered(cfg);
     if (q.answered.length) out.push("", "CEVAPLANMIS SORULAR:", ...q.answered.map((a) => `  ${a.question} → ${a.answer}`));
+    // Wake-up diet: with a known task the cycle reads only the lessons that match it and the last 5 journal
+    // lines (each cycle's output goes into the main model's context; the whole list cost Opus quota every
+    // cycle). --all brings the full lists back.
     const taskFilter = typeof args.task === "string" ? args.task.trim() : "";
+    const dieted = taskFilter && !args.all;
     if (taskFilter) {
         const splitCsv = (v) => (v === undefined || v === true ? [] : [].concat(v)).flatMap((x) => String(x).split(",")).map((x) => x.trim()).filter(Boolean);
         const primed = memory.primeLessons(cfg, {
@@ -150,14 +154,16 @@ export function begin(cfg, args = {}, now = new Date(), opts = {}) {
             limit: Number(args.limit) || 12
         });
         out.push("", `ONCELIKLI DERSLER (görev: ${taskFilter}, ${primed.length}):`, ...(primed.length ? primed.map((l) => `  [${l.source}:${l.score}] ${l.text}`) : ["  (eşleşen ders yok)"]));
-    } else {
+    }
+    if (!dieted) {
         const ls = memory.lessons(cfg);
         out.push("", `DERSLER (${ls.length}/${cfg.evolution.lessonsMax}):`, ...(ls.length ? ls.map((l) => "  " + l) : ["  (henüz yok)"]));
         if (ls.length > cfg.evolution.lessonsMax) out.push("  ! sınır aşıldı: benzerleri birleştir, eskimişi sil");
         const uni = projectLessons(cfg.root);
         if (uni.length) out.push("", `EVRENSEL DERSLER (paket + bu makine, .evrim/evrensel.md, ${uni.length}):`, ...uni.map((l) => "  " + l));
     }
-    out.push("", "GUNLUK (son satırlar):", ...(memory.journalTail(cfg) || "(boş)").split("\n").map((l) => "  " + l));
+    out.push("", "GUNLUK (son satırlar):", ...(memory.journalTail(cfg, dieted ? 5 : undefined) || "(boş)").split("\n").map((l) => "  " + l));
+    if (dieted) out.push("", "(göreve göre süzüldü; bütün dersler ve günlük: --all)");
     return done(g.decision);
 }
 

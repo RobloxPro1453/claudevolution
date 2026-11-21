@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { appendText, git, isWindows, nowIso, pidAlive, readJson, readText, run, writeJson } from "../lib/util.js";
 import { auto, branchOf, laneDir, newCtx, peakUntil, provider, spentToday, stateDir } from "./agent.js";
 import { parseDeclaredScope } from "./verify.js";
+import { readHandoff, recordHandoff } from "./choose.js";
 
 const CV = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "bin", "cv.js");
 const lanesDir = (cfg) => path.join(stateDir(cfg), "lanes");
@@ -301,6 +302,14 @@ async function executeTaskStep(cfg, ctx, task, dag, log, deps, pendingInBatch) {
         return { task, status: "budget", budgetStop: true };
     }
 
+    // The API path is closed (balance gone / key refused, K25): leave the task for the fallback worker.
+    const handoff = (deps.readHandoff || readHandoff)(cfg);
+    if (handoff) {
+        log?.(`${task}: API hand-off (${handoff.kind}); left for the main model (cv delegate which)`);
+        recordBlackboard(cfg, task, { status: "handoff", error: `API ${handoff.kind}` });
+        return { task, status: "handoff", handoff: true };
+    }
+
     log?.(`=== ${task} ===`);
     deps.onStart?.(task);
     recordBlackboard(cfg, task, { status: "running", blockedBy: [] });
@@ -312,6 +321,12 @@ async function executeTaskStep(cfg, ctx, task, dag, log, deps, pendingInBatch) {
         const rawStatus = r?.status || (r?.ok === false ? "error" : "done");
         const { summary, files } = taskSummaryFromState(cfg, task, r);
         recordBlackboard(cfg, task, { status: rawStatus, branch: r?.branch || branchOf(cfg, task), summary, files });
+        // Every rung refused for billing/auth: hand the rest of the night to the fallback at once (H50).
+        if (r?.stopReason === "api" && (r.apiKind === "billing" || r.apiKind === "auth")) {
+            recordHandoff(cfg, { kind: r.apiKind, task });
+            log?.(`${task}: API ${r.apiKind}; hand-off written, remaining tasks go to the main model`);
+            return { task, status: rawStatus, result: r, handoff: true };
+        }
         return { task, status: rawStatus, result: r };
     } catch (e) {
         log?.(`${task}: ERROR ${e.message}`);
@@ -375,7 +390,7 @@ export async function runDag(cfg, tasks, deps = {}) {
             const r = await executeTaskStep(cfg, ctx, task, dag, log, deps, pendingInBatch);
             results.push(r);
             if (r.status === "blocked") blocked.push(r);
-            if (r.budgetStop) { budgetHit = true; break; }
+            if (r.budgetStop || r.handoff) { budgetHit = true; break; }
         }
     }
     return {
@@ -408,6 +423,12 @@ export async function runLane(cfg, n, tasks, deps = {}) {
             onStart: (t) => record({ current: t, waiting: null }),
         }, pendingInBatch);
         if (r.budgetStop) break;
+        if (r.handoff) {
+            done.push(`${task}:${r.status}`);
+            for (const rest of dag.order.slice(dag.order.indexOf(task) + 1)) if (!done.some((d) => d.startsWith(rest + ":"))) { recordBlackboard(cfg, rest, { status: "handoff", error: "API hand-off" }); done.push(`${rest}:handoff`); }
+            record({ done });
+            break;
+        }
         done.push(`${task}:${r.status}`);
         record({ done });
     }

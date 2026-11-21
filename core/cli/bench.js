@@ -1,4 +1,4 @@
-// cv bench [--live] [--baseline] [--no-save] [--json]
+// cv bench [--live] [--baseline] [--no-save] [--json]   |   cv bench compare <refA> <refB> [--run] [--json]
 // Package benchmark (run inside the claudevolution checkout). Tiers A + B: zero model tokens.
 // --live adds tier C (cheap model on a fake project, hard spending cap). --baseline accepts the result as the new baseline.
 import path from "node:path";
@@ -6,6 +6,19 @@ import process from "node:process";
 import * as bench from "../bench/bench.js";
 
 export async function run(args) {
+    if (args._[0] === "compare") {
+        const [refA, refB] = args._.slice(1);
+        if (!refA || !refB) throw new Error("kullanım: cv bench compare <eski-ref> <yeni-ref> [--run]   (0 token; --run her ref'in kendi testlerini de koşar)");
+        const c = bench.compareRefs(refA, refB, { runTests: !!args.run });
+        if (args.json) { console.log(JSON.stringify(c)); return 0; }
+        const sign = (n) => (n > 0 ? "+" + n : String(n));
+        console.log(`Kıyas (0 token): ${refA} (${c.a.version}) → ${refB} (${c.b.version})`);
+        for (const [k, label] of [["codeLines", "kod satırı"], ["skillLines", "beceri satırı"], ["templateLines", "şablon satırı"], ["tests", "test"], ["chaos", "kaos senaryosu"]]) console.log(`  ${label.padEnd(15)} ${String(c.a[k]).padStart(6)} → ${String(c.b[k]).padStart(6)}  (${sign(c.delta[k])})`);
+        if (c.skillsAdded.length || c.skillsRemoved.length) console.log(`  beceriler       +${c.skillsAdded.join(", ") || "-"}  -${c.skillsRemoved.join(", ") || "-"}`);
+        if (c.a.A) console.log(`  testler koştu   ${c.a.A.passed}/${c.a.A.total} → ${c.b.A.passed}/${c.b.A.total}`);
+        console.log("Canlı (ücretli) kıyas yalnız sahibin isteğiyle: cv bench --live");
+        return 0;
+    }
     const result = bench.measure();
     if (args.live) {
         const live = await import("../bench/live.js");
