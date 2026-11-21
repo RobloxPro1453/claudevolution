@@ -294,3 +294,26 @@ test("E10: sahipsiz öz-evrim (--auto) yargıçlara dokunamaz — test, verify, 
     ok(!r.accepted && /E10/.test(r.why), r.why);
     eq(readJson(path.join(root, "package.json")).version, "1.0.0", "sürüm değişmedi");
 });
+
+test("tam İngilizce (Q12-B): --lang en projesi İngilizce belgeler alır (dosya adları aynı); her İngilizce şablonun Türkçe karşılığı var, aynı yer tutucularla", async () => {
+    const { TEMPLATE_EN_DIR } = await import("../core/cli/init.js");
+    const { TEMPLATE_DIR } = await import("../core/lib/config.js");
+    const walk = (d, base = d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(path.join(d, e.name), base) : [path.relative(base, path.join(d, e.name)).split(path.sep).join("/")]);
+    for (const rel of walk(TEMPLATE_EN_DIR)) {
+        const tr = path.join(TEMPLATE_DIR, rel);
+        ok(fs.existsSync(tr), `${rel}: Türkçe karşılığı yok`);
+        const vars = (t) => [...new Set(t.match(/\{\{\w+\}\}/g) || [])].sort();
+        eq(vars(readText(path.join(TEMPLATE_EN_DIR, rel))), vars(readText(tr)), `${rel}: yer tutucular`);
+    }
+    const dir = tmpDir("en-proj");
+    git(["init", "-q", "-b", "main"], dir);
+    init(dir, { name: "en-proj", lang: "en" });
+    ok(/^# Guide for AI agents/.test(readText(path.join(dir, "AGENTS.md"))), "AGENTS.md İngilizce");
+    ok(/^# Vision/.test(readText(path.join(dir, "docs/VISION.md"))), "VISION İngilizce");
+    ok(/^# Lessons/.test(readText(path.join(dir, ".evrim/otonom/DERSLER.md"))), "dersler dosyası İngilizce, adı aynı");
+    ok(!/\{\{date\}\}/.test(readText(path.join(dir, "docs/PROGRESS.md"))), "yer tutucular dolduruldu");
+    const trDir = tmpDir("tr-proj");
+    git(["init", "-q", "-b", "main"], trDir);
+    init(trDir, { name: "tr-proj" });
+    ok(/^# Yapay zekâ ajanları/.test(readText(path.join(trDir, "AGENTS.md"))), "Türkçe varsayılan değişmedi");
+});

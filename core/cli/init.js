@@ -48,6 +48,15 @@ export function skillSources(lang) {
     return out;
 }
 
+// Project documents in the chosen language (Q12-B): templates/project is the complete Turkish set; the
+// English overlay templates/project-en replaces a file where it has one. File names stay the same (code and
+// skills read them by name), only the text changes.
+export const TEMPLATE_EN_DIR = path.join(PKG_ROOT, "templates", "project-en");
+export function templateFile(rel, lang = "tr") {
+    const en = path.join(TEMPLATE_EN_DIR, rel);
+    return lang === "en" && exists(en) ? en : path.join(TEMPLATE_DIR, rel);
+}
+
 export function loopWorkflowText(lang = "tr") {
     if (lang === "en") {
         return [
@@ -173,7 +182,7 @@ export function init(root, { name, lang = "tr", adoptMode = false, skipExisting 
     // 2. Documents and memory files.
     for (const rel of walk(TEMPLATE_DIR)) {
         if (rel === CONFIG_REL || rel === "gitignore.add") continue;
-        place(path.join(root, rel), fill(readText(path.join(TEMPLATE_DIR, rel))), report, rel, { noNew: shouldSkipNew(rel) });
+        place(path.join(root, rel), fill(readText(templateFile(rel, cfg.lang || lang))), report, rel, { noNew: shouldSkipNew(rel) });
     }
 
     // 3. Skills: version-stamped copies across Claude Code, Codex, and Antigravity (docs/DECISIONS.md K3).

@@ -18,7 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { deepMerge, exists, readText, writeText } from "../lib/util.js";
 import { CONFIG_REL, TEMPLATE_DIR, VERSION, defaults, validate } from "../lib/config.js";
-import { loopWorkflowText, skillSources, stampSkill } from "./init.js";
+import { loopWorkflowText, skillSources, stampSkill, templateFile } from "./init.js";
 import * as knowledge from "../autonomy/knowledge.js";
 import { planSettings } from "../lib/hooks.js";
 
@@ -145,7 +145,7 @@ export function planFiles(root, lang = "tr") {
         for (const base of SKILL_DIRS) add(`${base}/${skill}/SKILL.md`, stamped);
     }
     add(LOOP_REL, stampSkill(loopWorkflowText(lang)));
-    add(".evrim/README.md", readText(path.join(TEMPLATE_DIR, ".evrim", "README.md")));
+    add(".evrim/README.md", readText(templateFile(".evrim/README.md", lang)));
     // M6: the quota guard hooks, merged into the owner's Claude Code settings (unreadable file: left alone).
     const hk = planSettings(root);
     if (hk.changed) items.push({ rel: hk.rel, want: hk.text, old: hk.old, kind: hk.old === null ? "yeni" : "birleşim", added: 2, removed: 0, why: "kota bekçisi kancası (cv guard)" });
