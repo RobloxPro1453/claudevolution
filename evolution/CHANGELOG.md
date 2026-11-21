@@ -31,3 +31,4 @@ Her satır: tarih · değişiklik · beklenen etki · doğrulama ölçüsü · s
 - 2026-11-21 · m2-token-ve-yedek (v1.0.26) · "M2: · test 101 → 108; kötü: codeLines %7 arttı (8362 → 8908) · kabul
 - 2026-11-21 · m3-masaustu-denetim (v1.0.27) · "M3: · test 108 → 114; kötü: codeLines %7 arttı (8908 → 9554) · kabul
 - 2026-11-21 · m4-rust-fabrika-kiti (v1.0.28) · "M4: · test 114 → 121; kötü: skillLines %37 arttı (565 → 773); kötü: templateLines %100 arttı (739 → 1475) · kabul
+- 2026-11-21 · m5-kapali-kutu-gece (v1.0.29) · "M5: · test 121 → 127; kötü: codeLines %6 arttı (9908 → 10496) · kabul
