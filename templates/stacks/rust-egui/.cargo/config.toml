@@ -1,0 +1,7 @@
+# Windows: the C runtime goes into the .exe, so it runs on a machine without the Visual C++
+# Redistributable (one file, double-click, nothing to install). craft-anything pitfalls "Building and running".
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

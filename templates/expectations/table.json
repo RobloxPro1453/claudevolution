@@ -1,0 +1,88 @@
+{
+  "id": "table",
+  "title": "Tablo / veri / hesap",
+  "keywords": [
+    "tablo",
+    "excel",
+    "hesap",
+    "bütçe",
+    "stok",
+    "envanter",
+    "kayıt",
+    "rapor",
+    "csv",
+    "table",
+    "spreadsheet",
+    "budget",
+    "inventory"
+  ],
+  "feel": "net, güvenilir",
+  "expectations": [
+    {
+      "id": "create",
+      "text": "Kayıt ekle/düzenle/sil; hücre içi düzenleme",
+      "step": "create"
+    },
+    {
+      "id": "sort-filter",
+      "text": "Sütuna göre sıralama ve süzme",
+      "step": "filter"
+    },
+    {
+      "id": "csv",
+      "text": "CSV/Excel içe ve dışa aktarma (Türkçe karakter ve ondalık virgül doğru)",
+      "step": "export"
+    },
+    {
+      "id": "totals",
+      "text": "Toplamlar ve basit hesaplar doğru (para için yuvarlama hatası yok)",
+      "step": "totals"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "undo",
+      "text": "Yapılan her değişiklik geri alınabilir (Ctrl+Z / Ctrl+Y)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "users",
+      "text": "Kaç kişi kullanacak?",
+      "options": [
+        "Yalnız ben, bu bilgisayarda (önerilen)",
+        "Birden çok kişi, paylaşımlı"
+      ],
+      "default": 0,
+      "why": "Paylaşım sunucu/eşitleme demektir: başka bir proje"
+    }
+  ]
+}

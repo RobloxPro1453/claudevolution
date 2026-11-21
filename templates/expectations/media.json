@@ -1,0 +1,84 @@
+{
+  "id": "media",
+  "title": "Medya oynatıcı / görüntüleyici",
+  "keywords": [
+    "müzik",
+    "video",
+    "oynat",
+    "oynatıcı",
+    "fotoğraf",
+    "resim görüntüle",
+    "galeri",
+    "player",
+    "music",
+    "photo",
+    "viewer"
+  ],
+  "feel": "akıcı, sade",
+  "expectations": [
+    {
+      "id": "open",
+      "text": "Dosya sürükle-bırak ya da çift tıkla açılır",
+      "step": "open"
+    },
+    {
+      "id": "keyboard",
+      "text": "Boşluk oynat/duraklat, oklar ileri/geri, tam ekran F11"
+    },
+    {
+      "id": "formats",
+      "text": "Yaygın biçimler (mp3, mp4, jpg, png, webp) açılır; açılamayan dosya sade mesajla atlanır"
+    },
+    {
+      "id": "resume",
+      "text": "Kaldığı saniyeden/resimden devam eder",
+      "step": "reopen"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "undo",
+      "text": "Yapılan her değişiklik geri alınabilir (Ctrl+Z / Ctrl+Y)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "library",
+      "text": "Kütüphane mi tek dosya mı?",
+      "options": [
+        "Tek dosya/klasör açar (sade, önerilen)",
+        "Kütüphane tarar ve listeler"
+      ],
+      "default": 0,
+      "why": "Tarama ve veritabanı işi büyütür"
+    }
+  ]
+}

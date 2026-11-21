@@ -14,6 +14,8 @@ const COMMANDS = {
     doctor: "gözetimsiz çalışma önkoşullarını denetle (hiçbir şeyi değiştirmez)",
     status: "tur, kota, şeritler, hafıza özeti",
     distill: "damıtma için yeni dersler, adaylar, ölçüler (--mark: damıtıldı işaretle)",
+    intent: "alt-metin motoru: \"<istek>\" → niyet kartı (söylenmeyen beklentiler, az soru, self-test adımları); coverage | kinds",
+    stack: "masaüstü yığını: suggest \"<istek>\" | new <yığın> [--name A] [--dir K] | list",
     check: "masaüstü uygulama denetimi: derle, --screenshot (boş mu), --self-test adımları; tur check.json'a yazılır",
     update: "paket sürümüyle projedeki farkı göster (--apply yedekleyip uygular, --rollback geri alır)",
     gate: "kota kapısı: --five N --week N [--five-resets ISO] [--week-resets ISO]",

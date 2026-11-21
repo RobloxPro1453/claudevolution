@@ -32,6 +32,17 @@ Treat the owner's words as a desired **outcome**, not a rigid low-level spec, an
   - `api-yoksa-subagent`: If no cheap API is available, a smaller subagent (`delegate.subagentModel`) or available secondary CLI writes code.
 - **Unattended work:** If it will run while they are away, explain in one sentence that the loop watches quota automatically, and run `cv doctor`; for each `✗`, give plain step-by-step instructions (never edit system settings yourself; never let them paste API keys into chat).
 
+## 2b. When a desktop program is wanted: subtext, mock-up, done contract
+
+The owner says the idea briefly; the purpose, feeling and expectations left unsaid are where revisions come from. Work them out yourself before asking:
+
+1. **Intent card:** `cv intent "<the owner's sentence>"` → kind, unsaid expectations (`[E:...]`), stack suggestion, the few questions worth asking. Fill the card's «...» lines (who, when, why, the wanted feeling, what "perfect" means, what would annoy them, which side of "like X" is meant) **yourself** from the conversation; `--apply` writes `docs/INTENT.md` and fills `check.selfTest.steps` and `finalForm.criteria`.
+2. **Few, smart questions:** only where the choice is the owner's and a wrong guess is expensive; with options, in batches of 1-3, at most 7 in all. Already said in the request? Don't ask (the card says "said in the request"). The owner's word beats every default.
+3. **Empty mock-up (1-2 min):** `cv stack new <stack> --name "<name>"` → screens empty but the layout real; take its picture with `cv check --self` and look at it yourself first (`desktop-design` skill).
+4. **"What I understood":** show the card's 5-8 line summary and the mock-up picture **together**; the owner corrects once. This is the cheapest moment for a revision.
+5. **Done contract:** `finalForm` = one `.exe` (`deliverable`), `cv check` passes (the window draws, every `--self-test` step passes), the card's acceptance lines. No endless additions: a new wish goes to the next version. Reviews stop a delivery only for a real usage bug; taste and small polish notes do not (metaswarm delivery-scope principle).
+6. **Coverage:** write the roadmap, tag each item with the `[E:...]` ids it covers; do not present the plan before `cv intent coverage` says "KAPSAM TAMAM".
+
 ## 3. Anti-dogma — you define the framework
 
 Any examples, directory layouts, or patterns shown here or in templates are **examples, NOT walls.** As Chief Architect, **you define the best engineering framework**, verification method, and workflow for this project. If the project needs a custom validation script, domain-specific review gate, or custom operating discipline, establish it upfront and record persistent project decrees in `.evrim/otonom/KARARNAMELER.md`.

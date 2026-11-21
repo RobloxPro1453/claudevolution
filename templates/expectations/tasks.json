@@ -1,0 +1,85 @@
+{
+  "id": "tasks",
+  "title": "Görev / ajanda",
+  "keywords": [
+    "görev",
+    "yapılacak",
+    "todo",
+    "ajanda",
+    "takvim",
+    "hatırlat",
+    "planlayıcı",
+    "task",
+    "tasks",
+    "calendar",
+    "to-do"
+  ],
+  "feel": "hızlı, pratik",
+  "expectations": [
+    {
+      "id": "create",
+      "text": "Görev tek satırla eklenir, tarih yazmak isteğe bağlıdır",
+      "step": "create"
+    },
+    {
+      "id": "done-toggle",
+      "text": "Tamamlandı işaretlenir, geri alınabilir; bitenler gizlenebilir",
+      "step": "toggle"
+    },
+    {
+      "id": "due",
+      "text": "Bugün / yaklaşan / gecikmiş ayrı görünür"
+    },
+    {
+      "id": "search",
+      "text": "Görevlerde arama ve etikete göre süzme",
+      "step": "search"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "undo",
+      "text": "Yapılan her değişiklik geri alınabilir (Ctrl+Z / Ctrl+Y)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "reminders",
+      "text": "Hatırlatma bildirimi istiyor musunuz?",
+      "options": [
+        "Hayır, listeye bakmam yeter (önerilen)",
+        "Evet, Windows bildirimi"
+      ],
+      "default": 0,
+      "why": "Arka planda çalışma ve bildirim izni gerektirir"
+    }
+  ]
+}

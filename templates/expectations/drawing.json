@@ -1,0 +1,81 @@
+{
+  "id": "drawing",
+  "title": "Çizim / tasarım",
+  "keywords": [
+    "çizim",
+    "çiz",
+    "boya",
+    "tasarım",
+    "diyagram",
+    "tuval",
+    "paint",
+    "draw",
+    "diagram",
+    "sketch",
+    "canvas"
+  ],
+  "feel": "yaratıcı, serbest",
+  "expectations": [
+    {
+      "id": "draw",
+      "text": "Kalemle çizim akıcı (gecikmesiz), yakınlaştırma ve kaydırma",
+      "step": "draw"
+    },
+    {
+      "id": "undo",
+      "text": "Sınırsıza yakın geri al/yinele",
+      "step": "undo"
+    },
+    {
+      "id": "export",
+      "text": "PNG olarak dışa aktarma; kendi biçiminde kaydet/aç",
+      "step": "save"
+    },
+    {
+      "id": "layers",
+      "text": "Katmanlar (dendiyse) ve renk seçici"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "vector",
+      "text": "Çizgiler sonradan düzenlenebilsin mi?",
+      "options": [
+        "Hayır, piksel çizim (sade, önerilen)",
+        "Evet, vektör şekiller"
+      ],
+      "default": 0,
+      "why": "Vektör model mimariyi değiştirir"
+    }
+  ]
+}

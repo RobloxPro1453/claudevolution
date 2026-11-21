@@ -1,4 +1,4 @@
-// cv doctor [--run] [--dir PATH]
+// cv doctor [--run] [--dir PATH]   |   cv doctor --install-deps [--yes]  (eksik araçlar: plan + tek onay; K14 ve Q11-B)
 // Checks what unattended work needs. Changes nothing; reports, and tells the owner in plain words what to do.
 // --run also runs the build and test commands (bounded by buildMinutes / testMinutes).
 import { choose as chooseWorker } from "../delegate/choose.js";
@@ -117,6 +117,18 @@ export function check(root, { runCommands = false } = {}) {
 export async function run(args) {
     const start = typeof args.dir === "string" ? path.resolve(args.dir) : process.cwd();
     const root = findRoot(start) || start;
+    // One-approval installer (Q11-B): the plan and its one question; installs only with --yes.
+    if (args["install-deps"]) {
+        const prereq = await import("./prereq.js");
+        let cfg = {};
+        try { cfg = loadConfig(root); } catch (_) { /* no project yet: tools only */ }
+        const items = prereq.missing(root, cfg);
+        if (!args.yes || !items.length) { console.log(prereq.plan(items)); return items.length ? 3 : 0; }
+        const res = prereq.install(items);
+        for (const r of res) console.log(`  ${r.ok ? "✓" : "✗"} ${r.id}: ${r.note}`);
+        console.log(res.every((r) => r.ok) ? "Kurulum bitti. Yeni bir terminal (ya da oturum) açın ki yeni araçlar görünsün." : "Bazıları kurulamadı; yukarıdaki satırlardaki adreslerden elle kurulabilir.");
+        return res.every((r) => r.ok) ? 0 : 1;
+    }
     const r = check(root, { runCommands: !!args.run });
     console.log(`Denetim (${root}):`);
     for (const [mark, text] of r.rows) console.log(`  ${mark} ${text}`);

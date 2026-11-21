@@ -1,0 +1,94 @@
+{
+  "id": "notes",
+  "title": "Not / bilgi uygulaması",
+  "keywords": [
+    "not",
+    "notlar",
+    "obsidian",
+    "günlük",
+    "defter",
+    "markdown",
+    "wiki",
+    "bilgi bankası",
+    "note",
+    "notes",
+    "journal"
+  ],
+  "feel": "sakin, odaklı",
+  "expectations": [
+    {
+      "id": "create",
+      "text": "Yeni not tek tuşla açılır, başlıksız da kaydedilebilir",
+      "step": "create"
+    },
+    {
+      "id": "search",
+      "text": "Tüm notlarda hızlı arama (başlık + içerik), yazarken sonuç",
+      "step": "search"
+    },
+    {
+      "id": "local-files",
+      "text": "Notlar yerel, okunabilir dosyalarda durur (kilit yok, başka programla açılabilir)"
+    },
+    {
+      "id": "links",
+      "text": "Notlar arası bağlantı ve geri bağlantılar (\"X gibi\" Obsidian dendiyse)"
+    },
+    {
+      "id": "no-data-loss",
+      "text": "Kapatırken, çökünce ya da elektrik gidince yazılan hiçbir şey kaybolmaz (otomatik kayıt, bölünmez yazma, kapanışta kaydedilmemiş sorusu)",
+      "step": "save"
+    },
+    {
+      "id": "reopen",
+      "text": "Program kapatılıp açılınca kaldığı yerden devam eder (son açılanlar, pencere düzeni)",
+      "step": "reopen"
+    },
+    {
+      "id": "fast-start",
+      "text": "Çift tıkla 1-2 saniyede açılır, büyük veride donmaz (çizim sırasında diskten okunmaz)"
+    },
+    {
+      "id": "undo",
+      "text": "Yapılan her değişiklik geri alınabilir (Ctrl+Z / Ctrl+Y)"
+    },
+    {
+      "id": "shortcuts",
+      "text": "Sık işlerin klavye kısayolu var ve menüde yazılı (Ctrl+S, Ctrl+F, Ctrl+N)"
+    },
+    {
+      "id": "theme",
+      "text": "Koyu ve açık tema; yazılar her ikisinde okunaklı (kontrast ≥ 4.5:1)"
+    },
+    {
+      "id": "single-exe",
+      "text": "Tek .exe, kurulum yok; taşınabilir mod (portable.txt yanındaysa veri exe'nin yanında)"
+    },
+    {
+      "id": "plain-errors",
+      "text": "Hata olunca sade dille ne olduğu ve ne yapılacağı söylenir; veri asla sessizce silinmez"
+    }
+  ],
+  "questions": [
+    {
+      "id": "storage",
+      "text": "Notlar nerede dursun?",
+      "options": [
+        "Bilgisayardaki bir klasörde, her not ayrı dosya (önerilen)",
+        "Tek bir veri dosyasında"
+      ],
+      "default": 0,
+      "why": "Yedekleme ve başka programla açma bunu belirler"
+    },
+    {
+      "id": "panes",
+      "text": "Ekran düzeni?",
+      "options": [
+        "Solda liste, ortada not (sade)",
+        "Obsidian gibi çok panel ve sekme"
+      ],
+      "default": 0,
+      "why": "Panel sistemi işin büyüklüğünü değiştirir"
+    }
+  ]
+}
