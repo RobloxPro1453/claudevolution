@@ -6,6 +6,12 @@ Büyük model tarif yazar; bu ajan tarifi bir şerit worktree'sinde, kendi dalı
 |---|---|
 | `agent.js` | Araç döngüsü (okuma, arama, izinli yazma/düzenleme, derle/test, git), yasak yol denetimi, döngü algılama, bütçe ve adım sınırı, saate göre fiyat, rapor + commit + durum kaydı; `run`, `fix`, `scout`, `auto`, `ask` |
 | `lanes.js` | Şeritler: her şerit **ayrık süreç** (oturum kapansa da yaşar), günlük dosyası, pid kaydı, yoğun saatte bekleme; `batch`, `status`, `stop` |
+| `edit-diff.js` | `edit_file` için bulanık eşleşme (boşluk, satır sonu, akıllı tırnak, BOM); eşleşme orijinale geri eşlenir, dosyanın kalanı bayt bayt aynı kalır; bulunamazsa en yakın satırı söyler (OMK atıflı) |
+| `context.js` | Önbellek dostu bağlam: araç çıktısı baş+son kesimi; konuşma `contextBudget`'ı aşınca tek seferde eski çıktıları kısalt, gerekirse eski adımları koşucu özetiyle değiştir (sistem + tarif + son 12 mesaj dokunulmaz) |
+| `spec.js` | Tarif başlıkları: kilitli kabul testi (`Acceptance:` / `Acceptance-Cmd:`), keşif gerekiyor mu |
+| `repomap.js` | Kod haritası (codePaths altında git'in izlediği dosyalar + üst düzey semboller); keşif ve `ask`'e verilir, `cv delegate map` basar |
+| `choose.js` | Kim yapar (API, Claude alt ajanı, yerel CLI, ana model); API devri (bakiye bitti/anahtar reddedildi → aynı gece ana modele) |
+| `verify.js` | Bağımsız doğrulayıcı (kapsam, yasak yol, gizli anahtar, test kalitesi, kabul testi kilidi + kırmızı→yeşil, derleme/test, makbuz) |
 | `plugins/crlf.js` | Paketle gelen eklenti: CRLF dosyada satır sonundan bağımsız düzenleme (K13) |
 
 ## Komutlar
@@ -15,6 +21,7 @@ cv delegate batch [--lanes N] [--from N] T-001 T-002 ...   şeritleri başlat ve
 cv delegate status | stop <şerit>
 cv delegate run T-001 | fix T-001 <notlar> | scout T-001 | auto T-001   [--lane N]   ön planda
 cv delegate ask "<soru>"                                   salt okunur, dosya:satırlı kısa cevap
+cv delegate map | api-ok                                    kod haritası | API devrini kaldır
 ```
 
 `auto` = keşif (salt okuma, not `<iş>.scout.md`) → uygulama → takılırsa bir otomatik düzeltme turu.
@@ -24,7 +31,9 @@ cv delegate ask "<soru>"                                   salt okunur, dosya:sa
 - Anahtar **yalnız ortam değişkeninden** (`delegate.providers.<ad>.keyEnv`); dosyaya, loga, rapora yazılmaz.
 - Yazma: `forbiddenWrite` + her zaman yasak `.git/`, `.evrim/`, `.claude/` (config ile kaldırılamaz). Yol göreli olmalı, proje dışına çıkamaz.
 - Her komutun zaman sınırı var (`buildMinutes`, `testMinutes`); asılan süreç öldürülür.
-- Aynı araç + aynı argüman + aynı hata: 3. kezde uyarı, 4. kezde `blocked` (`stop: loop`).
+- Aynı araç + aynı argüman + aynı hata (derleme/test `exit 1` dahil) ya da dosya değişmeden aynı okuma: 3. kezde uyarı, 4. kezde `blocked` (`stop: loop`).
+- Var olan dosya yalnız bu koşuda `read_file` ile okunduktan sonra ve o andan beri değişmediyse yazılır/düzenlenir; tarifin kabul testi (`Acceptance:`) hiç yazılamaz.
+- API hata türü: bakiye/anahtar → beklemeden sonraki basamak, zincir biterse şerit `api-handoff.json` yazar ve kalan işler `handoff` olur (`cv delegate which` yedeği gösterir, `cv delegate api-ok` kaldırır); 429 → `Retry-After`.
 - İş başına bütçe (`Budget:` satırı ya da `defaultBudget`), günlük tavan `dailyBudget`.
 - Ajan "bitti" dese de çalıştırıcı derleme ve testi kendisi doğrular (ajan son düzenlemeden sonra geçirdiyse sonucu kaydeder).
 

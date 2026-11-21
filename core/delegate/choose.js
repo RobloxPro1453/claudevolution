@@ -1,9 +1,10 @@
 // Who does a delegated task. The cheap-model API when its key is in the environment; otherwise the
 // configured fallback: "claude-subagent" (Claude Code's Agent tool on a cheaper Claude model), optional
 // local secondary CLIs ("codex", "agy", "gemini") or "self" (the main model does it).
+import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { exists, isWindows, readText, run as sh } from "../lib/util.js";
+import { exists, isWindows, readJson, readText, run as sh, writeJson } from "../lib/util.js";
 import { forbiddenRegexes } from "../lib/config.js";
 
 export const FALLBACKS = ["claude-subagent", "self"];
@@ -63,11 +64,34 @@ export function policyOf(d) {
     return first === "claude-subagent" ? "api-yoksa-subagent" : "api-yoksa-kendisi";
 }
 
+// API hand-off (K25, ERRATA H50): when a lane's API calls all ended in "billing" (402, balance gone) or
+// "auth" (key refused), the lane writes this file and stops starting API tasks. Until the owner tops up
+// (cv delegate api-ok) or HANDOFF_HOURS pass, choose() treats the API as unavailable even though the key is
+// set, so the same night continues on the fallback (Claude subagent or the main model) and no task is left
+// half done. A rate limit is not a hand-off: waiting helps there.
+export const HANDOFF_HOURS = 12;
+export const handoffFile = (cfg) => path.join(cfg.root, (cfg.delegate && cfg.delegate.stateDir) || ".evrim/state/delegate", "api-handoff.json");
+export function recordHandoff(cfg, { kind, task = null, detail = "" }, now = new Date()) {
+    if (kind !== "billing" && kind !== "auth") return null;
+    const h = { kind, task, detail: String(detail).slice(0, 200), at: now.toISOString() };
+    writeJson(handoffFile(cfg), h);
+    return h;
+}
+export function readHandoff(cfg, now = new Date()) {
+    if (!cfg || !cfg.root) return null; // a config without a project (planning, council) has no lanes
+    const h = readJson(handoffFile(cfg), null);
+    if (!h || !h.at || (h.kind !== "billing" && h.kind !== "auth")) return null;
+    return now.getTime() - Date.parse(h.at) < HANDOFF_HOURS * 3600e3 ? h : null;
+}
+export function clearHandoff(cfg) { try { fs.rmSync(handoffFile(cfg), { force: true }); return true; } catch (_) { return false; } }
+const handoffWhy = (h) => `API kullanılamıyor: ${h.kind === "billing" ? "bakiye bitti (402)" : "anahtar reddedildi (401/403)"} (${h.at.slice(0, 16).replace("T", " ")} UTC${h.task ? ", " + h.task : ""}); yükleyince: cv delegate api-ok`;
+
 export function choose(cfg, env = process.env, opts = {}) {
     const d = cfg.delegate, p = d.providers && d.providers[d.provider], policy = policyOf(d);
     if (policy === "kendisi") return { mode: "self", name: "self", reason: "delegate.policy kendisi: iş dağıtılmaz" };
-    if (p && env[p.keyEnv]) return { mode: "api", name: d.provider, reason: `${p.keyEnv} ortamda var` };
-    const why = p ? `${p.keyEnv} ortamda yok` : `"${d.provider}" sağlayıcısı tanımlı değil`;
+    const handoff = opts.ignoreHandoff ? null : readHandoff(cfg, opts.now);
+    if (p && env[p.keyEnv] && !handoff) return { mode: "api", name: d.provider, reason: `${p.keyEnv} ortamda var` };
+    const why = handoff ? handoffWhy(handoff) : p ? `${p.keyEnv} ortamda yok` : `"${d.provider}" sağlayıcısı tanımlı değil`;
     if (policy === "yalniz-api") return { mode: "bekle", name: "bekle", reason: `${why}; delegate.policy yalniz-api: kod işi anahtar gelene kadar bekler` };
 
     const useLocalCli = Boolean(opts.allowLocalCli || opts.preferLocalCli || d.localCli);

@@ -3,6 +3,7 @@
 // cv delegate run <TASK> | fix <TASK> <notes-file> | scout <TASK> | auto <TASK>   [--lane N]  (foreground)
 // cv delegate ask "<question>"
 // cv delegate which | brief <TASK>   who does the work (API key or fallback) and the fallback brief
+// cv delegate api-ok                  clear the API hand-off after a top-up (balance gone / key refused, K25)
 // cv delegate verify <TASK> [--base <branch>] [--skip-run] [--review]   independent adversarial verifier + receipt
 import { num } from "../lib/util.js";
 import { project } from "./_project.js";
@@ -16,7 +17,11 @@ export async function run(args) {
     const [sub, ...rest] = args._;
     const p = agent.provider(cfg);
     if (sub === "which") { console.log(choose.line(choose.choose(cfg))); return 0; }
+    // The owner topped up the balance or fixed the key: the API path opens again (K25 hand-off).
+    if (sub === "api-ok") { const had = choose.readHandoff(cfg); choose.clearHandoff(cfg); console.log(had ? `API devri kaldırıldı (${had.kind}); şeritler yeniden API ile çalışır.` : "Açık API devri yok."); return 0; }
     if (sub === "brief" && rest[0]) { console.log(choose.brief(cfg, rest[0])); return 0; }
+    // The code map the scout gets (files under codePaths + top-level symbols); handy when writing specs.
+    if (sub === "map") { const { repoMap } = await import("../delegate/repomap.js"); console.log(repoMap(cfg, { maxChars: num(args.chars, 6000) }) || "(codePaths altında git'in izlediği dosya yok)"); return 0; }
     if (sub === "verify") {
         const task = rest[0] || (typeof args["skip-run"] === "string" ? args["skip-run"] : (typeof args.review === "string" ? args.review : null));
         if (!task) throw new Error("kullanım: cv delegate verify <iş> [--base <dal>] [--skip-run] [--review]");
@@ -36,7 +41,7 @@ export async function run(args) {
 API işi başlatılmadı. ${picked.mode === "bekle" ? "Kod işi yapılmaz (delegate.policy yalniz-api): durumu SORULAR.md'ye yaz, kod dışı işlere geç. " : ""}Yedek (bekle değilse): \`cv delegate brief <iş>\` çıktısını ${picked.mode === "claude-subagent" ? `Agent aracına (model: ${picked.model}) ver` : "kendin uygula"}; kurallar aynıdır.`);
         return 3;
     }
-    if (sub === "status") { console.log(lanes.statusText(cfg)); return 0; }
+    if (sub === "status") { const h = choose.readHandoff(cfg); console.log((h ? `API DEVRİ: ${h.kind === "billing" ? "bakiye bitti" : "anahtar reddedildi"} (${h.at.slice(0, 16)} UTC); kalan işler "handoff": cv delegate brief <iş> ile ana model yapar. Yükleyince: cv delegate api-ok\n` : "") + lanes.statusText(cfg)); return 0; }
     if (sub === "stop" && rest[0]) { console.log(lanes.stop(cfg, parseInt(rest[0], 10))); return 0; }
     if (sub === "batch" && rest.length) {
         const started = lanes.batch(cfg, rest, { lanes: num(args.lanes, cfg.delegate.lanes), from: num(args.from, 1) });

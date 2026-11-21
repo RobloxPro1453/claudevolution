@@ -7,6 +7,7 @@ import { exists, extractJson, git, readJson, readText, run as defaultRun, slash,
 import * as configLib from "../lib/config.js";
 import { allowFakeKey, isSensitiveFile } from "../evolve/privacy.js";
 import { chat, provider } from "./agent.js";
+import { parseAcceptance } from "./spec.js";
 
 const TEST_FILE_RE = /(^|\/)(?:tests?|__tests__|specs?)\//i;
 const TEST_NAME_RE = /(?:^|\/)(?:test|spec)[._-][^/]*$|\.(?:test|spec)\.[a-z0-9]+$|_test\.[a-z0-9]+$/i;
@@ -563,6 +564,21 @@ export async function verifyTask(root, taskId, opts = {}) {
         }
     }
 
+    // 2b. Locked acceptance test (ERRATA E8): written and committed by the planner before the task, so it
+    // must already be on the base, still be on the branch, and be untouched by the task's diff.
+    const acceptance = parseAcceptance(specText);
+    checks.acceptance = { files: acceptance.files, cmd: acceptance.cmd, ok: true, red: null, green: null };
+    const accFail = (category, evidence, description, blocker = true) => {
+        if (blocker) checks.acceptance.ok = false;
+        findings.push({ category, severity: blocker ? "critical" : "minor", blocker, protects: "Locked acceptance test (written before the task)", evidence, description });
+    };
+    for (const a of acceptance.files) {
+        const touched = changedFiles.filter((f) => f === a || f.startsWith(a.replace(/\/?$/, "/")));
+        if (touched.length) accFail("acceptance_tampered", `${touched.join(", ")} changed by ${branch}`, `The task changed its own acceptance test: ${touched.join(", ")}`);
+        if (!git(["cat-file", "-e", `${base}:${a}`], root).ok) accFail("acceptance_not_locked", `${a} is not on ${base}`, `Acceptance test ${a} was not committed before the task (the coder could have written it)`);
+        else if (!git(["cat-file", "-e", `${branch}:${a}`], root).ok) accFail("acceptance_tampered", `${a} missing on ${branch}`, `Acceptance test ${a} was removed`);
+    }
+
     // 3. Secret scan on added diff lines
     const secretHits = scanDiffSecrets(diffText, opts.secretRes);
     checks.secrets.hits = secretHits;
@@ -697,6 +713,24 @@ export async function verifyTask(root, taskId, opts = {}) {
         } finally {
             if (wt.cleanup) wt.cleanup();
         }
+    }
+
+    // 5b. Red -> Green: the acceptance command must fail on the base (else it proves nothing) and pass on
+    // the branch. Runs only with a declared Acceptance-Cmd and without --skip-run; no model involved.
+    if (acceptance.cmd && !opts.skipRun) {
+        const runImpl = opts.run || defaultRun;
+        const runAt = (ref) => {
+            const wt = prepareExecWorktree(root, ref, cfg, ref === branch ? opts : { ...opts, cwd: opts.baseCwd });
+            if (!wt.cwd) return { ok: null, error: wt.error };
+            try { const r = runImpl(acceptance.cmd[0], acceptance.cmd.slice(1), { cwd: wt.cwd, timeoutMs: (cfg.testMinutes || 15) * 60000 }); return { ok: !!r.ok, code: r.code, text: r.text }; }
+            finally { if (wt.cleanup) wt.cleanup(); }
+        };
+        const green = runAt(branch);
+        checks.acceptance.green = green.ok;
+        if (green.ok !== true) accFail("acceptance_failed", green.error || `exit ${green.code}: ${String(green.text || "").trim().split(/\r?\n/).slice(-3).join(" | ")}`, `Acceptance command fails on ${branch}: ${acceptance.cmd.join(" ")}`);
+        const red = runAt(base);
+        checks.acceptance.red = red.ok === null ? null : !red.ok;
+        if (red.ok === true) accFail("acceptance_not_red", `${acceptance.cmd.join(" ")} already passes on ${base}`, "The acceptance test passes without the task's change, so it does not prove the task", false);
     }
 
     if (opts.review) {

@@ -11,11 +11,25 @@ import { appendText, exists, expand, extractJson, gitEnv, num, readJson, readTex
 import * as configLib from "../lib/config.js";
 import { isSensitiveFile } from "../evolve/privacy.js";
 import { slotCount, withSlot } from "./slots.js";
+import { applyEdit } from "./edit-diff.js";
+import { compact, headTail, headTailLines } from "./context.js";
+import { needsScout, parseAcceptance } from "./spec.js";
+import { repoMap } from "./repomap.js";
+
+// The code map for read-only passes (repomap.js); empty when the project has none or it cannot be built.
+const mapBlock = (cfg, deps = {}) => {
+    if (deps.repoMap === false) return "";
+    let m = "";
+    try { m = typeof deps.repoMap === "string" ? deps.repoMap : repoMap(cfg); } catch (_) { /* no map */ }
+    return m ? `\n\nCode map (tracked files under codePaths, top-level symbols; a starting point, verify by reading):\n<code_map>\n${m}\n</code_map>` : "";
+};
 
 const { PKG_ROOT, forbiddenRegexes, realInside, safeRel } = configLib;
 const MAX_TOOL_OUTPUT = 6000, READ_LINES = 200, LOOP_WARN = 3, LOOP_STOP = 4;
 const tail = (text, n) => String(text).split(/\r?\n/).slice(-n).join("\n");
-const cap = (text, max = MAX_TOOL_OUTPUT) => (text.length > max ? text.slice(0, max) + `\n... (${text.length - max} more characters cut; narrow the request)` : text);
+// Head and tail kept, the middle cut (context.js): a head-only cut lost a test run's summary line.
+const cap = (text, max = MAX_TOOL_OUTPUT) => headTail(text, max);
+const sha1 = (t) => crypto.createHash("sha1").update(String(t)).digest("hex");
 
 export const SCOPE_DISCIPLINE = "Scope discipline: make the SMALLEST surgical change that fully satisfies the spec. Prefer the standard library or existing helpers over new dependencies; add no unrequested abstractions, config, or files; do not refactor or reformat unrelated code. Keep error handling, edge cases, and existing tests intact (never delete or weaken assertions to pass).";
 
@@ -123,7 +137,20 @@ export function makeTools(ctx) {
     const { cfg } = ctx;
     const forbidden = forbiddenRegexes(cfg), skip = new RegExp(cfg.skipDirs);
     const linkDirs = [...((cfg.delegate && cfg.delegate.linkDirs) || []), ...((cfg.lanes && cfg.lanes.linkDirs) || [])];
-    const refuse = (rel, verb) => { if (forbidden.some((r) => r.test(rel))) throw new Error(`${verb} ${rel} is not allowed (see the task rules)`); };
+    const refuse = (rel, verb) => {
+        if (forbidden.some((r) => r.test(rel))) throw new Error(`${verb} ${rel} is not allowed (see the task rules)`);
+        // The task's locked acceptance test (ERRATA E8): written by the planner; the agent makes it pass, never changes it.
+        if ((ctx.locked || []).some((l) => rel === l || rel.startsWith(l.replace(/\/?$/, "/")))) throw new Error(`${verb} ${rel} is not allowed: it is this task's locked acceptance test; change the code so it passes`);
+    };
+    // Read-before-write (OMK spec 115, OpenCode FileTime idea): an existing file may be changed only after
+    // read_file saw it in this run, and only if it has not changed since (sha1 of what was read or written).
+    const seen = () => (ctx.track.seen instanceof Map ? ctx.track.seen : (ctx.track.seen = new Map()));
+    const guardStale = (rel, full) => {
+        if (!exists(full)) return;
+        const want = seen().get(rel);
+        if (!want) throw new Error(`read ${rel} with read_file before changing it (it exists; writing from memory loses what you did not see)`);
+        if (want !== sha1(readText(full))) throw new Error(`${rel} changed since you last read it; read it again before changing it`);
+    };
     const tick = () => { ctx.track.clock = (ctx.track.clock || 0) + 1; return ctx.track.clock; };
     function walk(root, dir, rel, out, limit) {
         for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -146,8 +173,10 @@ export function makeTools(ctx) {
             description: `Read a project file with line numbers, at most ${READ_LINES} lines per call. Use start_line/end_line; search first to find the lines you need.`,
             parameters: { type: "object", properties: { path: { type: "string" }, start_line: { type: "integer" }, end_line: { type: "integer" } }, required: ["path"] },
             run: async ({ path: p, start_line, end_line }) => {
-                const { full } = inside(ctx.readRoot, p, linkDirs);
-                const ls = readText(full).split(/\r?\n/);
+                const { rel, full } = inside(ctx.readRoot, p, linkDirs);
+                const whole = readText(full);
+                if (ctx.readRoot === ctx.wt) seen().set(rel, sha1(whole));
+                const ls = whole.split(/\r?\n/);
                 const from = Math.max(1, start_line || 1), to = Math.min(ls.length, end_line || from + READ_LINES - 1, from + READ_LINES - 1);
                 return ls.slice(from - 1, to).map((l, i) => `${from + i}\t${l}`).join("\n") + (to < ls.length ? `\n(${ls.length} lines in total)` : "");
             }
@@ -179,25 +208,29 @@ export function makeTools(ctx) {
                 const rel = safeRel(p);
                 refuse(rel, "writing");
                 const { full } = inside(ctx.wt, rel, linkDirs);
+                guardStale(rel, full);
                 writeText(full, String(content));
+                seen().set(rel, sha1(String(content)));
                 ctx.track.lastWrite = tick();
                 return "written " + rel;
             }
         },
         edit_file: {
-            description: "Replace exactly one occurrence of old_text with new_text in a file. old_text must match the file exactly (including indentation) and be unique.",
+            description: "Replace one occurrence of old_text with new_text in a file you have read. Copy old_text from the file (indentation included); small differences in trailing spaces, line endings and quote or dash characters are tolerated. It must be unique: add surrounding lines if not.",
             parameters: { type: "object", properties: { path: { type: "string" }, old_text: { type: "string" }, new_text: { type: "string" } }, required: ["path", "old_text", "new_text"] },
             run: async ({ path: p, old_text, new_text }) => {
                 const rel = safeRel(p);
                 refuse(rel, "editing");
                 const { full } = inside(ctx.wt, rel, linkDirs);
+                if (!exists(full)) throw new Error(`${rel} does not exist; create it with write_file`);
+                guardStale(rel, full);
                 const text = readText(full);
                 for (const pl of ctx.plugins) if (pl.beforeEdit) ({ old_text, new_text } = pl.beforeEdit(text, old_text, new_text));
-                const count = text.split(old_text).length - 1;
-                if (count !== 1) throw new Error(`old_text found ${count} times; it must be unique. Read the file again and copy the exact text.`);
-                writeText(full, text.replace(old_text, () => new_text));
+                const r = applyEdit(text, String(old_text ?? ""), String(new_text ?? ""), rel);
+                writeText(full, r.text);
+                seen().set(rel, sha1(r.text));
                 ctx.track.lastWrite = tick();
-                return "edited " + rel;
+                return "edited " + rel + (r.fuzzy ? " (matched after normalizing whitespace/quotes/line endings)" : "");
             }
         },
         run: {
@@ -214,7 +247,7 @@ export function makeTools(ctx) {
                         if (command === "build") ctx.track.lastBuildOk = tick();
                         else { ctx.track.lastTestOk = tick(); ctx.track.lastTestTail = tail(r.text.trim(), 2); }
                     }
-                    return `exit ${r.code}\n` + tail(r.text, 20);
+                    return `exit ${r.code}\n` + headTailLines(r.text, 15, 25);
                 }
                 if (command === "git_status") return (await git(["status", "--short"])).text || "(clean)";
                 if (command === "git_diff") return (await git(["diff"])).text || "(no changes)";
@@ -478,7 +511,11 @@ export async function chat(cfg, messages, key, toolList, fetchImplOrOpts = fetch
 
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             // An empty tool list is not sent: "tools: []" is refused by some providers and means nothing.
-            const body = { model: rung.model, messages: sent, temperature: 0.2, max_tokens: 16384 };
+            // With thinking on the provider ignores temperature (ERRATA E3): it is sent only without thinking.
+            const body = { model: rung.model, messages: sent, max_tokens: 16384 };
+            if (!rung.thinking) body.temperature = 0.2;
+            const effort = opts.effort || rung.effort;
+            if (effort && rung.thinking) body.reasoning_effort = effort; // DeepSeek: low | high | max (OMK spec 037 idea)
             if (Array.isArray(toolList) && toolList.length) body.tools = toolList;
             if (rung.thinking !== undefined) body.thinking = { type: rung.thinking ? "enabled" : "disabled" };
             const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 300000);
@@ -542,7 +579,7 @@ export async function chat(cfg, messages, key, toolList, fetchImplOrOpts = fetch
 }
 
 // The step loop shared by run/fix, scout and ask. Returns { finish, cost, steps, tokens, stopReason }.
-export async function loop(ctx, messages, key, names, maxSteps, budget, finishName, chatImpl = chat) {
+export async function loop(ctx, messages, key, names, maxSteps, budget, finishName, chatImpl = chat, { effort = null } = {}) {
     const { tools } = ctx.kit;
     let cost = 0, steps = 0, finish = null, stopReason = null, edited = false, apiKind = null;
     const tokens = { hit: 0, miss: 0, out: 0 }, guard = loopGuard(), stagnant = stagnationGuard();
@@ -552,7 +589,10 @@ export async function loop(ctx, messages, key, names, maxSteps, budget, finishNa
         if (cost >= budget) { stopReason = "budget"; finish = { status: "blocked", report: `Stopped: the budget of $${budget.toFixed(2)} was used up after ${steps} steps.` }; break; }
         ctx.track.step = ++steps;
         let reply;
-        try { reply = await chatImpl(ctx.cfg, messages, key, schema(tools, names)); }
+        // An epoch of context trimming only when the conversation passes its budget (context.js).
+        const ep = compact(messages, { budgetTokens: num(ctx.cfg.delegate.contextBudget, 64000) });
+        if (ep.changed && ctx.log) ctx.log(`  context: ~${ep.before} -> ~${ep.after} tokens (trimmed ${ep.trimmed}, summarised ${ep.summarised} messages)`);
+        try { reply = await (effort ? chatImpl(ctx.cfg, messages, key, schema(tools, names), { effort }) : chatImpl(ctx.cfg, messages, key, schema(tools, names))); }
         catch (error) { stopReason = "api"; apiKind = error.kind || null; finish = { status: "blocked", report: `Stopped by the runner: the model API failed${apiKind ? ` (${apiKind})` : ""} (${String(error.message).slice(0, 200)}). The work so far is committed; continue with the fix command.` }; break; }
         cost += reply.cost; tokens.hit += reply.tokens.hit; tokens.miss += reply.tokens.miss; tokens.out += reply.tokens.out;
         const m = reply.message, said = { role: "assistant", content: m.content || "", tool_calls: m.tool_calls };
@@ -752,7 +792,8 @@ export async function runTask(ctx, task, feedbackFile = null, deps = {}) {
     const state = loadState(cfg, task);
     const before = (await ctx.git(["rev-parse", "HEAD"])).text.trim(), startedAt = new Date().toISOString();
     ctx.readRoot = ctx.wt;
-    Object.assign(ctx.track, { step: 0, clock: 0, lastWrite: 0, lastBuildOk: 0, lastTestOk: 0, lastTestTail: "" });
+    Object.assign(ctx.track, { step: 0, clock: 0, lastWrite: 0, lastBuildOk: 0, lastTestOk: 0, lastTestTail: "", seen: new Map() });
+    ctx.locked = parseAcceptance(spec).files;
 
     let user = `Task ${task}. The spec:\n\n<spec path="${cfg.tasks.dir}/${task}.md">\n${spec}\n</spec>`;
     const scoutFile = path.join(stateDir(cfg), task + ".scout.md");
@@ -765,7 +806,7 @@ export async function runTask(ctx, task, feedbackFile = null, deps = {}) {
     const messages = [{ role: "system", content: systemPrompt(cfg) }, { role: "user", content: user }];
 
     ctx.log(`${task}: ${feedbackFile ? "fixing" : "starting"} with ${p.model}, budget $${budget.toFixed(2)}, ${maxSteps} steps, lane ${ctx.lane}`);
-    const r = await loop(ctx, messages, key, ctx.kit.taskTools, maxSteps, budget, "finish", deps.chat);
+    const r = await loop(ctx, messages, key, ctx.kit.taskTools, maxSteps, budget, "finish", deps.chat, { effort: effortFor(cfg, feedbackFile ? "fix" : "run") });
     const finish = r.finish, t = ctx.track;
 
     // The runner checks for itself: a "done" claim is trusted only if build and tests pass. If the agent's
@@ -818,8 +859,24 @@ export async function runTask(ctx, task, feedbackFile = null, deps = {}) {
     Object.assign(state, { cost: (state.cost || 0) + r.cost, status: finish.status, tests, summary, branch: branchOf(cfg, task), lane: ctx.lane, treeSha });
     state.runs.push({ startedAt, at: timestamp, kind: feedbackFile ? "fix" : "first", before, after: head, treeSha, cost: r.cost, steps: r.steps, tokens: r.tokens, status: finish.status, stopReason: r.stopReason, testsBy, offpeak: offpeak(p, new Date(startedAt)) });
     saveState(cfg, state);
+    if (finish.status !== "done") writeFailureLog(cfg, task, { kind: feedbackFile ? "fix" : "first", stopReason: r.stopReason, apiKind: r.apiKind, steps: r.steps, cost: r.cost, tests, files, report: finish.report, at: timestamp });
     ctx.log(`${task}: ${finish.status.toUpperCase()} (${r.stopReason}), tests (${testsBy || "-"}): ${tests.split("\n")[0]}, cost $${r.cost.toFixed(3)} (task total $${state.cost.toFixed(3)})\nchanged: ${files.join(", ") || "(nothing)"}`);
     return { status: finish.status, stopReason: r.stopReason, apiKind: r.apiKind, tests, treeSha, buildOk, testOk };
+}
+
+// Reasoning effort per kind of call (delegate.effort, e.g. { "scout": "low", "ask": "low", "run": "high" }).
+// Unset = nothing sent, the provider's default (the request stays byte-identical to before).
+export const effortFor = (cfg, kind) => { const e = cfg.delegate && cfg.delegate.effort; return (e && typeof e === "object" && typeof e[kind] === "string" && e[kind]) || null; };
+
+// One file per run that did not end done (craft-anything ai/src/failure_log.rs idea): what ran, what it
+// printed, where it stopped. The reviewer (or the main model taking over) opens one file, not a log.
+export function writeFailureLog(cfg, task, f) {
+    try {
+        const file = path.join(stateDir(cfg), "failures", `${task}-${String(f.at).replace(/[:.]/g, "-")}.md`);
+        writeText(file, [`# ${task}: ${f.kind} run stopped (${f.stopReason}${f.apiKind ? ", API " + f.apiKind : ""})`, "",
+            `- when: ${f.at}`, `- steps: ${f.steps}, cost: $${Number(f.cost || 0).toFixed(3)}`, `- tests: ${String(f.tests || "").split("\n")[0]}`,
+            `- changed: ${(f.files || []).join(", ") || "(nothing)"}`, "", "## Agent's report", "", String(f.report || "").trim() || "(none)", ""].join("\n"));
+    } catch (_) { /* a log must never stop a run */ }
 }
 
 // Scout: a read-only pass that finds the exact place in the code before the coder starts.
@@ -828,9 +885,9 @@ export async function scout(ctx, task, deps = {}) {
     const spec = readText(path.join(cfg.root, cfg.tasks.dir, task + ".md"));
     const messages = [
         { role: "system", content: `${cfg.delegate.intro}\nYou are the scout for a coder who will implement the task below. Read-only. Find the files and functions to change (file:line) and the existing helpers to reuse. Then call answer with notes of at most 40 lines: each fact with a file:line, and what you could not find. No guesses presented as facts.` },
-        { role: "user", content: `Task ${task}:\n\n${spec}` }
+        { role: "user", content: `Task ${task}:\n\n${spec}${mapBlock(cfg, deps)}` }
     ];
-    const r = await loop(ctx, messages, key, ctx.kit.askTools, 80, 0.30, "answer", deps.chat);
+    const r = await loop(ctx, messages, key, ctx.kit.askTools, 80, 0.30, "answer", deps.chat, { effort: effortFor(cfg, "scout") });
     // Only real notes are kept: a scout stopped by the API or the step limit has nothing to pass on.
     if (r.stopReason === "finish") writeText(path.join(stateDir(cfg), task + ".scout.md"), r.finish.report.trim() + "\n");
     const state = loadState(cfg, task);
@@ -846,7 +903,9 @@ export async function auto(ctx, task, deps = {}) {
     await ensureLane(ctx);
     const resumed = await syncForTask(ctx, task, { after: Array.isArray(deps.dependsOn) ? deps.dependsOn : [] });
     const notes = path.join(stateDir(cfg), task + ".auto-review.md");
-    if (!exists(path.join(stateDir(cfg), task + ".scout.md"))) { try { await scout(ctx, task, deps); } catch (e) { ctx.log(`${task}: scout failed: ${e.message}`); } }
+    // The scout pass only where it pays: an undeclared or wide scope, or no known file:line yet (spec.js).
+    const specText = readText(path.join(cfg.root, cfg.tasks.dir, task + ".md"), "");
+    if (!exists(path.join(stateDir(cfg), task + ".scout.md")) && (deps.forceScout || needsScout(specText))) { try { await scout(ctx, task, deps); } catch (e) { ctx.log(`${task}: scout failed: ${e.message}`); } }
     let first;
     // The merge train leaves "<task>.train-fix.md" when this branch broke the combined build/test; that note
     // (failing checks, the fix to make) is the reason the task is back, so the run starts from it. Restored:
@@ -871,9 +930,9 @@ export async function ask(ctx, question, deps = {}) {
     ctx.readRoot = cfg.root;
     const messages = [
         { role: "system", content: `${cfg.delegate.intro}\nYou answer one question about the code, read-only. Search narrowly, read only the lines you need, then call answer. At most 25 lines: the facts, each with a file:line reference, and say plainly what you could not find. No guesses presented as facts.` },
-        { role: "user", content: question }
+        { role: "user", content: question + mapBlock(cfg, deps) }
     ];
-    const r = await loop(ctx, messages, key, ctx.kit.askTools, 30, 0.05, "answer", deps.chat);
+    const r = await loop(ctx, messages, key, ctx.kit.askTools, 30, 0.05, "answer", deps.chat, { effort: effortFor(cfg, "ask") });
     appendText(path.join(stateDir(cfg), "asks.jsonl"), JSON.stringify({ at: new Date().toISOString(), question: question.slice(0, 200), steps: r.steps, cost: r.cost, tokens: r.tokens, stop: r.stopReason }) + "\n");
     return { answer: r.finish.report.trim(), steps: r.steps, cost: r.cost, stop: r.stopReason };
 }

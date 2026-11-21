@@ -218,6 +218,8 @@ export function validate(cfg) {
     if (d.fallback !== undefined && (!Array.isArray(d.fallback) || d.fallback.some((f) => !["claude-subagent", "self"].includes(f)))) err("delegate.fallback: yalnız \"claude-subagent\" ve \"self\" içeren liste olmalı");
     if (d.policy !== undefined && !["kendisi", "yalniz-api", "api-yoksa-kendisi", "api-yoksa-subagent"].includes(d.policy)) err("delegate.policy: kendisi | yalniz-api | api-yoksa-kendisi | api-yoksa-subagent");
     if (d.subagentModel !== undefined && !/^[a-z0-9.-]+$/i.test(String(d.subagentModel))) err("delegate.subagentModel: model adı olmalı (ör. haiku, sonnet)");
+    if (d.contextBudget !== undefined && (!isNum(d.contextBudget) || d.contextBudget < 8000)) err("delegate.contextBudget: en az 8000 (token)");
+    if (d.effort !== undefined && d.effort !== null && (!isPlainObj(d.effort) || !Object.values(d.effort).every((v) => v === null || ["low", "medium", "high", "max"].includes(v)))) err("delegate.effort: { \"scout\": \"low\", ... } (low | medium | high | max)");
 
     const a = cfg.autonomy || {}, g = a.gates || {};
     for (const k of ["fiveHourNoNewStep", "fiveHourExit", "weeklyBase", "weeklySlope", "weeklyMargin", "cycleShareMax", "stepShareAlarm"]) if (!isNum(g[k])) err(`autonomy.gates.${k}: sayı olmalı`);
