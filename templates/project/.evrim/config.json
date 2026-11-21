@@ -68,6 +68,7 @@
         "model": "deepseek-flash",
         "keyEnv": "DEEPSEEK_API_KEY",
         "thinking": true,
+        "vision": true,
         "price": { "input": 0.30, "cached": 0.006, "output": 1.2 },
         "peakUtc": "01:00-04:00,06:00-10:00",
         "offpeakFactor": 0.5
@@ -147,6 +148,16 @@
     "plugin": null,
     "maxChars": 4000,
     "timeoutSeconds": 120
+  },
+
+  "check": {
+    "_comment": "cv check: masaüstü uygulama denetimi (core/check/README.md). kind: auto | window | console. program: [yol, argüman...] ya da null (o zaman finalForm.deliverable, sonra Cargo.toml'un default-run / pencere paketi). selfTest.steps: uygulamanın --self-test ile ölçmesi gereken adımlar (ör. [\"create\", \"save\", \"reopen\", \"search\"]); boşsa self-test istenmez. referenceGate: referans görüntüye en az yüzde kaç benzemeli (yalnız 'şunu yeniden kur' işlerinde; yeni fikirde null = yalnız not). runSeconds: programın çizip kaydetmesi için süre.",
+    "enabled": true,
+    "kind": "auto",
+    "program": null,
+    "selfTest": { "steps": [] },
+    "referenceGate": null,
+    "runSeconds": 90
   },
 
   "reference": {

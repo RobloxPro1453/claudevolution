@@ -29,3 +29,7 @@ Menü yolu ya da başlık → küçük harf, Türkçe ve aksanlı harfler ASCII'
 ## Karşılaştırma sayfası
 
 Üç bölüm: **ikisi de var** (yan yana), **yalnız referansta** (henüz yapılmadı ya da çekilmedi), **yalnız bizde**. Görüntüler kopyalanmaz; sayfa onlara göreli yolla bağlanır (sayfa yerinden taşınırsa bağlar kopar).
+
+## Lisans: ne alınabilir (`cv ref license <klasör>`)
+
+Sahibin kararı #11: referansın lisansına göre üç kip. **adapt** (MIT, Apache-2.0, BSD, ISC, Zlib...; çift lisansta biri yeter): kod ve modül uyarlanır, `THIRD_PARTY_NOTICES.md`'ye kaynak + telif satırı, marka/logo alınmaz. **ideas-only** (GPL/LGPL/AGPL, dosya düzeyinde copyleft MPL-2.0): yalnız fikir ve davranış. **clean-room** (lisans yok, kapalı kaynak, kurulu program): yalnız ekran, erişilebilirlik ağacı ve akış; kod, ikon, görsel kopyalanmaz, özgün SVG ikon çizilir. `--birebir` düzeni korur, varsayılan "benzer" aynı tasarım dilinde özgün düzen ister. Kaynak: `package.json`/`Cargo.toml` `license` alanı ve `LICENSE*`/`COPYING*` metinleri (`core/reference/license.js`); hiçbir şey çalıştırılmaz.

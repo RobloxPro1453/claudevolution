@@ -14,6 +14,7 @@ const COMMANDS = {
     doctor: "gözetimsiz çalışma önkoşullarını denetle (hiçbir şeyi değiştirmez)",
     status: "tur, kota, şeritler, hafıza özeti",
     distill: "damıtma için yeni dersler, adaylar, ölçüler (--mark: damıtıldı işaretle)",
+    check: "masaüstü uygulama denetimi: derle, --screenshot (boş mu), --self-test adımları; tur check.json'a yazılır",
     update: "paket sürümüyle projedeki farkı göster (--apply yedekleyip uygular, --rollback geri alır)",
     gate: "kota kapısı: --five N --week N [--five-resets ISO] [--week-resets ISO]",
     lock: "çevrim kilidi: status | acquire --session ID | release [--session ID]",
@@ -23,7 +24,7 @@ const COMMANDS = {
     council: "plan/kota uyumlu meclis: --topic \"<konu>\" [--complexity ...] [--depth ...] [--license ...] [--execute] [--json]",
     round: "tur ölçümü: start | end | show | table",
     probe: "çalışan uygulamayı yokla: --preset AD | --script JS | --list",
-    ref: "referans karşılaştırma: name | index | compare",
+    ref: "referans: name | index | compare | license <klasör> (uyarla mı, clean-room mu)",
     evolve: "evrensel evrim: evrim/<ad> dalını ölç, geçerse main'e al, sürüm, CHANGELOG, push",
     lesson: "ders yaz: \"<ders>\" [--evrensel: hemen pakete, ölç, commit, push] [--hata]",
     bench: "paket ölçümü: A testler + B kaos (bedava); --live ile C (ücretli, tavanlı); --baseline"

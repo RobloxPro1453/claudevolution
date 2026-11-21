@@ -247,6 +247,18 @@ export function validate(cfg) {
     const e = cfg.evolution || {};
     for (const k of ["lessonsMax", "journalTailLines", "distillEveryCycles", "distillQuotaShare", "selectionK"]) if (!isNum(e[k]) || e[k] <= 0) err(`evolution.${k}: pozitif sayı olmalı`);
 
+    const ck = cfg.check;
+    if (ck !== undefined && ck !== null) {
+        if (!isPlainObj(ck)) err("check: nesne olmalı");
+        else {
+            if (ck.kind !== undefined && !["auto", "window", "console"].includes(ck.kind)) err("check.kind: auto | window | console");
+            if (ck.program !== undefined && ck.program !== null && !isCmd(ck.program)) err("check.program: null ya da [\"yol\", \"argüman\", ...]");
+            if (ck.selfTest !== undefined && ck.selfTest !== true && !(isPlainObj(ck.selfTest) && (ck.selfTest.steps === undefined || (Array.isArray(ck.selfTest.steps) && ck.selfTest.steps.every((s) => typeof s === "string" && s.trim()))))) err("check.selfTest: { \"steps\": [\"create\", \"save\", ...] }");
+            if (ck.referenceGate !== undefined && ck.referenceGate !== null && (!isNum(ck.referenceGate) || ck.referenceGate < 0 || ck.referenceGate > 100)) err("check.referenceGate: null ya da 0-100");
+            if (ck.runSeconds !== undefined && (!isNum(ck.runSeconds) || ck.runSeconds < 5)) err("check.runSeconds: en az 5");
+        }
+    }
+
     const raw = JSON.stringify({ ...cfg, root: undefined });
     if (SECRET_RES.some((r) => r.test(raw))) err("config içinde anahtara benzeyen bir değer var: anahtarlar yalnız ortam değişkeninde durur, dosyadan silin");
     if (/[A-Za-z]:\\\\Users\\\\|\/Users\/[^/"]+\/|\/home\/[^/"]+\//.test(raw)) warn("config içinde makineye özgü mutlak yol var; ~ ya da göreli yol kullanın");

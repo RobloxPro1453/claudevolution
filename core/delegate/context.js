@@ -34,8 +34,10 @@ export function headTailLines(text, headLines = 15, tailLines = 25) {
     return [...ls.slice(0, headLines), `... (${ls.length - headLines - tailLines} lines cut from the middle)`, ...ls.slice(-tailLines)].join("\n");
 }
 
+// A picture part counts as its token cap (about 1024 tokens at most per image, ERRATA E4), never as its base64.
+const contentLength = (c) => (Array.isArray(c) ? c.reduce((n, p) => n + (p && p.type === "text" ? String(p.text || "").length : 4096), 0) : String(c || "").length);
 const textOf = (m) => {
-    let n = String(m.content || "").length + String(m.reasoning_content || "").length;
+    let n = contentLength(m.content) + String(m.reasoning_content || "").length;
     for (const c of m.tool_calls || []) n += String((c.function && c.function.arguments) || "").length + 20;
     return n;
 };
