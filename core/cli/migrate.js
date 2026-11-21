@@ -19,6 +19,7 @@ import path from "node:path";
 import { deepMerge, exists, readText, writeText } from "../lib/util.js";
 import { CONFIG_REL, TEMPLATE_DIR, VERSION, defaults, validate } from "../lib/config.js";
 import { loopWorkflowText, skillSources, stampSkill } from "./init.js";
+import * as knowledge from "../autonomy/knowledge.js";
 
 export const SKILL_DIRS = [".claude/skills", ".codex/skills", ".agent/skills"];
 export const LOOP_REL = ".agent/workflows/loop.md";
@@ -165,8 +166,22 @@ export function planUpdate(root, { lang } = {}) {
     const language = lang || (readConfigForUpdate(root).own || {}).lang || "tr";
     const from = readText(path.join(root, ".evrim", "version"), "?").trim();
     if (c.blocked) return { from, to: VERSION, blocked: c.blocked, items: [], kept: keptList(root, language), notes: [] };
-    const items = [...(c.item ? [c.item] : []), ...planFiles(root, language)];
+    const items = [...(c.item ? [c.item] : []), ...planFiles(root, language), ...planKnowledge(root)];
     return { from, to: VERSION, blocked: null, items, kept: keptList(root, language), notes: c.notes || [] };
+}
+
+// M6 data step: the lessons and error lines of DERSLER.md / HATALAR.md are copied (never moved) into
+// .evrim/knowledge.jsonl, so retrieval and the hypothesis loop can use them. The memory files stay as they
+// are; existing knowledge entries stay; running it again adds nothing. Backed up and rolled back like any file.
+export function planKnowledge(root) {
+    const own = readConfigForUpdate(root).own || {};
+    const dir = (own.autonomy && own.autonomy.dir) || ".evrim/otonom";
+    const want = knowledge.migratedText(root, dir);
+    const rel = ".evrim/knowledge.jsonl", dest = path.join(root, rel);
+    const have = exists(dest) ? readText(dest) : null;
+    if (!want || want === have) return [];
+    const count = want.split("\n").filter(Boolean).length - (have ? have.split("\n").filter(Boolean).length : 0);
+    return [{ rel, want, old: have, kind: have === null ? "yeni" : "değişti", added: count, removed: 0, note: "dersler bilgi deposuna kopyalanır; DERSLER.md aynen kalır" }];
 }
 
 // ------------------------------------------------------------------ backup, apply, rollback

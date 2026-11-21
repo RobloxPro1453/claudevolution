@@ -6,6 +6,7 @@ import path from "node:path";
 import { appendText, lines, readText, tail } from "../lib/util.js";
 import { autonomyDir, defaults, loadConfig } from "../lib/config.js";
 import { keyOf, merged, projectLessons } from "../evolve/merge.js";
+import * as knowledge from "./knowledge.js";
 
 export const memFile = (cfg, name) => path.join(autonomyDir(cfg), name + ".md");
 const stripComments = (text) => String(text).replace(/<!--[\s\S]*?-->/g, "");
@@ -137,6 +138,12 @@ export function primeLessons(rootOrCfg, { task = "", files = [], keywords = [], 
         for (const l of u.fromMachine || []) addCandidate(l, "machine", 0.7);
         for (const l of u.fromPkg || []) addCandidate(l, "universal", 0.6);
     } catch { /* universal package/machine stores are optional */ }
+    // The lasting knowledge (.evrim/knowledge.jsonl): matched by file, folder and identifier, stale entries never.
+    // A file match is the strongest sign a lesson applies, so it lifts the entry well above word overlap.
+    try {
+        const hits = knowledge.retrieve(cfg.root, { files: fileList, text: [taskStr, specText, ...kwList, ...errList].join(" "), limit: maxItems });
+        for (const h of hits) addCandidate(`- ${h.entry.fact}${h.entry.recommendation ? ` → ${h.entry.recommendation}` : ""}`, `knowledge:${h.entry.type}`, 0.9 + h.score / 100);
+    } catch { /* the knowledge file is optional */ }
 
     const hasQuery = fileTerms.size > 0 || errTerms.size > 0 || queryTerms.size > 0;
     const scored = candidates.map((c) => {

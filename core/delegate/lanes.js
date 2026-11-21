@@ -7,7 +7,7 @@ import process from "node:process";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { appendText, git, isWindows, nowIso, pidAlive, readJson, readText, run, writeJson } from "../lib/util.js";
-import { auto, branchOf, laneDir, newCtx, peakUntil, provider, spentToday, stateDir } from "./agent.js";
+import { auto, branchOf, laneDir, newCtx, peakUntil, provider, spentToday, spentTotal, stateDir } from "./agent.js";
 import { parseDeclaredScope } from "./verify.js";
 import { withFileLock } from "../lib/filelock.js";
 import { redact } from "../lib/process.js";
@@ -306,6 +306,16 @@ async function executeTaskStep(cfg, ctx, task, dag, log, deps, pendingInBatch) {
         log?.(`daily budget reached ($${spent.toFixed(2)} of $${cfg.delegate.dailyBudget}); not starting ${task}`);
         recordBlackboard(cfg, task, { status: "budget", error: "daily budget reached" });
         return { task, status: "budget", budgetStop: true };
+    }
+    // The project's whole budget the owner approved (delegate.projectBudget; null = none): the emergency brake.
+    const pb = cfg.delegate.projectBudget;
+    if (typeof pb === "number" && pb > 0) {
+        const total = deps.spentTotal ? deps.spentTotal(cfg) : spentTotal(cfg);
+        if (total >= pb) {
+            log?.(`project budget reached ($${total.toFixed(2)} of $${pb}); not starting ${task}`);
+            recordBlackboard(cfg, task, { status: "budget", error: "project budget reached" });
+            return { task, status: "budget", budgetStop: true };
+        }
     }
 
     // The API path is closed (balance gone / key refused, K25): leave the task for the fallback worker.

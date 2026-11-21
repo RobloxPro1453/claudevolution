@@ -87,6 +87,8 @@
     "defaultSteps": 200,
     "defaultBudget": 1.0,
     "dailyBudget": 5.0,
+    "_comment_projectBudget": "projectBudget: sahibin bu proje için onayladığı toplam ucuz model bütçesi (dolar); dolunca yeni iş başlamaz (acil fren). null = yok. Durum: cv usage",
+    "projectBudget": null,
     "minBalanceNote": "Bakiye API'den okunamaz; günlük harcama stateDir kayıtlarından toplanır ve dailyBudget aşılınca yeni iş başlamaz.",
     "stateDir": ".evrim/state/delegate",
     "commitTrailer": "Co-Authored-By: delegate-agent <noreply@example.invalid>",

@@ -19,6 +19,8 @@ const COMMANDS = {
     check: "masaüstü uygulama denetimi: derle, --screenshot (boş mu), --self-test adımları; tur check.json'a yazılır",
     telegram: "bitince tek haber + yetkili uzaktan kumanda: setup --chat <id> | test | poll [--every sn] | done",
     watch: "şeritleri ve son denetimi izle; STATUS.md yazar (--every sn, --once)",
+    tune: "öz-ayar (hipotez): sinyal → tek sınırlı deneme → K koşu sonra tut ya da geri al + ders (--apply, --evaluate)",
+    usage: "kullanım ve bütçe: Claude, Codex, Antigravity tokenları + ucuz model harcaması; günlük/proje freni",
     update: "paket sürümüyle projedeki farkı göster (--apply yedekleyip uygular, --rollback geri alır)",
     gate: "kota kapısı: --five N --week N [--five-resets ISO] [--week-resets ISO]",
     lock: "çevrim kilidi: status | acquire --session ID | release [--session ID]",

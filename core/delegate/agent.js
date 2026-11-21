@@ -690,6 +690,18 @@ export function spentToday(cfg, now = new Date()) {
     return total;
 }
 
+// Everything spent on this project so far (the ledger; run records for older state): the project brake.
+export function spentTotal(cfg) {
+    try {
+        const ledger = fs.readFileSync(path.join(stateDir(cfg), "spend.jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+        if (ledger.length) return ledger.reduce((s, r) => s + (r.cost || 0), 0);
+    } catch (_) { /* no ledger yet */ }
+    let total = 0, files = [];
+    try { files = fs.readdirSync(stateDir(cfg)).filter((f) => f.endsWith(".json")); } catch (_) { /* nothing yet */ }
+    for (const f of files) total += (readJson(path.join(stateDir(cfg), f), {}).cost || 0);
+    return total;
+}
+
 export async function newCtx(cfg, lane, log = console.log) {
     const ctx = { cfg, wt: laneDir(cfg, lane), readRoot: laneDir(cfg, lane), lane, log, plugins: await loadPlugins(cfg), track: { step: 0, clock: 0, lastWrite: 0, lastBuildOk: 0, lastTestOk: 0, lastTestTail: "" } };
     ctx.kit = makeTools(ctx);
